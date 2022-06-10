@@ -1,2 +1,2 @@
 # home-assistant-solarfocus
-Custom component for Home-Assistant to integrate Solarfocus Heatpump
+Custom component for Home-Assistant to integrate Solarfocus eco manager-touch
