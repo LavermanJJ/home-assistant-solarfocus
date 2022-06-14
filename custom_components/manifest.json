@@ -3,7 +3,7 @@
   "name": "Solarfocus",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/solarfocus",
-  "requirements": ["pysolarfocus==0.0.1", "pymodbus==2.5.3"],
+  "requirements": ["pysolarfocus==0.0.5", "pymodbus==2.5.3"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},

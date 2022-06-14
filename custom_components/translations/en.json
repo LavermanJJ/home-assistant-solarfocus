@@ -11,8 +11,13 @@
         "step": {
             "user": {
                 "data": {
+                    "boiler": "Enable Boiler",
+                    "buffer": "Enable Buffer",
+                    "heating_circuit": "Enable Heating Circuit",
+                    "heatpump": "Enable Heatpump",
                     "host": "Host",
                     "password": "Password",
+                    "photovoltaic": "Enable Photovoltaic",
                     "username": "Username"
                 }
             }

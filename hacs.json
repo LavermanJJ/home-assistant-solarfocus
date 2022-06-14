@@ -1,0 +1,9 @@
+{
+    "name": "Solarfocus eco manager-touch",
+    "country": [
+      "DE"
+    ],
+    "homeassistant": "2021.12.8",
+    "hacs": "1.18.0",
+    "render_readme": true
+}

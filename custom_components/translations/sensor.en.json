@@ -1,0 +1,110 @@
+{
+    "state": {
+        "solarfocus__boiler": {
+            "0": "Boilerladung nicht aktiv",
+            "1": "Boilerladung aktiv"
+        },
+        "solarfocus__bomode": {
+            "0": "Always Off",
+            "1": "Always On",
+            "2": "Monday - Sunday",
+            "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
+            "4": "Daywise"
+        },
+        "solarfocus__bostate": {
+            "0": "Boilerstatus nicht vorhanden",
+            "1": "Bereitschaft",
+            "10": "F\u00fchler Kurzschluss",
+            "11": "F\u00fchler Unterbrechung",
+            "12": "Ferienbetrieb",
+            "13": "Defrost",
+            "2": "Laden",
+            "3": "Frostschutz",
+            "4": "Rauchfangkehrermodus",
+            "5": "Legionellenschutz",
+            "6": "Anforderung",
+            "7": "Energiequelle zu hei\u00df",
+            "8": "Blockadeschutz",
+            "9": "einmalige Freigabe aktiv"
+        },
+        "solarfocus__bumode": {
+            "0": "Immer Aus",
+            "1": "Immer Ein",
+            "2": "Zeitschaltung"
+        },
+        "solarfocus__bustate": {
+            "0": "Status nicht vorhanden",
+            "1": "Bereitschaft",
+            "2": "Puffer wird beladen",
+            "3": "Frostschutzbetrieb",
+            "4": "Kaminkehrer",
+            "5": "W\u00e4rmeableitung",
+            "6": "Testlauf Pumpe ist aktiv ",
+            "7": "Trinkwasserspeicher wird beladen"
+        },
+        "solarfocus__defrost": {
+            "0": "Abtauung nicht aktiv",
+            "1": "Abtauung aktiv"
+        },
+        "solarfocus__evu": {
+            "0": "Normalbetrieb",
+            "1": "EVU-Lock aktiv"
+        },
+        "solarfocus__hcstate": {
+            "0": "Heizkreis ist ausgeschaltet",
+            "1": "Absenkbetrieb",
+            "10": "Raumsolltemperatur Heizbetrieb erreicht",
+            "11": "Trinkwasserspeichervorrang ist aktiv",
+            "12": "Dauerheizbetrieb",
+            "13": "Dauerabsenkbetrieb",
+            "14": "Aussenf\u00fchlerunterbrechung",
+            "15": "min. Energiequellentemperatur unterschritten",
+            "16": "Vorlauff\u00fchler defekt",
+            "17": "min. Energiequellentemperatur unterschritten, Frostschutzbetrieb",
+            "18": "Testlauf Pumpe ist aktiv",
+            "19": "Partybetrieb",
+            "2": "Heizbetrieb",
+            "20": "Begrenzungsthermostat ist offen",
+            "21": "Pumpen Nachlauf",
+            "22": "Defrost",
+            "23": "K\u00fchlbetrieb",
+            "24": "K\u00fchlen hat Vorrang",
+            "25": "Heizen hat Vorrang",
+            "26": "Pool hat Vorrang",
+            "27": "Au\u00dfenabschalttemperatur Absenkbetrieb erreicht",
+            "28": "Raumsolltemperatur Absenkbetrieb erreicht",
+            "29": "Min. R\u00fccklauftemperatur \u2013 Regelung vampair",
+            "3": "Ferienbetrieb",
+            "30": "Au\u00dfenabschalttemperatur K\u00fchlen erreicht",
+            "31": "warte auf K\u00fchlbetrieb der W\u00e4rmepumpe",
+            "4": "Estrichprogramm",
+            "5": "Frostschutzbetrieb",
+            "6": "Kaminkehrer",
+            "7": "Heizkreis nicht freigeschaltet",
+            "8": "W\u00e4rmeableitung",
+            "9": "Au\u00dfenabschalttemperatur Heizbetrieb erreicht"
+        },
+        "solarfocus__hpstate": {
+            "0": "Standby",
+            "1": "Heizbetrieb",
+            "10": "K\u00fchlanforderung",
+            "11": "manuelle Leistungsvorgabe",
+            "12": "W\u00e4rmepumpe ausgeschaltet",
+            "2": "Heizbetrieb, Trinkwasserspeicherladung",
+            "3": "K\u00fchlbetrieb",
+            "4": "Manueller Betrieb",
+            "5": "EVU-Lock aktiv",
+            "6": "keine Zeitfreigabe, W\u00e4rmepumpe aus",
+            "7": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus 8: elektrische Zusatzheizung aktiv",
+            "9": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
+        },
+        "solarfocus__limit": {
+            "0": "Offen",
+            "1": "Geschlossen"
+        },
+        "solarfocus__pump": {
+            "0": "Wird nicht beladen",
+            "1": "Wird beladen"
+        }
+    }
+}

@@ -1,9 +1,10 @@
 """The Solarfocus integration."""
 from __future__ import annotations
+from datetime import timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT, Platform
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
 
 from homeassistant.helpers.entity import Entity, EntityDescription
@@ -11,7 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pysolarfocus import SolarfocusAPI
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-from .const import DOMAIN, SCAN_INTERVAL
+from .const import DOMAIN
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,7 +54,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         self._entry = entry
         self.hass = hass
 
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=self._entry.data[CONF_SCAN_INTERVAL]),
+        )
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -87,7 +93,7 @@ class SolarfocusEntity(Entity):
         return {
             "identifiers": {(DOMAIN, device)},
             "name": "Solarfocus eco manager-touch",
-            "model": "Solarfocus",
+            "model": "eco manager-touch",
             "sw_version": None,
             "manufacturer": "Solarfocus",
         }
