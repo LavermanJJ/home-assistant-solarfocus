@@ -1,4 +1,4 @@
-# home-assistant-solarfocus
+# Home Assistant Sensor for Solarfocus Eco Manager-Touch
 Custom component for Home-Assistant to integrate Solarfocus eco manager-touch
 
 ## Installation
