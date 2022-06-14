@@ -1,0 +1,110 @@
+{
+  "state": {
+    "solarfocus__boiler": {
+      "0.0": "Boilerladung nicht aktiv",
+      "1.0": "Boilerladung aktiv"
+    },
+    "solarfocus__bomode": {
+      "0.0": "Immer Aus",
+      "1.0": "Immer Ein",
+      "2.0": "Montag \u2013 Sontag",
+      "3.0": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
+      "4.0": "Tageweise"
+    },
+    "solarfocus__bostate": {
+      "0.0": "Boilerstatus nicht vorhanden",
+      "1.0": "Bereitschaft",
+      "10.0": "F\u00fchler Kurzschluss",
+      "11.0": "F\u00fchler Unterbrechung",
+      "12.0": "Ferienbetrieb",
+      "13.0": "Defrost",
+      "2.0": "Laden",
+      "3.0": "Frostschutz",
+      "4.0": "Rauchfangkehrermodus",
+      "5.0": "Legionellenschutz",
+      "6.0": "Anforderung",
+      "7.0": "Energiequelle zu hei\u00df",
+      "8.0": "Blockadeschutz",
+      "9.0": "einmalige Freigabe aktiv"
+    },
+    "solarfocus__bumode": {
+      "0.0": "Immer Aus",
+      "1.0": "Immer Ein",
+      "2.0": "Zeitschaltung"
+    },
+    "solarfocus__bustate": {
+      "0.0": "Status nicht vorhanden",
+      "1.0": "Bereitschaft",
+      "2.0": "Puffer wird beladen",
+      "3.0": "Frostschutzbetrieb",
+      "4.0": "Kaminkehrer",
+      "5.0": "W\u00e4rmeableitung",
+      "6.0": "Testlauf Pumpe ist aktiv ",
+      "7.0": "Trinkwasserspeicher wird beladen"
+    },
+    "solarfocus__defrost": {
+      "0.0": "Abtauung nicht aktiv",
+      "1.0": "Abtauung aktiv"
+    },
+    "solarfocus__evu": {
+      "0.0": "Normalbetrieb",
+      "1.0": "EVU-Lock aktiv"
+    },
+    "solarfocus__hcstate": {
+      "0.0": "Heizkreis ist ausgeschaltet",
+      "1.0": "Absenkbetrieb",
+      "10.0": "Raumsolltemperatur Heizbetrieb erreicht",
+      "11.0": "Trinkwasserspeichervorrang ist aktiv",
+      "12.0": "Dauerheizbetrieb",
+      "13.0": "Dauerabsenkbetrieb",
+      "14.0": "Aussenf\u00fchlerunterbrechung",
+      "15.0": "min. Energiequellentemperatur unterschritten",
+      "16.0": "Vorlauff\u00fchler defekt",
+      "17.0": "min. Energiequellentemperatur unterschritten, Frostschutzbetrieb",
+      "18.0": "Testlauf Pumpe ist aktiv",
+      "19.0": "Partybetrieb",
+      "2.0": "Heizbetrieb",
+      "20.0": "Begrenzungsthermostat ist offen",
+      "21.0": "Pumpen Nachlauf",
+      "22.0": "Defrost",
+      "23.0": "K\u00fchlbetrieb",
+      "24.0": "K\u00fchlen hat Vorrang",
+      "25.0": "Heizen hat Vorrang",
+      "26.0": "Pool hat Vorrang",
+      "27.0": "Au\u00dfenabschalttemperatur Absenkbetrieb erreicht",
+      "28.0": "Raumsolltemperatur Absenkbetrieb erreicht",
+      "29.0": "Min. R\u00fccklauftemperatur \u2013 Regelung vampair",
+      "3.0": "Ferienbetrieb",
+      "30.0": "Au\u00dfenabschalttemperatur K\u00fchlen erreicht",
+      "31.0": "warte auf K\u00fchlbetrieb der W\u00e4rmepumpe",
+      "4.0": "Estrichprogramm",
+      "5.0": "Frostschutzbetrieb",
+      "6.0": "Kaminkehrer",
+      "7.0": "Heizkreis nicht freigeschaltet",
+      "8.0": "W\u00e4rmeableitung",
+      "9.0": "Au\u00dfenabschalttemperatur Heizbetrieb erreicht"
+    },
+    "solarfocus__hpstate": {
+      "0.0": "Standby",
+      "1.0": "Heizbetrieb",
+      "10.0": "K\u00fchlanforderung",
+      "11.0": "manuelle Leistungsvorgabe",
+      "12.0": "W\u00e4rmepumpe ausgeschaltet",
+      "2.0": "Heizbetrieb, Trinkwasserspeicherladung",
+      "3.0": "K\u00fchlbetrieb",
+      "4.0": "Manueller Betrieb",
+      "5.0": "EVU-Lock aktiv",
+      "6.0": "keine Zeitfreigabe, W\u00e4rmepumpe aus",
+      "7.0": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus 8: elektrische Zusatzheizung aktiv",
+      "9.0": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
+    },
+    "solarfocus__limit": {
+      "0.0": "Offen",
+      "1.0": "Geschlossen"
+    },
+    "solarfocus__pump": {
+      "0.0": "Wird nicht beladen",
+      "1.0": "Wird beladen"
+    }
+  }
+}
