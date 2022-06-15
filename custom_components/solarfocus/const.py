@@ -278,6 +278,12 @@ HEATPUMP_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="hp_cop",
+        name="Heatpump Coefficient of Performance",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
         key="hp_vampair_state",
         name="Heatpump State",
         icon="mdi:heat-pump-outline",
@@ -288,7 +294,7 @@ HEATPUMP_SENSOR_TYPES = [
 PV_SENSOR_TYPES = [
     SensorEntityDescription(
         key="pv_power",
-        name="Photovolatic Power",
+        name="Photovoltaic Power",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:solar-power",
         device_class=SensorDeviceClass.POWER,
@@ -296,7 +302,7 @@ PV_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="pv_house_consumption",
-        name="Photovolatic House Consumption",
+        name="Photovoltaic House Consumption",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-lightning-bolt-outline",
         device_class=SensorDeviceClass.POWER,
@@ -304,7 +310,7 @@ PV_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="pv_heatpump_consumption",
-        name="Photovolatic Heatpump Consumption",
+        name="Photovoltaic Heatpump Consumption",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:heat-pump-outline",
         device_class=SensorDeviceClass.POWER,
@@ -312,7 +318,7 @@ PV_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="pv_grid_import",
-        name="Photovolatic Grid Import",
+        name="Photovoltaic Grid Import",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-import-outline",
         device_class=SensorDeviceClass.POWER,
@@ -320,7 +326,7 @@ PV_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="pv_grid_export",
-        name="Photovolatic Grid Export",
+        name="Photovoltaic Grid Export",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-export-outline",
         device_class=SensorDeviceClass.POWER,

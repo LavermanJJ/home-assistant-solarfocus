@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, Optional
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 
 import voluptuous as vol
@@ -41,6 +41,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
         ): cv.positive_int,
+    }
+)
+
+STEP_COMP_SELECTION_SCHEMA = vol.Schema(
+    {
         vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
         vol.Optional(CONF_BUFFER, default=True): bool,
         vol.Optional(CONF_BOILER, default=True): bool,
@@ -60,10 +65,6 @@ class Solarfocus:
         self.hass = hass
         client = ModbusClient(host, port)
         self.api = SolarfocusAPI(client)
-
-    # async def authenticate(self, username: str, password: str) -> bool:
-    #    """Test if we can authenticate with the host."""
-    #    return True
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -89,6 +90,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
+    data: dict[str, Any]
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -110,17 +113,35 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(
-                title=info["title"], data=user_input, options=user_input
-            )
+            self.data = user_input
+            return await self.async_step_component()
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    # @staticmethod
-    # @callback
-    # def async_get_options_flow(config_entry):
+    async def async_step_component(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle the Component Selection step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="component", data_schema=STEP_COMP_SELECTION_SCHEMA
+            )
+
+        self.data[CONF_BOILER] = user_input[CONF_BOILER]
+        self.data[CONF_BUFFER] = user_input[CONF_BUFFER]
+        self.data[CONF_HEATING_CIRCUIT] = user_input[CONF_HEATING_CIRCUIT]
+        self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
+        self.data[CONF_PHOTOVOLTAIC] = user_input[CONF_PHOTOVOLTAIC]
+
+        return self.async_create_entry(
+            title=self.data["name"], data=self.data, options=self.data
+        )
+
+    #@staticmethod
+    #@callback
+    #def async_get_options_flow(config_entry):
     #    """Get options flow."""
     #    return SolarfocusOptionsFlowHandler(config_entry)
 
@@ -185,19 +206,24 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
 
         errors = {}
 
-        try:
-            info = await validate_input(self.hass, user_input)
-        except CannotConnect:
-            errors["base"] = "cannot_connect"
-        except InvalidAuth:
-            errors["base"] = "invalid_auth"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
-            errors["base"] = "unknown"
-        else:
-            return self.async_create_entry(title=info["title"], data=user_input)
+        # ry:
+        #   info = await validate_input(self.hass, user_input)
+        # xcept CannotConnect:
+        #   errors["base"] = "cannot_connect"
+        # xcept InvalidAuth:
+        #   errors["base"] = "invalid_auth"
+        # xcept Exception:  # pylint: disable=broad-except
+        #   _LOGGER.exception("Unexpected exception")
+        #   errors["base"] = "unknown"
+        # lse:
+        #   return self.async_create_entry(
+        #       title=self.config_entry.data["name"], data=user_input
+        #   )
 
-        return await self._show_options_form(user_input)
+        return self.async_create_entry(
+            title=self.config_entry.data["name"], data=user_input
+        )
+        # return await self._show_options_form(user_input)
 
 
 class CannotConnect(HomeAssistantError):

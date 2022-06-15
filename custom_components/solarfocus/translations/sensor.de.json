@@ -85,7 +85,7 @@
       "9.0": "Au\u00dfenabschalttemperatur Heizbetrieb erreicht"
     },
     "solarfocus__hpstate": {
-      "0.0": "Standby",
+      "0.0": "Bereitschaft",
       "1.0": "Heizbetrieb",
       "10.0": "K\u00fchlanforderung",
       "11.0": "manuelle Leistungsvorgabe",
@@ -95,7 +95,8 @@
       "4.0": "Manueller Betrieb",
       "5.0": "EVU-Lock aktiv",
       "6.0": "keine Zeitfreigabe, W\u00e4rmepumpe aus",
-      "7.0": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus 8: elektrische Zusatzheizung aktiv",
+      "7.0": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus", 
+      "8.0": "elektrische Zusatzheizung aktiv",
       "9.0": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
     },
     "solarfocus__limit": {

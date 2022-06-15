@@ -11,14 +11,16 @@
     "step": {
       "user": {
         "data": {
+          "host": "Host"
+        }
+      },
+      "component": {
+        "data": {
           "boiler": "Boiler auslesen",
           "buffer": "Pufferspeicher auslesen",
           "heating_circuit": "Heizkreis auslesen",
           "heatpump": "Wärmepumpe auslesen",
-          "host": "Host",
-          "password": "Password",
-          "photovoltaic": "Photovoltaik auslesen",
-          "username": "Username"
+          "photovoltaic": "Photovoltaik auslesen"
         }
       }
     }
