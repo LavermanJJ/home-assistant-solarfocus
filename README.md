@@ -31,7 +31,7 @@ Add custom integration using the web interface and follow instruction on screen.
 
 ### Software Version
 
-This integration has been tested with Solarfocus eco<sup>manager-touch</sup> version `21.040`.
+This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `21.040`.
 
 ### Solarfocus Components
 
