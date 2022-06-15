@@ -1,4 +1,4 @@
-# Home Assistant Sensor for Solarfocus Eco<sup>_manager-touch_</sup>
+# Home Assistant Sensor for Solarfocus eco<sup>_manager-touch_</sup>
 Custom component for Home-Assistant to integrate Solarfocus eco<sup>_manager-touch_</sup>
 
 ## Installation
@@ -31,7 +31,7 @@ Add custom integration using the web interface and follow instruction on screen.
 
 ### Software Version
 
-This integration has been tested with Eco<sup>manager-touch</sup> `21.040` 
+This integration has been tested with Solarfocus eco<sup>manager-touch</sup> version `21.040`.
 
 ### Solarfocus Components
 
