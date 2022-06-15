@@ -1,14 +1,13 @@
 """Sensors for the Solarfocus integration."""
 import logging
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.components.solarfocus import (
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.typing import HomeAssistantType
+
+from . import (
     SolarfocusDataUpdateCoordinator,
     SolarfocusEntity,
 )
-from homeassistant.components.solarfocus.const import HEATING_CIRCUIT_SENSOR_TYPES
-from homeassistant.config_entries import ConfigEntry
-
-from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import (
     BOILER_SENSOR_TYPES,
@@ -20,6 +19,7 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     DOMAIN,
     HEATPUMP_SENSOR_TYPES,
+    HEATING_CIRCUIT_SENSOR_TYPES,
     PV_SENSOR_TYPES,
 )
 
