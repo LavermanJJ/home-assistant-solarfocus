@@ -1,5 +1,5 @@
-# Home Assistant Sensor for Solarfocus Eco Manager-Touch
-Custom component for Home-Assistant to integrate Solarfocus eco manager-touch
+# Home Assistant Sensor for Solarfocus Eco<sup>_manager-touch_</sup>
+Custom component for Home-Assistant to integrate Solarfocus eco<sup>_manager-touch_</sup>
 
 ## Installation
 
@@ -24,4 +24,24 @@ Add custom integration using the web interface and follow instruction on screen.
 
 - Go to `Configuration -> Integrations` and add "Solarfocus" integration
 - Provide name for the device and it's IP-address
+- Select components for which you would like to add the sensors
 - Provide area where the heat pump is located
+
+## What's Supported 
+
+### Software Version
+
+This integration has been tested with Eco<sup>manager-touch</sup> `21.040` 
+
+### Solarfocus Components
+
+| Components | Supported |
+|---|---|
+| Heating Circuit 1 (_Heizkreis_)| :white_check_mark: |
+| Buffer 1 (_Puffer_) | :white_check_mark: |
+| Solar (_Solar_)| :x:|
+| Boiler 1 (_Boiler_) | :white_check_mark: |
+| Heatpump (_Wärmepumpe_) | :white_check_mark: |
+| Pelletsboiler (_Kessel_) | :x: | 
+
+_Note: The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future_
