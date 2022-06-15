@@ -45,3 +45,20 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 | Pelletsboiler (_Kessel_) | :x: | 
 
 _Note: The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future_
+
+### Provided Sensors
+
+## Heating
+![Heating Sensors](images/sf-heating-sensors.png?raw=true)
+
+## Buffer
+![Buffer Sensors](images/sf-buffer-sensors.png?raw=true)
+
+## Boiler
+![Boiler Sensors](images/sf-boiler-sensors.png?raw=true)
+
+## Heatpump
+![Heatpump Sensors](images/sf-heatpump-sensors.png?raw=true)
+
+## Photovoltaic
+![Photovoltaic Sensors](images/sf-photovoltaic-sensors.png?raw=true)

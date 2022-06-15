@@ -37,7 +37,7 @@ REVOLUTIONS_PER_MIN: Final = "rpm"
 HEATING_CIRCUIT_SENSOR_TYPES = [
     SensorEntityDescription(
         key="hc1_supply_temp",
-        name="Heating Supply Temperatur",
+        name="Heating Supply Temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -45,7 +45,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="hc1_room_temp",
-        name="Heating Room Temperatur",
+        name="Heating Room Temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -83,7 +83,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
 BUFFER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="bu1_top_temp",
-        name="Buffer Top Temperatur",
+        name="Buffer Top Temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -91,7 +91,7 @@ BUFFER_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="bu1_bottom_temp",
-        name="Buffer Bottom Temperatur",
+        name="Buffer Bottom Temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -120,7 +120,7 @@ BUFFER_SENSOR_TYPES = [
 BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="bo1_temp",
-        name="Boiler Temperatur",
+        name="Boiler Temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
