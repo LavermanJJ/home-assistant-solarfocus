@@ -159,9 +159,9 @@ HEATPUMP_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="hp_flow_rate",
-        name="Heatpump Supply Temperature",
+        name="Heatpump Flow Rate",
         native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
-        icon="mdi:thermometer",
+        icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
@@ -272,9 +272,9 @@ HEATPUMP_SENSOR_TYPES = [
     SensorEntityDescription(
         key="hp_electrical_energy_cooling",
         name="Heatpump Cooling Electrical Energy",
-        native_unit_of_measurement=POWER_WATT,
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
-        device_class=SensorDeviceClass.POWER,
+        device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
