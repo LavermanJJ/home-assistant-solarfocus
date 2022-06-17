@@ -1,28 +1,31 @@
 {
     "config": {
-        "abort": {
-            "already_configured": "Device is already configured"
+      "step": {
+        "user": {
+          "data": {
+            "host": "[%key:common::config_flow::data::host%]"
+          }
         },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "host": "Host"
-                }
-            },
-            "component": {
-                "data": {
-                    "boiler": "Enable Boiler",
-                    "buffer": "Enable Buffer",
-                    "heating_circuit": "Enable Heating Circuit",
-                    "heatpump": "Enable Heatpump",
-                    "photovoltaic": "Enable Photovoltaic"
-                }
-            }
+        "component": {
+          "title": "Component Selection",
+          "description": "Select which components are available in your setup and should be read.",
+          "data": {
+            "heating_circuit": "Enable Heating Circuit",
+            "buffer": "Enable Buffer",
+            "boiler": "Enable Boiler",
+            "heatpump": "Enable Heatpump",
+            "photovoltaic": "Enable Photovoltaic"
+          }
         }
+      },
+      "error": {
+        "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+        "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+        "unknown": "[%key:common::config_flow::error::unknown%]"
+      },
+      "abort": {
+        "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      }
     }
-}
+  }
+  

@@ -5,7 +5,6 @@
     },
     "error": {
       "cannot_connect": "Verbindung Fehlgeschlagen",
-      "invalid_auth": "Invalid authentication",
       "unknown": "Unexpected error"
     },
     "step": {
@@ -15,12 +14,14 @@
         }
       },
       "component": {
+        "title": "Komponenten Auswahl",
+        "description": "Für welche Komponenten sollen Sensoren angelegt werden?",
         "data": {
-          "boiler": "Boiler auslesen",
-          "buffer": "Pufferspeicher auslesen",
-          "heating_circuit": "Heizkreis auslesen",
-          "heatpump": "Wärmepumpe auslesen",
-          "photovoltaic": "Photovoltaik auslesen"
+          "boiler": "Boiler",
+          "buffer": "Pufferspeicher",
+          "heating_circuit": "Heizkreis",
+          "heatpump": "Wärmepumpe",
+          "photovoltaic": "Photovoltaik"
         }
       }
     }
