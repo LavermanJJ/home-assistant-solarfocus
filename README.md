@@ -1,5 +1,5 @@
 # Home Assistant Sensor for Solarfocus eco<sup>_manager-touch_</sup>
-Custom component for Home-Assistant to integrate [Solarfocus eco<sup>_manager-touch_</sup>](https://www.solarfocus.com/produkte/Waermepumpe/EcoManager-t_Modbus-TCP-Registerdaten_Anleitung.pdf)
+Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarfocus.com/) eco<sup>_manager-touch_</sup>
 
 ## Installation
 
@@ -32,7 +32,7 @@ Add custom integration using the web interface and follow instruction on screen.
 ### Software Version
 
 This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `21.040`.
-[->Link to specification by Solarfocus GmbH](https://www.solarfocus.com/produkte/Waermepumpe/EcoManager-t_Modbus-TCP-Registerdaten_Anleitung.pdf)
+[->Link to specification](https://www.solarfocus.com/produkte/Waermepumpe/EcoManager-t_Modbus-TCP-Registerdaten_Anleitung.pdf)
 
 ### Solarfocus Components
 
