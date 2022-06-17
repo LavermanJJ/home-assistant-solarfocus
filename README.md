@@ -49,16 +49,16 @@ _Note: The number of supported Heating Circuits, Buffers, and Boilers could be e
 ### Provided Sensors
 
 #### Heating
-![Heating Sensors](images/sf-heating-sensors.png?raw=true)
+<img src="images/sf-heating-sensors.png?raw=true" width="300">
 
 #### Buffer
-![Buffer Sensors](images/sf-buffer-sensors.png?raw=true)
+<img src="images/sf-buffer-sensors.png?raw=true" width="300">
 
 #### Boiler
-![Boiler Sensors](images/sf-boiler-sensors.png?raw=true)
+<img src="images/sf-boiler-sensors.png?raw=true" width="300">
 
 #### Heatpump
-![Heatpump Sensors](images/sf-heatpump-sensors.png?raw=true)
+<img src="images/sf-heatpump-sensors.png?raw=true" width="300">
 
 #### Photovoltaic
-![Photovoltaic Sensors](images/sf-photovoltaic-sensors.png?raw=true)
+<img src="images/sf-photovoltaic-sensors.png?raw=true" width="300">
