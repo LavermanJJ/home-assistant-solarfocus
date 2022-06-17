@@ -126,11 +126,13 @@ class SolarfocusEntity(Entity):
         """Return the current state."""
         sensor = self.entity_description.key
         value = getattr(self.coordinator.api, sensor)
-        try:
-            rounded_value = round(float(value), 2)
-            return rounded_value
-        except ValueError:
-            return value
+        if isinstance(value, float):
+            try:
+                rounded_value = round(float(value), 2)
+                return rounded_value
+            except ValueError:
+                return value
+        return value
 
     @property
     def available(self):
