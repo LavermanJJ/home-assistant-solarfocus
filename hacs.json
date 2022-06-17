@@ -1,7 +1,7 @@
 {
     "name": "Solarfocus eco manager-touch",
     "country": [
-      "DE"
+      "DE", "AT", "CH"
     ],
     "homeassistant": "2021.12.8",
     "hacs": "1.18.0",
