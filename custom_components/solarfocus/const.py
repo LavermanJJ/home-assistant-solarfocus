@@ -66,6 +66,11 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         device_class="solarfocus__limit",
     ),
     SensorEntityDescription(
+        key="hc1_circulator_pump",
+        name="Heating Circulator Pump",
+        icon="mdi:pump",
+    ),
+    SensorEntityDescription(
         key="hc1_mixer_valve",
         name="Heating Mixer Valve",
         native_unit_of_measurement=PERCENTAGE,
@@ -76,6 +81,26 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         name="Heating State",
         icon="mdi:radiator",
         device_class="solarfocus__hcstate",
+    ),
+    SensorEntityDescription(
+        key="hc1_target_temperatur",
+        name="Heating Target Temperature",
+        icon="mdi:thermometer",
+    ),
+    SensorEntityDescription(
+        key="hc1_cooling",
+        name="Heating Cooling",
+        icon="mdi:radiator",
+    ),
+    SensorEntityDescription(
+        key="hc1_mode_holding",
+        name="Heating Mode Set",
+        icon="mdi:format-list-bulleted",
+    ),
+    SensorEntityDescription(
+        key="hc1_target_room_temperatur",
+        name="Heating Target Room Temperature",
+        icon="mdi:thermometer",
     ),
 ]
 
@@ -137,6 +162,28 @@ BOILER_SENSOR_TYPES = [
         name="Boiler Mode",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__bomode",
+    ),
+    SensorEntityDescription(
+        key="bo1_target_temperatur",
+        name="Boiler Mode",
+        icon="mdi:thermometer-high",
+        device_class="solarfocus__bomode",
+    ),
+    SensorEntityDescription(
+        key="bo1_single_charge",
+        name="Boiler Mode",
+        icon="mdi:pump",
+    ),
+    SensorEntityDescription(
+        key="bo1_mode_holding",
+        name="Boiler Mode Set",
+        icon="mdi:format-list-bulleted",
+        device_class="solarfocus__bomode",
+    ),
+    SensorEntityDescription(
+        key="bo1_ciruclation",
+        name="Boiler Circulation",
+        icon="mdi:reload",
     ),
 ]
 
@@ -287,6 +334,12 @@ HEATPUMP_SENSOR_TYPES = [
         key="hp_vampair_state",
         name="Heatpump State",
         icon="mdi:heat-pump-outline",
+        device_class="solarfocus__hpstate",
+    ),
+    SensorEntityDescription(
+        key="hp_smart_grid",
+        name="Heatpump Smart Grid",
+        icon="mdi:leaf",
         device_class="solarfocus__hpstate",
     ),
 ]
