@@ -242,7 +242,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_thermal_energy_drinking_water",
@@ -250,7 +250,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_thermal_energy_heating",
@@ -258,7 +258,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_electrical_energy_total",
@@ -266,7 +266,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_electrical_energy_drinking_water",
@@ -274,7 +274,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_eletrical_energy_heating",
@@ -282,7 +282,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_electrical_power",
@@ -314,7 +314,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING
     ),
     SensorEntityDescription(
         key="hp_electrical_energy_cooling",
