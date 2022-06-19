@@ -5,7 +5,7 @@ Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarf
 
 ### Hacs
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 - Install [Home Assistant Community Store (HACS)](https://hacs.xyz/)
 - Add custom repository https://github.com/lavermanjj/home-assistant-solarfocus to HACS
