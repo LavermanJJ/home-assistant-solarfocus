@@ -45,7 +45,8 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Pelletsboiler (_Kessel_) | :x: | 
 
-_Note: The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future_
+> **Note**
+> The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future
 
 ### Provided Sensors
 
