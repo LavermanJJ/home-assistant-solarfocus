@@ -5,7 +5,7 @@ Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarf
 
 ### Hacs
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 - Install [Home Assistant Community Store (HACS)](https://hacs.xyz/)
 - Add custom repository https://github.com/lavermanjj/home-assistant-solarfocus to HACS
@@ -45,7 +45,8 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Pelletsboiler (_Kessel_) | :x: | 
 
-_Note: The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future_
+> **Note**
+> The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future
 
 ### Provided Sensors
 
