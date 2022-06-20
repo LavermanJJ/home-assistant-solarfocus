@@ -1,111 +1,115 @@
 {
-    "state": {
-        "solarfocus__boiler": {
-            "0": "Charging inactive",
-            "1": "Charging active"
-        },
-        "solarfocus__bomode": {
-            "0": "Always Off",
-            "1": "Always On",
-            "2": "Monday - Sunday",
-            "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
-            "4": "Daywise"
-        },
-        "solarfocus__bostate": {
-            "0": "Boiler state unavailable",
-            "1": "Standby",
-            "10": "Sensor bypass",
-            "11": "Sensor disconnection",
-            "12": "Vacation mode",
-            "13": "Defrost",
-            "2": "Charging",
-            "3": "Frost protection",
-            "4": "Smokestack sweep mode",
-            "5": "Legionella protection",
-            "6": "Demand",
-            "7": "Energy source too hot",
-            "8": "Block protection",
-            "9": "One-time release active"
-        },
-        "solarfocus__bumode": {
-            "0": "Always Off",
-            "1": "Always On",
-            "2": "Timetrigger"
-        },
-        "solarfocus__bustate": {
-            "0": "State unavailable",
-            "1": "Standby",
-            "2": "Buffer charging",
-            "3": "Frost protection mode",
-            "4": "Chimney sweeper",
-            "5": "Heat pump dissipation",
-            "6": "Pump test run active",
-            "7": "Drinking water buffer charging"
-        },
-        "solarfocus__defrost": {
-            "0": "Defrost inactive",
-            "1": "Defrost active"
-        },
-        "solarfocus__evu": {
-            "0": "Normal operation",
-            "1": "EVU-Lock active"
-        },
-        "solarfocus__hcstate": {
-            "0": "Heating is off",
-            "1": "Reduced mode",
-            "10": "Indoor target temperature heating reached",
-            "11": "Priority on drinkig water",
-            "12": "Permanent heating mode",
-            "13": "Permanent reduced mode",
-            "14": "Outdoor sensor disconnected",
-            "15": "Below min. energy source temperature",
-            "16": "Supply sensor defect",
-            "17": "Below min. energy source temperature, frost protection",
-            "18": "Test run pump active",
-            "19": "Party mode",
-            "2": "Heating mode",
-            "20": "Limit thermostat is open",
-            "21": "Pump cast",
-            "22": "Defrost",
-            "23": "Cooling mode",
-            "24": "Priority on cooling",
-            "25": "Priority on heating",
-            "26": "Priority on pool",
-            "27": "Outdoor temperature limit for reduced heating reached",
-            "28": "Indoor target temperature reduced heating reached",
-            "29": "Min. return flow temperature \u2013 vampair controller",
-            "3": "Vacation mode",
-            "30": "Outdoor temperature limit for cooling reached",
-            "31": "Cooling mode pending",
-            "4": "Screed mode",
-            "5": "Frost protection mode",
-            "6": "Chimney sweeper",
-            "7": "Heating not enabled",
-            "8": "Heat dissipation",
-            "9": "Outdoor temperature limit for heating reached"
-        },
-        "solarfocus__hpstate": {
-            "0": "Standby",
-            "1": "Heating",
-            "10": "Cooling demand",
-            "11": "Performance set manually",
-            "12": "Heat pump off",
-            "2": "Heating mode, Drinking water buffer",
-            "3": "Cooling",
-            "4": "Manual operation",
-            "5": "EVU-Lock active",
-            "6": "Outside time window, Heat pump off",
-            "7": "Outdoor temperature lock, Heat pump off",
-            "8": "electrical booster heateractiv",
-            "9": "External boiler active, Heat pump off"
-        },
-        "solarfocus__limit": {
-            "0": "Open",
-            "1": "Closed"
-        },
-        "solarfocus__pump": {
-            "0": "Inactive",
-            "1": "Charging"
-        }
+  "state": {
+    "solarfocus__hpsmartgrid": {
+      "2": "Normalbetrieb",
+      "4": "Einschaltung"
+    },
+    "solarfocus__boiler": {
+      "0": "Charging inactive",
+      "1": "Charging active"
+    },
+    "solarfocus__bomode": {
+      "0": "Always Off",
+      "1": "Always On",
+      "2": "Monday - Sunday",
+      "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
+      "4": "Daywise"
+    },
+    "solarfocus__bostate": {
+      "0": "Boiler state unavailable",
+      "1": "Standby",
+      "10": "Sensor bypass",
+      "11": "Sensor disconnection",
+      "12": "Vacation mode",
+      "13": "Defrost",
+      "2": "Charging",
+      "3": "Frost protection",
+      "4": "Smokestack sweep mode",
+      "5": "Legionella protection",
+      "6": "Demand",
+      "7": "Energy source too hot",
+      "8": "Block protection",
+      "9": "One-time release active"
+    },
+    "solarfocus__bumode": {
+      "0": "Always Off",
+      "1": "Always On",
+      "2": "Timetrigger"
+    },
+    "solarfocus__bustate": {
+      "0": "State unavailable",
+      "1": "Standby",
+      "2": "Buffer charging",
+      "3": "Frost protection mode",
+      "4": "Chimney sweeper",
+      "5": "Heat pump dissipation",
+      "6": "Pump test run active",
+      "7": "Drinking water buffer charging"
+    },
+    "solarfocus__defrost": {
+      "0": "Defrost inactive",
+      "1": "Defrost active"
+    },
+    "solarfocus__evu": {
+      "0": "Normal operation",
+      "1": "EVU-Lock active"
+    },
+    "solarfocus__hcstate": {
+      "0": "Heating is off",
+      "1": "Reduced mode",
+      "10": "Indoor target temperature heating reached",
+      "11": "Priority on drinkig water",
+      "12": "Permanent heating mode",
+      "13": "Permanent reduced mode",
+      "14": "Outdoor sensor disconnected",
+      "15": "Below min. energy source temperature",
+      "16": "Supply sensor defect",
+      "17": "Below min. energy source temperature, frost protection",
+      "18": "Test run pump active",
+      "19": "Party mode",
+      "2": "Heating mode",
+      "20": "Limit thermostat is open",
+      "21": "Pump cast",
+      "22": "Defrost",
+      "23": "Cooling mode",
+      "24": "Priority on cooling",
+      "25": "Priority on heating",
+      "26": "Priority on pool",
+      "27": "Outdoor temperature limit for reduced heating reached",
+      "28": "Indoor target temperature reduced heating reached",
+      "29": "Min. return flow temperature \u2013 vampair controller",
+      "3": "Vacation mode",
+      "30": "Outdoor temperature limit for cooling reached",
+      "31": "Cooling mode pending",
+      "4": "Screed mode",
+      "5": "Frost protection mode",
+      "6": "Chimney sweeper",
+      "7": "Heating not enabled",
+      "8": "Heat dissipation",
+      "9": "Outdoor temperature limit for heating reached"
+    },
+    "solarfocus__hpstate": {
+      "0": "Standby",
+      "1": "Heating",
+      "10": "Cooling demand",
+      "11": "Performance set manually",
+      "12": "Heat pump off",
+      "2": "Heating mode, Drinking water buffer",
+      "3": "Cooling",
+      "4": "Manual operation",
+      "5": "EVU-Lock active",
+      "6": "Outside time window, Heat pump off",
+      "7": "Outdoor temperature lock, Heat pump off",
+      "8": "electrical booster heateractiv",
+      "9": "External boiler active, Heat pump off"
+    },
+    "solarfocus__limit": {
+      "0": "Open",
+      "1": "Closed"
+    },
+    "solarfocus__pump": {
+      "0": "Inactive",
+      "1": "Charging"
     }
+  }
 }

@@ -1,5 +1,15 @@
 {
   "state": {
+    "solarfocus__hpsmartgrid": {
+      "2": "Normalbetrieb",
+      "4": "Einschaltung"
+    },
+    "solarfocus__hcmode": {
+      "0": "Dauerbetrieb",
+      "1": "Absenkbetrieb",
+      "2": "Automatik (Zeiteinstellung wird beachtet)",
+      "3": "Heizkreis ausgeschaltet (nur Frostwache)"
+    },
     "solarfocus__boiler": {
       "0": "Boilerladung nicht aktiv",
       "1": "Boilerladung aktiv"
@@ -95,7 +105,7 @@
       "4": "Manueller Betrieb",
       "5": "EVU-Lock aktiv",
       "6": "keine Zeitfreigabe, W\u00e4rmepumpe aus",
-      "7": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus", 
+      "7": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus",
       "8": "elektrische Zusatzheizung aktiv",
       "9": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
     },
