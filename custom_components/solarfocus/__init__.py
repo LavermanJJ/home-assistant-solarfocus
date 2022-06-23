@@ -1,27 +1,16 @@
 """The Solarfocus integration."""
 from __future__ import annotations
-from datetime import timedelta
-import logging
-
-
-import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL, Platform
+from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-import homeassistant.helpers.config_validation as cv
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import DOMAIN
 
-
-_LOGGER = logging.getLogger(__name__)
-
-# TODO List the platforms that you want to support.
-# For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
