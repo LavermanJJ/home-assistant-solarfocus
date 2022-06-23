@@ -4,6 +4,10 @@
       "2": "Normalbetrieb",
       "4": "Einschaltung"
     },
+    "solarfocus__hccooling": {
+      "0": "Heizen",
+      "1": "Kühlen"
+    },
     "solarfocus__hcmode": {
       "0": "Dauerbetrieb",
       "1": "Absenkbetrieb",

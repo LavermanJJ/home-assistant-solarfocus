@@ -4,6 +4,10 @@
       "2": "Normalbetrieb",
       "4": "Einschaltung"
     },
+    "solarfocus__hccooling": {
+      "0": "Heizen",
+      "1": "Kühlen"
+    },
     "solarfocus__boiler": {
       "0": "Charging inactive",
       "1": "Charging active"

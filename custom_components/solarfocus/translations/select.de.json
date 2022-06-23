@@ -1,0 +1,18 @@
+{
+  "state": {
+    "solarfocus__hpsmartgrid": {
+      "2": "Normalbetrieb",
+      "4": "Einschaltung"
+    },
+    "solarfocus__hccooling": {
+      "0": "Heizen",
+      "1": "Kühlen"
+    },
+    "solarfocus__hcmode": {
+      "0": "Dauerbetrieb",
+      "1": "Absenkbetrieb",
+      "2": "Automatik (Zeiteinstellung wird beachtet)",
+      "3": "Heizkreis ausgeschaltet (nur Frostwache)"
+    }
+  }
+}
