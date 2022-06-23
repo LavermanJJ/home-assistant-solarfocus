@@ -1,13 +1,10 @@
 """Sensors for the Solarfocus integration."""
 import logging
+
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
 
-from . import (
-    SolarfocusDataUpdateCoordinator,
-    SolarfocusEntity,
-)
 
 from .const import (
     BOILER_SENSOR_TYPES,
@@ -22,6 +19,8 @@ from .const import (
     HEATING_CIRCUIT_SENSOR_TYPES,
     PV_SENSOR_TYPES,
 )
+from .coordinator import SolarfocusDataUpdateCoordinator
+from .entity import SolarfocusEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ async def async_setup_entry(
 
 
 class SolarfocusSensor(SolarfocusEntity, SensorEntity):
-    """Sensor for the Heating Circuit"""
+    """Sensor for the Solarfocus"""
 
     def __init__(
         self,

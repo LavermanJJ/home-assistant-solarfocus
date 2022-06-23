@@ -1,6 +1,7 @@
 """Constants for the Solarfocus integration."""
 
 from typing import Final
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
@@ -84,7 +85,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="hc1_target_temperatur",
-        name="Heating Target Temperature",
+        name="Heating Target Supply Temperature",
         icon="mdi:thermometer",
         native_unit_of_measurement=TEMP_CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -94,6 +95,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         key="hc1_cooling",
         name="Heating Cooling",
         icon="mdi:radiator",
+        device_class="solarfocus__hccooling",
     ),
     SensorEntityDescription(
         key="hc1_mode_holding",
@@ -395,3 +397,6 @@ PV_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
 ]
+
+
+SENSORS_DISABLED_BY_DEFAULT = ["hc1_cooling", "hc1_mode_holding", "hp_smart_grid"]
