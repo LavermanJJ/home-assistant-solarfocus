@@ -1,9 +1,10 @@
 # Home Assistant Sensor for Solarfocus eco<sup>_manager-touch_</sup>
 Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarfocus.com/) eco<sup>_manager-touch_</sup>
 
-## Installation
+## Getting Started
+### 1: Installation
 
-### Hacs
+#### Hacs
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
@@ -13,12 +14,21 @@ Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarf
     - Select latest version or `master`
 - Restart Home Assistant to install all dependencies
 
-### Manual
+#### Manual
 
 - Copy all files from `custom_components/solarfocus/` to `custom_components/solarfocus/` inside your config Home Assistant directory.
 - Restart Home Assistant to install all dependencies
 
-### Adding or enabling integration
+### 2: Adding or enabling integration
+
+via [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=solarfocus) 
+> **Note**
+> Requires `2021.3+`
+
+#### or manual
+ Add custom integration using the web interface and follow instruction on screen.
+
+ - Go to `Configuration -> Integrations` and add "Senec" integration
 
 Add custom integration using the web interface and follow instruction on screen.
 
