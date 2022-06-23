@@ -333,7 +333,7 @@ HEATPUMP_SENSOR_TYPES = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas-outline",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
         key="hp_cop",

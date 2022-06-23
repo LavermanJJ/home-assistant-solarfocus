@@ -1,4 +1,4 @@
-"""asfdas"""
+"""Entity for Solarfocus integration"""
 
 
 import logging
@@ -68,10 +68,8 @@ class SolarfocusEntity(Entity):
     @property
     def entity_registry_enabled_default(self):
         """Return if this entity is enabled by default."""
-        _LOGGER.info("Enable %s (%s)", self.platform, self.entity_id)
         if self.platform.domain == Platform.SENSOR:
             enable = not self.entity_description.key in SENSORS_DISABLED_BY_DEFAULT
-            _LOGGER.info("Enable %s: %s", self.entity_description.key, enable)
             return enable
         return True
 

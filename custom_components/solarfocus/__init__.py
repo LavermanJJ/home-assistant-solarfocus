@@ -24,9 +24,6 @@ _LOGGER = logging.getLogger(__name__)
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
-SERVICE_ENABLE_COOLING = vol.Schema({vol.Required("cooling"): cv.boolean})
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Solarfocus from a config entry."""
     if hass.data.get(DOMAIN) is None:

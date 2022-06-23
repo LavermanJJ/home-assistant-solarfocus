@@ -1,4 +1,4 @@
-"""Demo platform that offers a fake select entity."""
+"""Selects for Solarfocus integration"""
 from __future__ import annotations
 from dataclasses import dataclass
 import logging

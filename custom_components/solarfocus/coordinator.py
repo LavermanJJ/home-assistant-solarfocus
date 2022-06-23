@@ -1,4 +1,4 @@
-"""Demo platform that offers a fake select entity."""
+"""Coordinator for Solarfocus integration"""
 
 from datetime import timedelta
 import logging
