@@ -34,6 +34,15 @@ VOLUME_FLOW_RATE_LITER_PER_HOUR: Final = "l/h"
 REVOLUTIONS_PER_MIN: Final = "rpm"
 
 
+"""Service keys"""
+FIELD_SMARTGRID_STATE = "state"
+FIELD_SMARTGRID_STATE_DEFAULT = "2"
+FIELD_HEATING_MODE = "mode"
+FIELD_HEATING_MODE_DEFAULT = "3"
+FIELD_HEATING_OPERATION_MODE = "mode"
+FIELD_HEATING_OPERATION_MODE_DEFAULT = "0"
+
+
 """Supported sensor types."""
 HEATING_CIRCUIT_SENSOR_TYPES = [
     SensorEntityDescription(
@@ -399,4 +408,10 @@ PV_SENSOR_TYPES = [
 ]
 
 
-SENSORS_DISABLED_BY_DEFAULT = ["hc1_cooling", "hc1_mode_holding", "hp_smart_grid"]
+SENSORS_DISABLED_BY_DEFAULT = [
+    "hc1_cooling",
+    "hc1_mode_holding",
+    "hp_smart_grid",
+    "hc1_target_temperatur",
+    "bo1_target_temperatur",
+]

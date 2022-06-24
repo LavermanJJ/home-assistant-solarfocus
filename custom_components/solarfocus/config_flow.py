@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -139,9 +139,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             title=self.data["name"], data=self.data, options=self.data
         )
 
-    #@staticmethod
-    #@callback
-    #def async_get_options_flow(config_entry):
+    # @staticmethod
+    # @callback
+    # def async_get_options_flow(config_entry):
     #    """Get options flow."""
     #    return SolarfocusOptionsFlowHandler(config_entry)
 

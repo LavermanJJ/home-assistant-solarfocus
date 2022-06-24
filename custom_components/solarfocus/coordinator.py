@@ -13,6 +13,12 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     DOMAIN,
+    FIELD_HEATING_MODE,
+    FIELD_HEATING_MODE_DEFAULT,
+    FIELD_HEATING_OPERATION_MODE,
+    FIELD_HEATING_OPERATION_MODE_DEFAULT,
+    FIELD_SMARTGRID_STATE,
+    FIELD_SMARTGRID_STATE_DEFAULT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,6 +95,18 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         await self._update(self.api.hc1_set_mode, int(value))
         await self.hass.async_add_executor_job(self.api.update_heating)
 
+    async def update_hc1_target_temperatur(self, value: float):
+        """Set Heating target supply temperature"""
+        _LOGGER.info("update_hc1_target_temperatur: %f", value)
+        await self._update(self.api.hc1_set_target_supply_temperature, value)
+        await self.hass.async_add_executor_job(self.api.update_heating)
+
+    async def update_bo1_target_temperatur(self, value: float):
+        """Set Boiler target temperature"""
+        _LOGGER.info("update_bo1_target_temperatur: %s", value)
+        await self._update(self.api.bo1_set_target_temperature, value)
+        await self.hass.async_add_executor_job(self.api.update_boiler)
+
     async def _update(self, func, value):
         if not await self.hass.async_add_executor_job(func, value):
             _LOGGER.debug("Writing Data failed")
@@ -96,3 +114,33 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("Writing Data successfully")
 
     # bo1_enable_circulation
+
+
+class SolarfocusServiceCoordinator:
+    """Coordinate service calls"""
+
+    data_update_coordinator = None
+
+    def __init__(self, data_update_coordinator: SolarfocusDataUpdateCoordinator):
+        """Init the Solarfocus data object."""
+        self.data_update_coordinator = data_update_coordinator
+
+    async def set_operation_mode(self, call):
+        """Handle the set operation mode service call."""
+        mode = call.data.get(
+            FIELD_HEATING_OPERATION_MODE, FIELD_HEATING_OPERATION_MODE_DEFAULT
+        )
+        _LOGGER.debug("set_operation_mode: state = %s", mode)
+        await self.data_update_coordinator.update_hc1_cooling(mode)
+
+    async def set_heating_mode(self, call):
+        """Handle the set heating mode service call."""
+        mode = call.data.get(FIELD_HEATING_MODE, FIELD_HEATING_MODE_DEFAULT)
+        _LOGGER.debug("set_heating_mode: state = %s", mode)
+        await self.data_update_coordinator.update_hc1_mode_holding(mode)
+
+    async def set_smart_grid(self, call):
+        """Handle the set smart grid service call."""
+        state = call.data.get(FIELD_SMARTGRID_STATE, FIELD_SMARTGRID_STATE_DEFAULT)
+        _LOGGER.debug("set_smart_grid: state = %s", state)
+        await self.data_update_coordinator.update_hp_smart_grid(state)

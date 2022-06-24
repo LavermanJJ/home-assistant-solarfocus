@@ -8,10 +8,13 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-from .coordinator import SolarfocusDataUpdateCoordinator
+from .coordinator import SolarfocusDataUpdateCoordinator, SolarfocusServiceCoordinator
 from .const import DOMAIN
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
+# TODO List the platforms that you want to support.
+# For your initial PR, limit it to 1 platform.
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT, Platform.NUMBER]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Solarfocus from a config entry."""
@@ -20,6 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     modbus_client = ModbusClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
     coordinator = SolarfocusDataUpdateCoordinator(hass, modbus_client, entry)
+    service_coordinator = SolarfocusServiceCoordinator(coordinator)
 
     await coordinator.async_refresh()
 
@@ -47,9 +51,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
-    # hass.services.async_register(
-    #    DOMAIN, "enable_cooling", coordinator.update_hc1_cooling
-    # )
+    hass.services.async_register(
+        DOMAIN, "set_operation_mode", service_coordinator.set_operation_mode
+    )
+
+    hass.services.async_register(
+        DOMAIN, "set_heating_mode", service_coordinator.set_heating_mode
+    )
+
+    hass.services.async_register(
+        DOMAIN, "set_smart_grid", service_coordinator.set_smart_grid
+    )
 
     return True
 
