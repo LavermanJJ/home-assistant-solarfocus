@@ -1,4 +1,5 @@
 """Selects for Solarfocus integration"""
+
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
@@ -54,8 +55,6 @@ class SolarfocusSelectEntityDescription(EntityDescription):
 
 class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
     """Representation of a Solarfocus select entity."""
-
-    _attr_should_poll = False
 
     def __init__(
         self,

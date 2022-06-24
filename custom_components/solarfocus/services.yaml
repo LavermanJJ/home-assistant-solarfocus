@@ -1,0 +1,54 @@
+set_operation_mode:
+  name: Set operation mode
+  description: Set mode of heating
+  fields:
+    mode:
+      name: Heating Operation Mode
+      required: true
+      default: "0"
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - value: "0"
+              label: "Heating"
+            - value: "1"
+              label: "Cooling"
+
+set_heating_mode:
+  name: Set heating mode
+  description: Set mode of heating
+  fields:
+    mode:
+      name: Heating Mode
+      mode: dropdown
+      required: true
+      default: "3"
+      selector:
+        select:
+          options:
+            - value: "0"
+              label: "Dauerbetrieb"
+            - value: "1"
+              label: "Absenkbetrieb"
+            - value: "2"
+              label: "Automatik (Zeiteinstellung wird beachtet)"
+            - value: "3"
+              label: "Heizkreis ausgeschaltet (nur Frostwache)"
+
+set_smart_grid:
+  name: Set SmartGrid
+  description: Set SmartGrid operation state
+  fields:
+    state:
+      name: Smart Grid State
+      mode: dropdown
+      required: true
+      default: "2"
+      selector:
+        select:
+          options:
+            - value: "2"
+              label: "Normalbetrieb"
+            - value: "4"
+              label: "Einschaltung"
