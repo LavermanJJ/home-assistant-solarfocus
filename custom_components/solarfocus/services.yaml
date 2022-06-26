@@ -1,9 +1,10 @@
 set_operation_mode:
   name: Set operation mode
-  description: Set mode of heating
+  description: Set operation mode of heating circuit
   fields:
     mode:
       name: Heating Operation Mode
+      description: Choose whether heat pump shall heat or cool according to heating circuit target supply temperature.
       required: true
       default: "0"
       selector:
@@ -17,10 +18,11 @@ set_operation_mode:
 
 set_heating_mode:
   name: Set heating mode
-  description: Set mode of heating
+  description: Set mode of heating circuit
   fields:
     mode:
       name: Heating Mode
+      description: Find the description of the values in the Solarfocus manual
       required: true
       default: "3"
       selector:
@@ -42,6 +44,7 @@ set_smart_grid:
   fields:
     state:
       name: Smart Grid State
+      description: Find the description of the values in the Solarfocus manual
       required: true
       default: "2"
       selector:
