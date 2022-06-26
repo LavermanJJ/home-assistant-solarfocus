@@ -21,11 +21,11 @@ set_heating_mode:
   fields:
     mode:
       name: Heating Mode
-      mode: dropdown
       required: true
       default: "3"
       selector:
         select:
+          mode: dropdown
           options:
             - value: "0"
               label: "Dauerbetrieb"
@@ -42,11 +42,11 @@ set_smart_grid:
   fields:
     state:
       name: Smart Grid State
-      mode: dropdown
       required: true
       default: "2"
       selector:
         select:
+          mode: dropdown
           options:
             - value: "2"
               label: "Normalbetrieb"
