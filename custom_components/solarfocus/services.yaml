@@ -23,11 +23,11 @@ set_heating_mode:
     mode:
       name: Heating Mode
       description: Find the description of the values in the Solarfocus manual
-      mode: dropdown
       required: true
       default: "3"
       selector:
         select:
+          mode: dropdown
           options:
             - value: "0"
               label: "Dauerbetrieb"
@@ -45,11 +45,11 @@ set_smart_grid:
     state:
       name: Smart Grid State
       description: Find the description of the values in the Solarfocus manual
-      mode: dropdown
       required: true
       default: "2"
       selector:
         select:
+          mode: dropdown
           options:
             - value: "2"
               label: "Normalbetrieb"
