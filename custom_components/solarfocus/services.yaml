@@ -8,7 +8,7 @@ set_operation_mode:
       default: "0"
       selector:
         select:
-          mode: dropdown
+          mode: list
           options:
             - value: "0"
               label: "Heating"
@@ -21,7 +21,7 @@ set_heating_mode:
   fields:
     mode:
       name: Heating Mode
-      mode: dropdown
+      mode: Dropdown
       required: true
       default: "3"
       selector:
