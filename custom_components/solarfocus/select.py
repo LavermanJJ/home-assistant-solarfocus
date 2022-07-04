@@ -8,11 +8,12 @@ import logging
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityDescription
+from homeassistant.helpers.entity import EntityCategory, EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
+    CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     DOMAIN,
@@ -34,6 +35,11 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_HEATING_CIRCUIT]:
         for description in HEATING_CIRCUIT_SELECT_TYPES:
+            entity = SolarfocusSelectEntity(coordinator, description)
+            entities.append(entity)
+
+    if config_entry.data[CONF_BOILER]:
+        for description in BOILER_SELECT_TYPES:
             entity = SolarfocusSelectEntity(coordinator, description)
             entities.append(entity)
 
@@ -116,12 +122,31 @@ HEATING_CIRCUIT_SELECT_TYPES = [
         name="Heating Circuit Mode",
         icon="mdi:radiator",
         device_class="solarfocus__hcmode",
+        entity_category=EntityCategory.CONFIG,
         current_option="3",
         options=[
             "0",
             "1",
             "2",
             "3",
+        ],
+    ),
+]
+
+BOILER_SELECT_TYPES = [
+    SolarfocusSelectEntityDescription(
+        key="bo1_mode_holding",
+        name="Boiler Mode",
+        icon="mdi:water-boiler",
+        device_class="solarfocus__bomode",
+        entity_category=EntityCategory.CONFIG,
+        current_option="0",
+        options=[
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
         ],
     ),
 ]
