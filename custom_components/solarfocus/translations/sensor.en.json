@@ -114,6 +114,11 @@
     "solarfocus__pump": {
       "0": "Inactive",
       "1": "Charging"
+    },
+    "solarfocus__bocirculation": {
+      "-1": "Locked",
+      "0": "Off",
+      "1": "On"
     }
   }
 }

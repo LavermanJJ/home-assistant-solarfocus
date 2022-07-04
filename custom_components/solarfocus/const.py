@@ -206,6 +206,7 @@ BOILER_SENSOR_TYPES = [
         key="bo1_ciruclation",
         name="Boiler Circulation",
         icon="mdi:reload",
+        device_class="solarfocus__bocirculation",
     ),
 ]
 
