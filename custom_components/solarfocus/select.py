@@ -135,7 +135,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="bo1_mode",
+        key="bo1_mode_holding",
         name="Boiler Mode",
         icon="mdi:water-boiler",
         device_class="solarfocus__bomode",

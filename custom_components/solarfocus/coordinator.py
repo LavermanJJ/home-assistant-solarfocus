@@ -107,7 +107,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         await self._update(self.api.bo1_set_target_temperature, value)
         await self.hass.async_add_executor_job(self.api.update_boiler)
 
-    async def update_bo1_mode(self, value: str):
+    async def update_bo1_mode_holding(self, value: str):
         """Set Boiler Mode"""
         _LOGGER.debug("update_bo1_mode: %s", int(value))
         await self._update(self.api.bo1_set_mode, int(value))
@@ -151,7 +151,7 @@ class SolarfocusServiceCoordinator:
         """Handle the set heating mode service call."""
         mode = call.data.get(FIELD_HEATING_MODE, FIELD_HEATING_MODE_DEFAULT)
         _LOGGER.debug("set_heating_mode: state = %s", mode)
-        await self.data_update_coordinator.update_hc1_mode(mode)
+        await self.data_update_coordinator.update_hc1_mode_holding(mode)
 
     async def set_smart_grid(self, call):
         """Handle the set smart grid service call."""
