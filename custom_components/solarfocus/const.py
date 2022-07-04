@@ -414,4 +414,5 @@ SENSORS_DISABLED_BY_DEFAULT = [
     "hp_smart_grid",
     "hc1_target_temperatur",
     "bo1_target_temperatur",
+    "bo1_mode_holding",
 ]

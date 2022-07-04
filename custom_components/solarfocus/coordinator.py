@@ -85,7 +85,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def update_hc1_cooling(self, value: str):
         """Set Cooling"""
-        _LOGGER.debug("update_hc1_cooling: %s", bool(int(value)))
+        _LOGGER.info("update_hc1_cooling: %s", bool(int(value)))
         await self._update(self.api.hc1_enable_cooling, bool(int(value)))
         await self.hass.async_add_executor_job(self.api.update_heating)
 
@@ -107,13 +107,27 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         await self._update(self.api.bo1_set_target_temperature, value)
         await self.hass.async_add_executor_job(self.api.update_boiler)
 
+    async def update_bo1_mode(self, value: str):
+        """Set Boiler Mode"""
+        _LOGGER.debug("update_bo1_mode: %s", int(value))
+        await self._update(self.api.bo1_set_mode, int(value))
+        await self.hass.async_add_executor_job(self.api.update_boiler)
+
+    async def trigger_bo1_enable_single_charge(self):
+        """Trigger Boiler Single Charge"""
+        _LOGGER.info("trigger_bo1_single_charge")
+        await self._update(self.api.bo1_enable_single_charge, True)
+
+    async def trigger_bo1_enable_circulation(self):
+        """Trigger Boiler Circulation Reuqest"""
+        _LOGGER.info("bo1_enable_circulation")
+        await self._update(self.api.bo1_enable_circulation, True)
+
     async def _update(self, func, value):
         if not await self.hass.async_add_executor_job(func, value):
             _LOGGER.debug("Writing Data failed")
         else:
             _LOGGER.debug("Writing Data successfully")
-
-    # bo1_enable_circulation
 
 
 class SolarfocusServiceCoordinator:
@@ -137,7 +151,7 @@ class SolarfocusServiceCoordinator:
         """Handle the set heating mode service call."""
         mode = call.data.get(FIELD_HEATING_MODE, FIELD_HEATING_MODE_DEFAULT)
         _LOGGER.debug("set_heating_mode: state = %s", mode)
-        await self.data_update_coordinator.update_hc1_mode_holding(mode)
+        await self.data_update_coordinator.update_hc1_mode(mode)
 
     async def set_smart_grid(self, call):
         """Handle the set smart grid service call."""

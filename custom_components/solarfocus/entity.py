@@ -27,7 +27,6 @@ class SolarfocusEntity(Entity):
         self._state = None
 
         self.entity_description = description
-        # super().__init__(self._name)
 
     @property
     def device_info(self) -> dict:

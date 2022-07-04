@@ -7,6 +7,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.number import (
     NumberEntity,
@@ -78,21 +79,11 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         name="Heating Circuit Target Supply Temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.CONFIG,
         min_value=7.0,
         max_value=35.0,
         step=0.5,
-        # mode=NumberMode("slider"),
     ),
-    # NumberEntityDescription(
-    #    key="hc1_target_temperatur",
-    #    name="Heating Circuit Target Supply Temperature",
-    #    icon="mdi:thermostat",
-    #    device_class=SensorDeviceClass.TEMPERATURE,
-    #    min_value=7.0,
-    #    max_value=35.0,
-    #    step=0.5,
-    #    # mode=NumberMode("slider"),
-    # ),
 ]
 
 BOILER_NUMBER_TYPES = [
@@ -101,6 +92,7 @@ BOILER_NUMBER_TYPES = [
         name="Boiler Target Temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.CONFIG,
         min_value=20.0,
         max_value=80.0,
         step=1,
