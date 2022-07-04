@@ -64,6 +64,10 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 
 <img src="images/sf-configuration.png?raw=true" width="500">
 
+### Provided Services
+
+<img src="images/sf-services.png?raw=true" width="500">
+
 ### Provided Sensors
 
 #### Heating
