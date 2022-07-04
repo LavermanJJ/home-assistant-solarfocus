@@ -58,6 +58,12 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 > **Note**
 > The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future
 
+
+### Provided Controls
+<img src="images/sf-controls.png?raw=true" width="500">
+
+<img src="images/sf-configuration.png?raw=true" width="500">
+
 ### Provided Sensors
 
 #### Heating

@@ -13,6 +13,8 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     DOMAIN,
+    FIELD_BOILER_MODE,
+    FIELD_BOILER_MODE_DEFAULT,
     FIELD_HEATING_MODE,
     FIELD_HEATING_MODE_DEFAULT,
     FIELD_HEATING_OPERATION_MODE,
@@ -152,6 +154,12 @@ class SolarfocusServiceCoordinator:
         mode = call.data.get(FIELD_HEATING_MODE, FIELD_HEATING_MODE_DEFAULT)
         _LOGGER.debug("set_heating_mode: state = %s", mode)
         await self.data_update_coordinator.update_hc1_mode_holding(mode)
+
+    async def set_boiler_mode(self, call):
+        """Handle the set boiler mode service call."""
+        mode = call.data.get(FIELD_BOILER_MODE, FIELD_BOILER_MODE_DEFAULT)
+        _LOGGER.debug("set_boiler_mode: state = %s", mode)
+        await self.data_update_coordinator.update_bo1_mode_holding(mode)
 
     async def set_smart_grid(self, call):
         """Handle the set smart grid service call."""
