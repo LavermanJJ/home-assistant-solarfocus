@@ -38,6 +38,30 @@ set_heating_mode:
             - value: "3"
               label: "Heizkreis ausgeschaltet (nur Frostwache)"
 
+set_boiler_mode:
+  name: Set boiler mode
+  description: Set mode of boiler
+  fields:
+    mode:
+      name: Boiler Mode
+      description: Find the description of the values in the Solarfocus manual
+      required: true
+      default: "0"
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - value: "0"
+              label: "Immer Aus"
+            - value: "1"
+              label: "Immer Ein"
+            - value: "2"
+              label: "Montag – Sonntag"
+            - value: "3"
+              label: "Blockweise (Montag – Freitag, Samstag – Sonntag)"
+            - value: "4"
+              label: "Tagweise"
+
 set_smart_grid:
   name: Set SmartGrid
   description: Set SmartGrid operation state

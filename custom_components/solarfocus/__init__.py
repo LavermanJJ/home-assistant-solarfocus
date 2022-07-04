@@ -65,6 +65,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     hass.services.async_register(
+        DOMAIN, "set_boiler_mode", service_coordinator.set_boiler_mode
+    )
+
+    hass.services.async_register(
         DOMAIN, "set_smart_grid", service_coordinator.set_smart_grid
     )
 

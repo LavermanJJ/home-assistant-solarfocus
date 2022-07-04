@@ -41,6 +41,8 @@ FIELD_HEATING_MODE = "mode"
 FIELD_HEATING_MODE_DEFAULT = "3"
 FIELD_HEATING_OPERATION_MODE = "mode"
 FIELD_HEATING_OPERATION_MODE_DEFAULT = "0"
+FIELD_BOILER_MODE = "mode"
+FIELD_BOILER_MODE_DEFAULT = "0"
 
 
 """Supported sensor types."""
@@ -204,6 +206,7 @@ BOILER_SENSOR_TYPES = [
         key="bo1_ciruclation",
         name="Boiler Circulation",
         icon="mdi:reload",
+        device_class="solarfocus__bocirculation",
     ),
 ]
 

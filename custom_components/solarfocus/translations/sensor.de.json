@@ -120,6 +120,11 @@
     "solarfocus__pump": {
       "0": "Wird nicht beladen",
       "1": "Wird beladen"
+    },
+    "solarfocus__bocirculation": {
+      "-1": "Gesperrt",
+      "0": "Aus",
+      "1": "An"
     }
   }
 }
