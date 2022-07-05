@@ -1,25 +1,25 @@
 {
   "state": {
     "solarfocus__hpsmartgrid": {
-      "2": "Normalbetrieb",
-      "4": "Einschaltung"
+      "2": "Normal operation",
+      "4": "Request operation"
     },
     "solarfocus__hccooling": {
-      "0": "Heizen",
-      "1": "Kühlen"
+      "0": "Heating",
+      "1": "Cooling"
     },
     "solarfocus__hcmode": {
-      "0": "Dauerbetrieb",
-      "1": "Absenkbetrieb",
-      "2": "Automatik (Zeiteinstellung wird beachtet)",
-      "3": "Heizkreis ausgeschaltet (nur Frostwache)"
+      "0": "Continuous operation",
+      "1": "Reduced operation",
+      "2": "Automatic (time setting)",
+      "3": "Heating off (frost protection only)"
     },
     "solarfocus__bomode": {
-      "0": "Immer Aus",
-      "1": "Immer Ein",
-      "2": "Montag \u2013 Sontag",
-      "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
-      "4": "Tageweise"
+      "0": "Always on",
+      "1": "Always off",
+      "2": "Monday \u2013 Sunday",
+      "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
+      "4": "Daywise"
     }
   }
 }

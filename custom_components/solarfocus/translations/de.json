@@ -15,7 +15,7 @@
       },
       "component": {
         "title": "Komponenten Auswahl",
-        "description": "Für welche Komponenten sollen Sensoren angelegt werden?",
+        "description": "Welche Komponenten sollen integriert werden?",
         "data": {
           "boiler": "Boiler",
           "buffer": "Pufferspeicher",

@@ -1,12 +1,12 @@
 {
   "state": {
     "solarfocus__hpsmartgrid": {
-      "2": "Normalbetrieb",
-      "4": "Einschaltung"
+      "2": "Normal operation",
+      "4": "Request operation"
     },
     "solarfocus__hccooling": {
-      "0": "Heizen",
-      "1": "Kühlen"
+      "0": "Heating",
+      "1": "Cooling"
     },
     "solarfocus__boiler": {
       "0": "Charging inactive",
@@ -38,7 +38,7 @@
     "solarfocus__bumode": {
       "0": "Always Off",
       "1": "Always On",
-      "2": "Timetrigger"
+      "2": "Time trigger"
     },
     "solarfocus__bustate": {
       "0": "State unavailable",

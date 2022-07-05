@@ -67,7 +67,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         _name = self.entity_description.key
         _updater = getattr(self.coordinator, "update_" + _name)
 
-        _LOGGER.info("async_set_value - name: %s, value: %f", _name, value)
+        _LOGGER.debug("async_set_value - name: %s, value: %f", _name, value)
 
         await _updater(value)
         self.async_write_ha_state()

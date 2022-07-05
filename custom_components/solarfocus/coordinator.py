@@ -87,7 +87,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def update_hc1_cooling(self, value: str):
         """Set Cooling"""
-        _LOGGER.info("update_hc1_cooling: %s", bool(int(value)))
+        _LOGGER.debug("update_hc1_cooling: %s", bool(int(value)))
         await self._update(self.api.hc1_enable_cooling, bool(int(value)))
         await self.hass.async_add_executor_job(self.api.update_heating)
 
@@ -99,13 +99,13 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def update_hc1_target_temperatur(self, value: float):
         """Set Heating target supply temperature"""
-        _LOGGER.info("update_hc1_target_temperatur: %f", value)
+        _LOGGER.debug("update_hc1_target_temperatur: %f", value)
         await self._update(self.api.hc1_set_target_supply_temperature, value)
         await self.hass.async_add_executor_job(self.api.update_heating)
 
     async def update_bo1_target_temperatur(self, value: float):
         """Set Boiler target temperature"""
-        _LOGGER.info("update_bo1_target_temperatur: %s", value)
+        _LOGGER.debug("update_bo1_target_temperatur: %s", value)
         await self._update(self.api.bo1_set_target_temperature, value)
         await self.hass.async_add_executor_job(self.api.update_boiler)
 
@@ -117,12 +117,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def trigger_bo1_enable_single_charge(self):
         """Trigger Boiler Single Charge"""
-        _LOGGER.info("trigger_bo1_single_charge")
+        _LOGGER.debug("trigger_bo1_single_charge")
         await self._update(self.api.bo1_enable_single_charge, True)
 
     async def trigger_bo1_enable_circulation(self):
         """Trigger Boiler Circulation Reuqest"""
-        _LOGGER.info("bo1_enable_circulation")
+        _LOGGER.debug("bo1_enable_circulation")
         await self._update(self.api.bo1_enable_circulation, True)
 
     async def _update(self, func, value):
