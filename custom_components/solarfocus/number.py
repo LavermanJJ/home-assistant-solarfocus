@@ -63,7 +63,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
 
     async def async_set_value(self, value: float) -> None:
         """Update the current value."""
-        self._attr_value = value
+        self._attr_native_value = value
         _name = self.entity_description.key
         _updater = getattr(self.coordinator, "update_" + _name)
 
@@ -80,9 +80,9 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
-        min_value=7.0,
-        max_value=35.0,
-        step=0.5,
+        native_min_value=7.0,
+        native_max_value=35.0,
+        native_step=0.5,
     ),
 ]
 
@@ -93,8 +93,8 @@ BOILER_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
-        min_value=20.0,
-        max_value=80.0,
-        step=1,
+        native_min_value=20.0,
+        native_max_value=80.0,
+        native_step=1,
     ),
 ]
