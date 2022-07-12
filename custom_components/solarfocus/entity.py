@@ -5,7 +5,6 @@ import logging
 from homeassistant.const import Platform
 from homeassistant.helpers.entity import Entity, EntityDescription
 
-from .const import DOMAIN, SENSORS_DISABLED_BY_DEFAULT
 from .coordinator import SolarfocusDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,14 +62,6 @@ class SolarfocusEntity(Entity):
         """Return a unique ID to use for this entity."""
         sensor = self.entity_description.key
         return f"{self._name}_{sensor}"
-
-    @property
-    def entity_registry_enabled_default(self):
-        """Return if this entity is enabled by default."""
-        if self.platform.domain == Platform.SENSOR:
-            enable = not self.entity_description.key in SENSORS_DISABLED_BY_DEFAULT
-            return enable
-        return True
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""

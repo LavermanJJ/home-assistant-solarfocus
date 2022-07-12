@@ -38,6 +38,8 @@ async def async_setup_entry(
 class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     """Representation of a Solarfocus button entity."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
@@ -46,12 +48,6 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
-        title = self.coordinator._entry.title
-        key = self.entity_description.key
-        name = self.entity_description.name
-
-        self.entity_id = f"number.{title}_{key}"
-        self._attr_name = f"{title} {name}"
 
     async def async_press(self) -> None:
         """Update the current value."""
@@ -66,12 +62,12 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
 BOILER_BUTTON_TYPES = [
     ButtonEntityDescription(
         key="bo1_enable_single_charge",
-        name="Boiler Trigger Single Charge",
+        name="Boiler trigger single charge",
         icon="mdi:water-boiler",
     ),
     ButtonEntityDescription(
         key="bo1_enable_circulation",
-        name="Boiler Trigger Circulation",
+        name="Boiler trigger circulation",
         icon="mdi:reload",
     ),
 ]
