@@ -46,6 +46,8 @@ async def async_setup_entry(
 class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
     """Representation of a Solarfocus number entity."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
@@ -54,12 +56,6 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
-        title = self.coordinator._entry.title
-        key = self.entity_description.key
-        name = self.entity_description.name
-
-        self.entity_id = f"number.{title}_{key}"
-        self._attr_name = f"{title} {name}"
 
     async def async_set_value(self, value: float) -> None:
         """Update the current value."""
@@ -76,7 +72,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
 HEATING_CIRCUIT_NUMBER_TYPES = [
     NumberEntityDescription(
         key="hc1_target_temperatur",
-        name="Heating Circuit Target Supply Temperature",
+        name="Heating circuit target supply temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
@@ -89,7 +85,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
 BOILER_NUMBER_TYPES = [
     NumberEntityDescription(
         key="bo1_target_temperatur",
-        name="Boiler Target Temperature",
+        name="Boiler target temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,

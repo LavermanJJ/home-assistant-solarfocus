@@ -62,6 +62,8 @@ class SolarfocusSelectEntityDescription(EntityDescription):
 class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
     """Representation of a Solarfocus select entity."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
@@ -70,12 +72,6 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
 
-        title = self.coordinator._entry.title
-        key = self.entity_description.key
-        name = self.entity_description.name
-
-        self.entity_id = f"select.{title}_{key}"
-        self._attr_name = f"{title} {name}"
         self._attr_current_option = description.current_option
         self._attr_options = description.options
 
@@ -94,7 +90,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
 HEATPUMP_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="hp_smart_grid",
-        name="Heatpump SmartGrid",
+        name="Heatpump smart grid",
         icon="mdi:leaf",
         device_class="solarfocus__hpsmartgrid",
         current_option="2",
@@ -108,7 +104,7 @@ HEATPUMP_SELECT_TYPES = [
 HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="hc1_cooling",
-        name="Heating Circuit Cooling",
+        name="Heating circuit cooling",
         icon="mdi:snowflake",
         device_class="solarfocus__hccooling",
         current_option="0",
@@ -119,7 +115,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     ),
     SolarfocusSelectEntityDescription(
         key="hc1_mode_holding",
-        name="Heating Circuit Mode",
+        name="Heating circuit mode",
         icon="mdi:radiator",
         device_class="solarfocus__hcmode",
         entity_category=EntityCategory.CONFIG,
@@ -136,7 +132,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="bo1_mode_holding",
-        name="Boiler Mode",
+        name="Boiler mode",
         icon="mdi:water-boiler",
         device_class="solarfocus__bomode",
         entity_category=EntityCategory.CONFIG,
