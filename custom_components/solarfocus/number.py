@@ -56,14 +56,13 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
-
-    async def async_set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         self._attr_native_value = value
         _name = self.entity_description.key
         _updater = getattr(self.coordinator, "update_" + _name)
 
-        _LOGGER.debug("async_set_value - name: %s, value: %f", _name, value)
+        _LOGGER.debug("async_set_native_value - name: %s, value: %f", _name, value)
 
         await _updater(value)
         self.async_write_ha_state()

@@ -1,11 +1,11 @@
 """Sensors for the Solarfocus integration."""
 import logging
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
 
 from homeassistant.components.sensor import (
+    SensorEntity,
     SensorDeviceClass,
     SensorEntityDescription,
     SensorStateClass,
@@ -24,6 +24,8 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     DOMAIN,
+    REVOLUTIONS_PER_MIN,
+    VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .entity import SolarfocusEntity
@@ -78,11 +80,7 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
         """Initialize a singular value sensor."""
         super().__init__(coordinator=coordinator, description=description)
 
-        title = self.coordinator._entry.title
-        key = self.entity_description.key
-        name = self.entity_description.name
 
-"""Supported sensor types."""
 HEATING_CIRCUIT_SENSOR_TYPES = [
     SensorEntityDescription(
         key="hc1_supply_temp",

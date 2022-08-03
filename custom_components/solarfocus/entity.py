@@ -2,10 +2,11 @@
 
 
 import logging
-from homeassistant.const import Platform
+
 from homeassistant.helpers.entity import Entity, EntityDescription
 
 from .coordinator import SolarfocusDataUpdateCoordinator
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ class SolarfocusEntity(Entity):
     """Defines a base Solarfocus entity."""
 
     _attr_should_poll = True
+    has_entity_name = True
 
     def __init__(
         self,
@@ -33,7 +35,7 @@ class SolarfocusEntity(Entity):
         device = self._name
         return {
             "identifiers": {(DOMAIN, device)},
-            "name": "Solarfocus eco manager-touch",
+            "name": "Solarfocus",
             "model": "eco manager-touch",
             "sw_version": "21.040",
             "manufacturer": "Solarfocus",
