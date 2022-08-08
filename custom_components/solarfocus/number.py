@@ -5,6 +5,7 @@ import logging
 from homeassistant.components.sensor import SensorDeviceClass
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import TEMP_CELSIUS
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
@@ -88,6 +89,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=TEMP_CELSIUS,
         native_min_value=7.0,
         native_max_value=35.0,
         native_step=0.5,
@@ -101,6 +103,7 @@ BOILER_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=TEMP_CELSIUS,
         native_min_value=20.0,
         native_max_value=80.0,
         native_step=1,
