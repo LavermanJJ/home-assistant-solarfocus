@@ -8,10 +8,6 @@
       "0": "Heating",
       "1": "Cooling"
     },
-    "solarfocus__boiler": {
-      "0": "Charging inactive",
-      "1": "Charging active"
-    },
     "solarfocus__bomode": {
       "0": "Always Off",
       "1": "Always On",
@@ -49,14 +45,6 @@
       "5": "Heat pump dissipation",
       "6": "Pump test run active",
       "7": "Drinking water buffer charging"
-    },
-    "solarfocus__defrost": {
-      "0": "Defrost inactive",
-      "1": "Defrost active"
-    },
-    "solarfocus__evu": {
-      "0": "Normal operation",
-      "1": "EVU-Lock active"
     },
     "solarfocus__hcstate": {
       "0": "Heating is off",
@@ -106,14 +94,6 @@
       "7": "Outdoor temperature lock, Heat pump off",
       "8": "electrical booster heateractiv",
       "9": "External boiler active, Heat pump off"
-    },
-    "solarfocus__limit": {
-      "0": "Open",
-      "1": "Closed"
-    },
-    "solarfocus__pump": {
-      "0": "Inactive",
-      "1": "Charging"
     },
     "solarfocus__bocirculation": {
       "-1": "Locked",

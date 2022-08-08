@@ -67,6 +67,19 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         await _updater(value)
         self.async_write_ha_state()
 
+    @property
+    def native_value(self):
+        """Return the current state."""
+        sensor = self.entity_description.key
+        value = getattr(self.coordinator.api, sensor)
+        if isinstance(value, float):
+            try:
+                rounded_value = round(float(value), 2)
+                return rounded_value
+            except ValueError:
+                return value
+        return value
+
 
 HEATING_CIRCUIT_NUMBER_TYPES = [
     NumberEntityDescription(

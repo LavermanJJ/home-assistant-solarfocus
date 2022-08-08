@@ -42,19 +42,6 @@ class SolarfocusEntity(Entity):
         }
 
     @property
-    def state(self):
-        """Return the current state."""
-        sensor = self.entity_description.key
-        value = getattr(self.coordinator.api, sensor)
-        if isinstance(value, float):
-            try:
-                rounded_value = round(float(value), 2)
-                return rounded_value
-            except ValueError:
-                return value
-        return value
-
-    @property
     def available(self):
         """Return True if entity is available."""
         return self.coordinator.last_update_success

@@ -14,10 +14,6 @@
       "2": "Automatik (Zeiteinstellung wird beachtet)",
       "3": "Heizkreis ausgeschaltet (nur Frostwache)"
     },
-    "solarfocus__boiler": {
-      "0": "Boilerladung nicht aktiv",
-      "1": "Boilerladung aktiv"
-    },
     "solarfocus__bomode": {
       "0": "Immer Aus",
       "1": "Immer Ein",
@@ -55,14 +51,6 @@
       "5": "W\u00e4rmeableitung",
       "6": "Testlauf Pumpe ist aktiv ",
       "7": "Trinkwasserspeicher wird beladen"
-    },
-    "solarfocus__defrost": {
-      "0": "Abtauung nicht aktiv",
-      "1": "Abtauung aktiv"
-    },
-    "solarfocus__evu": {
-      "0": "Normalbetrieb",
-      "1": "EVU-Lock aktiv"
     },
     "solarfocus__hcstate": {
       "0": "Heizkreis ist ausgeschaltet",
@@ -112,14 +100,6 @@
       "7": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus",
       "8": "elektrische Zusatzheizung aktiv",
       "9": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
-    },
-    "solarfocus__limit": {
-      "0": "Offen",
-      "1": "Geschlossen"
-    },
-    "solarfocus__pump": {
-      "0": "Wird nicht beladen",
-      "1": "Wird beladen"
     },
     "solarfocus__bocirculation": {
       "-1": "Gesperrt",
