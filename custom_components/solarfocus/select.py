@@ -86,6 +86,19 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         await _updater(option)
         self.async_write_ha_state()
 
+    @property
+    def native_value(self):
+        """Return the current state."""
+        sensor = self.entity_description.key
+        value = getattr(self.coordinator.api, sensor)
+        if isinstance(value, float):
+            try:
+                rounded_value = round(float(value), 2)
+                return rounded_value
+            except ValueError:
+                return value
+        return value
+
 
 HEATPUMP_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
