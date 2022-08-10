@@ -42,7 +42,7 @@ Add custom integration using the web interface and follow instruction on screen.
 ### Software Version
 
 This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `21.040`.
-[->Link to specification](https://www.solarfocus.com/produkte/Waermepumpe/EcoManager-t_Modbus-TCP-Registerdaten_Anleitung.pdf)
+[->Link to specification](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010)
 
 ### Solarfocus Components
 
