@@ -11,6 +11,7 @@ from .const import (
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
+    CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
     DOMAIN,
     FIELD_BOILER_MODE,
@@ -72,6 +73,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         if self._entry.data[CONF_PHOTOVOLTAIC]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_photovoltaic
+            )
+
+        if self._entry.data[CONF_PELLETSBOILER]:
+            success &= True and await self.hass.async_add_executor_job(
+                self.api.update_pelletsboiler
             )
 
         if not success:
