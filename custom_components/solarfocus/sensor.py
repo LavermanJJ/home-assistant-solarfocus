@@ -384,9 +384,9 @@ PV_SENSOR_TYPES = [
 PB_SENSOR_TYPES = [
     SensorEntityDescription(
         key="pb_temperature",
-        name="Photovoltaic power",
+        name="Pelletsboiler temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
-        icon="mdi:solar-power",
+        icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
