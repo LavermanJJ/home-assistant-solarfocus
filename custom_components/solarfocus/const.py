@@ -18,6 +18,7 @@ CONF_BUFFER = "buffer"
 CONF_BOILER = "boiler"
 CONF_HEATPUMP = "heatpump"
 CONF_PHOTOVOLTAIC = "photovoltaic"
+CONF_PELLETSBOILER = "pelletsboiler"
 
 """Custom Measurement Units"""
 VOLUME_FLOW_RATE_LITER_PER_HOUR: Final = "l/h"

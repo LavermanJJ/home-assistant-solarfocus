@@ -14,7 +14,8 @@
           "buffer": "Enable Buffer",
           "boiler": "Enable Boiler",
           "heatpump": "Enable Heatpump",
-          "photovoltaic": "Enable Photovoltaic"
+          "photovoltaic": "Enable Photovoltaic",
+          "pelletsboiler": "Enable Pelletsboiler"
         }
       }
     },

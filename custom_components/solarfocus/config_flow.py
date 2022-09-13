@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.data_entry_flow import FlowResult
@@ -22,6 +22,7 @@ from .const import (
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
+    CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
     DEFAULT_HOST,
     DEFAULT_NAME,
@@ -51,6 +52,7 @@ STEP_COMP_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_BOILER, default=True): bool,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+        vol.Optional(CONF_PELLETSBOILER, default=True): bool,
     }
 )
 
@@ -134,6 +136,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.data[CONF_HEATING_CIRCUIT] = user_input[CONF_HEATING_CIRCUIT]
         self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
         self.data[CONF_PHOTOVOLTAIC] = user_input[CONF_PHOTOVOLTAIC]
+        self.data[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
 
         return self.async_create_entry(
             title=self.data["name"], data=self.data, options=self.data
@@ -193,6 +196,10 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_PHOTOVOLTAIC,
                         default=self.options.get(CONF_PHOTOVOLTAIC, True),
+                    ): bool,
+                    vol.Optional(
+                        CONF_PELLETSBOILER,
+                        default=self.options.get(CONF_PELLETSBOILER, True),
                     ): bool,
                 }
             ),

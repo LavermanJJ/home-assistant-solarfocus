@@ -15,7 +15,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_BUFFER, CONF_HEATING_CIRCUIT, CONF_HEATPUMP, DOMAIN
+from .const import (
+    CONF_BUFFER,
+    CONF_HEATING_CIRCUIT,
+    CONF_HEATPUMP,
+    CONF_PELLETSBOILER,
+    DOMAIN,
+)
 from .entity import SolarfocusEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +48,11 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_HEATPUMP]:
         for description in HEATPUMP_BINARY_SENSOR_TYPES:
+            entity = SolarfocusBinarySensorEntity(coordinator, description)
+            entities.append(entity)
+
+    if config_entry.data[CONF_PELLETSBOILER]:
+        for description in PB_BINARY_SENSOR_TYPES:
             entity = SolarfocusBinarySensorEntity(coordinator, description)
             entities.append(entity)
 
@@ -121,6 +132,15 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
         key="hp_boiler_charge",
         name="Heatpump boiler charge",
         device_class=BinarySensorDeviceClass.RUNNING,
+        on_state="1",
+    ),
+]
+
+PB_BINARY_SENSOR_TYPES = [
+    SolarfocusBinarySensorEntityDescription(
+        key="pb_door_contact",
+        name="Pelletsboiler door",
+        device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
     ),
 ]

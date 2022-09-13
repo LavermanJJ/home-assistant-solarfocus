@@ -21,7 +21,8 @@
           "buffer": "Pufferspeicher",
           "heating_circuit": "Heizkreis",
           "heatpump": "Wärmepumpe",
-          "photovoltaic": "Photovoltaik"
+          "photovoltaic": "Photovoltaik",
+          "pelletsboiler": "Kessel"
         }
       }
     }

@@ -22,6 +22,7 @@ from .const import (
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
+    CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
     DOMAIN,
     REVOLUTIONS_PER_MIN,
@@ -61,6 +62,11 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_PHOTOVOLTAIC]:
         for description in PV_SENSOR_TYPES:
+            entity = SolarfocusSensor(coordinator, description)
+            entities.append(entity)
+
+    if config_entry.data[CONF_PELLETSBOILER]:
+        for description in PB_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
@@ -371,6 +377,69 @@ PV_SENSOR_TYPES = [
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-export-outline",
         device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+]
+
+PB_SENSOR_TYPES = [
+    SensorEntityDescription(
+        key="pb_temperature",
+        name="Photovoltaic power",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pb_status",
+        name="Pelletsboiler status",
+        icon="mdi:fire-circle",
+    ),
+    SensorEntityDescription(
+        key="pb_message_number",
+        name="Pelletsboiler message number",
+        icon="mdi:message-text-outline",
+    ),
+    SensorEntityDescription(
+        key="pb_cleaning",
+        name="Pelletsboiler cleaning",
+        native_unit_of_measurement=PERCENTAGE,
+        icon="mdi:broom",
+    ),
+    SensorEntityDescription(
+        key="pb_ash_container",
+        name="Pelletsboiler ash container",
+        native_unit_of_measurement=PERCENTAGE,
+        icon="mdi:trash-can-outline",
+    ),
+    SensorEntityDescription(
+        key="pb_outdoor_temperature",
+        name="Pelletsboiler outdoor temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pb_mode",
+        name="Pelletsboiler mode",
+        icon="mdi:format-list-bulleted",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pb_octoplus_buffer_temperature_bottom",
+        name="Pelletsboiler buffer bottom temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer-low",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pb_octoplus_buffer_temperature_top",
+        name="Pelletsboiler buffer top temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
 ]
