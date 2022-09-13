@@ -72,7 +72,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
 
-        self._attr_current_option = description.current_option
+        # self._attr_current_option = description.current_option
         self._attr_options = description.options
 
     async def async_select_option(self, option: str) -> None:
@@ -87,17 +87,11 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         self.async_write_ha_state()
 
     @property
-    def native_value(self):
-        """Return the current state."""
+    def current_option(self) -> str:
         sensor = self.entity_description.key
         value = getattr(self.coordinator.api, sensor)
-        if isinstance(value, float):
-            try:
-                rounded_value = round(float(value), 2)
-                return rounded_value
-            except ValueError:
-                return value
-        return value
+        _LOGGER.debug("current_option - name: %s, option: %s", sensor, value)
+        return str(value)
 
 
 HEATPUMP_SELECT_TYPES = [
