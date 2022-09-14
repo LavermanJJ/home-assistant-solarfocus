@@ -28,7 +28,7 @@ via [![Open your Home Assistant instance and start setting up a new integration.
 #### or manual
  Add custom integration using the web interface and follow instruction on screen.
 
- - Go to `Configuration -> Integrations` and add "Senec" integration
+ - Go to `Configuration -> Integrations` and add "Solarfocus" integration
 
 Add custom integration using the web interface and follow instruction on screen.
 
