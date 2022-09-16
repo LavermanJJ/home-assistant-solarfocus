@@ -139,7 +139,7 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
 PB_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="pb_door_contact",
-        name="Pelletsboiler door",
+        name="Biomass boiler door",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
     ),
