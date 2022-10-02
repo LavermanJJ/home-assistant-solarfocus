@@ -35,7 +35,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
         self.api = SolarfocusAPI(modbus_client, 1)
         self.api.connect()
-        
+
         self.name = entry.title
         self._entry = entry
         self.hass = hass
@@ -50,7 +50,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         
-        if not self.api.is_connected():
+        if not self.api.is_connected:
             self.api.connect()
 
         success = True
@@ -138,7 +138,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _update(self, func, value):
 
-        if not self.api.is_connected():
+        if not self.api.is_connected:
             self.api.connect()
 
         if not await self.hass.async_add_executor_job(func, value):
