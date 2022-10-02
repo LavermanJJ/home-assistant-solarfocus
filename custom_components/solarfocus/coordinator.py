@@ -34,6 +34,8 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         """Init the Solarfocus data object."""
 
         self.api = SolarfocusAPI(modbus_client, 1)
+        self.api.connect()
+        
         self.name = entry.title
         self._entry = entry
         self.hass = hass
@@ -135,6 +137,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         await self._update(self.api.bo1_enable_circulation, True)
 
     async def _update(self, func, value):
+
+        if not self.api.is_connected():
+            self.api.connect()
+
         if not await self.hass.async_add_executor_job(func, value):
             _LOGGER.debug("Writing Data failed")
         else:
