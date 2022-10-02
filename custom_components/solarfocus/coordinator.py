@@ -47,6 +47,9 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Update data via library."""
+        
+        if not self.api.is_connected():
+            self.api.connect()
 
         success = True
 
