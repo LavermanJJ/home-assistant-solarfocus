@@ -16,6 +16,7 @@ from .const import (
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
+    DATA_COORDINATOR,
     DOMAIN,
 )
 from .entity import SolarfocusEntity
@@ -30,20 +31,23 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_HEATING_CIRCUIT]:
+    if (
+        config_entry.data[CONF_HEATING_CIRCUIT]
+        or config_entry.options[CONF_HEATING_CIRCUIT]
+    ):
         for description in HEATING_CIRCUIT_SELECT_TYPES:
             entity = SolarfocusSelectEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BOILER]:
+    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
         for description in BOILER_SELECT_TYPES:
             entity = SolarfocusSelectEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_HEATPUMP]:
+    if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SELECT_TYPES:
             entity = SolarfocusSelectEntity(coordinator, description)
             entities.append(entity)

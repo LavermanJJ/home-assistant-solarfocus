@@ -1,5 +1,6 @@
 """The Solarfocus integration."""
 from __future__ import annotations
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
@@ -9,7 +10,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 from .coordinator import SolarfocusDataUpdateCoordinator, SolarfocusServiceCoordinator
-from .const import DOMAIN
+from .const import DATA_COORDINATOR, DOMAIN
 
 # TODO List the platforms that you want to support.
 # For your initial PR, limit it to 1 platform.
@@ -20,6 +21,8 @@ PLATFORMS: list[Platform] = [
     Platform.BUTTON,
     Platform.BINARY_SENSOR,
 ]
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -36,26 +39,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
     for platform in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, platform)
         )
 
-    # hass.data[DOMAIN][entry.entry_id] = coordinator
-    #
-    # for platform in PLATFORMS:
-    #    if entry.options.get(platform, True):
-    #        hass.async_add_job(
-    #            hass.config_entries.async_forward_entry_setup(entry, platform)
-    #        )
-    #
-    # entry.async_on_unload(entry.add_update_listener(async_reload_entry))
-    # hass.data.setdefault(DOMAIN, {})
-    # hass.data[DOMAIN][entry.entry_id] = coordinator
+    # Registers update listener to update config entry when options are updated.
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+    # unsub_options_update_listener = entry.add_update_listener(async_update_options)
+    # Store a reference to the unsubscribe function to cleanup if an entry is unloaded.
 
-    # hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    hass.data[DOMAIN][entry.entry_id] = {
+        DATA_COORDINATOR: coordinator,
+        # UPDATE_LISTENER: unsub_options_update_listener,
+    }
 
     hass.services.async_register(
         DOMAIN, "set_operation_mode", service_coordinator.set_operation_mode
@@ -76,10 +73,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update options from user interface."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
+
+    _LOGGER.info("async_unload_entry is getting called! unload_ok: %s", unload_ok)
 
     return unload_ok
 

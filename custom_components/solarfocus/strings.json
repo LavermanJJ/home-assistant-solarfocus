@@ -1,4 +1,21 @@
 {
+  "options": {
+    "step": {
+      "init": {
+        "title": "Component Selection",
+        "description": "Select which components are available in your setup and should be read.",
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "heating_circuit": "Enable Heating Circuit",
+          "buffer": "Enable Buffer",
+          "boiler": "Enable Boiler",
+          "heatpump": "Enable Heatpump",
+          "photovoltaic": "Enable Photovoltaic",
+          "pelletsboiler": "Enable Pelletsboiler"
+        }
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {
@@ -15,7 +32,7 @@
           "boiler": "Enable Boiler",
           "heatpump": "Enable Heatpump",
           "photovoltaic": "Enable Photovoltaic",
-          "pelletsboiler": "Enable Biomassboiler"
+          "pelletsboiler": "Enable Pelletsboiler"
         }
       }
     },

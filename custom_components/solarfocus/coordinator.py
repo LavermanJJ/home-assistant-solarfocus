@@ -13,6 +13,7 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
+    CONF_SOLARFOCUS_SYSTEM,
     DOMAIN,
     FIELD_BOILER_MODE,
     FIELD_BOILER_MODE_DEFAULT,
@@ -33,7 +34,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, modbus_client, entry):
         """Init the Solarfocus data object."""
 
-        self.api = SolarfocusAPI(modbus_client, 1)
+        self.api = SolarfocusAPI(modbus_client, entry.data[CONF_SOLARFOCUS_SYSTEM])
         self.api.connect()
 
         self.name = entry.title
@@ -49,7 +50,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Update data via library."""
-        
+
         if not self.api.is_connected:
             self.api.connect()
 
@@ -152,7 +153,9 @@ class SolarfocusServiceCoordinator:
 
     data_update_coordinator = None
 
-    def __init__(self, data_update_coordinator: SolarfocusDataUpdateCoordinator):
+    def __init__(
+        self, data_update_coordinator: SolarfocusDataUpdateCoordinator
+    ) -> None:
         """Init the Solarfocus data object."""
         self.data_update_coordinator = data_update_coordinator
 

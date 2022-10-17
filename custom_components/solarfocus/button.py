@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_BOILER, DOMAIN
+from .const import CONF_BOILER, DATA_COORDINATOR, DOMAIN
 from .entity import SolarfocusEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,10 +24,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_BOILER]:
+    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
         for description in BOILER_BUTTON_TYPES:
             entity = SolarfocusButtonEntity(coordinator, description)
             entities.append(entity)
@@ -47,7 +47,6 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
-
 
     async def async_press(self) -> None:
         """Update the current value."""

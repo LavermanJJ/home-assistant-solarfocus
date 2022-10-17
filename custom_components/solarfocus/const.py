@@ -3,8 +3,9 @@
 from typing import Final
 
 
-
 DOMAIN = "solarfocus"
+UPDATE_LISTENER = "update-listener"
+DATA_COORDINATOR = "data-coordinator"
 
 """Default values for configuration"""
 DEFAULT_HOST = "solarfocus.local"
@@ -13,6 +14,7 @@ DEFAULT_NAME = "Solarfocus"
 DEFAULT_SCAN_INTERVAL = 10
 
 """Configuration and options"""
+CONF_SOLARFOCUS_SYSTEM = "system"
 CONF_HEATING_CIRCUIT = "heating_circuit"
 CONF_BUFFER = "buffer"
 CONF_BOILER = "boiler"
@@ -34,5 +36,3 @@ FIELD_HEATING_OPERATION_MODE = "mode"
 FIELD_HEATING_OPERATION_MODE_DEFAULT = "0"
 FIELD_BOILER_MODE = "mode"
 FIELD_BOILER_MODE_DEFAULT = "0"
-
-

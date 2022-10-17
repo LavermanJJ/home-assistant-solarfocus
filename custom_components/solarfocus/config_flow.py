@@ -12,9 +12,10 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import selector
 
 
-from pysolarfocus import SolarfocusAPI
+from pysolarfocus import SolarfocusAPI, Systems
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 from .const import (
@@ -24,6 +25,7 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
+    CONF_SOLARFOCUS_SYSTEM,
     DEFAULT_HOST,
     DEFAULT_NAME,
     DEFAULT_PORT,
@@ -34,14 +36,31 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # TODO adjust the data schema to the data that you need
+
+SOLARFOCUS_SYSTEMS = [
+    selector.SelectOptionDict(value="Vampair", label="Heat pump vampair"),
+    selector.SelectOptionDict(
+        value="Therminator", label=" Biomass boiler therminator II touch"
+    ),
+]
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
         vol.Optional(
-            CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
+            CONF_PORT, default=DEFAULT_PORT, description={"port": "Port"}
+        ): cv.port,
+        vol.Optional(
+            CONF_SCAN_INTERVAL,
+            default=DEFAULT_SCAN_INTERVAL,
+            description={"scan_interval": "Poll interval"},
         ): cv.positive_int,
+        vol.Required(
+            CONF_SOLARFOCUS_SYSTEM, default="Vampair"
+        ): selector.SelectSelector(
+            selector.SelectSelectorConfig(options=SOLARFOCUS_SYSTEMS),
+        ),
     }
 )
 
@@ -51,6 +70,26 @@ STEP_COMP_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_BUFFER, default=True): bool,
         vol.Optional(CONF_BOILER, default=True): bool,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+        vol.Optional(CONF_PELLETSBOILER, default=True): bool,
+    }
+)
+
+STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
+        vol.Optional(CONF_BUFFER, default=True): bool,
+        vol.Optional(CONF_BOILER, default=True): bool,
+        vol.Optional(CONF_HEATPUMP, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+    }
+)
+
+STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
+        vol.Optional(CONF_BUFFER, default=True): bool,
+        vol.Optional(CONF_BOILER, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
     }
@@ -66,7 +105,7 @@ class Solarfocus:
         self.port = port
         self.hass = hass
         client = ModbusClient(host, port)
-        self.api = SolarfocusAPI(client)
+        self.api = SolarfocusAPI(client, Systems.Vampair)
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -98,6 +137,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
+
         if user_input is None:
             return self.async_show_form(
                 step_id="user", data_schema=STEP_USER_DATA_SCHEMA
@@ -127,16 +167,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Handle the Component Selection step."""
         if user_input is None:
-            return self.async_show_form(
-                step_id="component", data_schema=STEP_COMP_SELECTION_SCHEMA
-            )
+            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+                return self.async_show_form(
+                    step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
+                )
+            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+                return self.async_show_form(
+                    step_id="component",
+                    data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
+                )
 
         self.data[CONF_BOILER] = user_input[CONF_BOILER]
         self.data[CONF_BUFFER] = user_input[CONF_BUFFER]
         self.data[CONF_HEATING_CIRCUIT] = user_input[CONF_HEATING_CIRCUIT]
-        self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
         self.data[CONF_PHOTOVOLTAIC] = user_input[CONF_PHOTOVOLTAIC]
-        self.data[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
+
+        if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+            self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
+            self.data[CONF_PELLETSBOILER] = False
+        elif self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+            self.data[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
+            self.data[CONF_HEATPUMP] = False
 
         return self.async_create_entry(
             title=self.data["name"], data=self.data, options=self.data
@@ -160,12 +211,22 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Manage the options."""
-        return await self.async_step_user()
+
+        errors = {}
+
+        if user_input is not None:
+            _LOGGER.debug(f"OptionsFlow: going to update configuration {user_input}")
+            # if not (errors := check_input(self.hass, user_input)):
+            return self.async_create_entry(
+                title=self.config_entry.data["name"], data=user_input
+            )
+
+        return await self._show_options_form(user_input)
 
     async def _show_options_form(self, user_input):
         """Show the options form to edit info."""
         return self.async_show_form(
-            step_id="user",
+            step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(
@@ -204,33 +265,6 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                 }
             ),
         )
-
-    async def async_step_user(self, user_input=None):
-        """Handle a flow initialized by the user."""
-
-        if user_input is None:
-            return await self._show_options_form(user_input)
-
-        errors = {}
-
-        # ry:
-        #   info = await validate_input(self.hass, user_input)
-        # xcept CannotConnect:
-        #   errors["base"] = "cannot_connect"
-        # xcept InvalidAuth:
-        #   errors["base"] = "invalid_auth"
-        # xcept Exception:  # pylint: disable=broad-except
-        #   _LOGGER.exception("Unexpected exception")
-        #   errors["base"] = "unknown"
-        # lse:
-        #   return self.async_create_entry(
-        #       title=self.config_entry.data["name"], data=user_input
-        #   )
-
-        return self.async_create_entry(
-            title=self.config_entry.data["name"], data=user_input
-        )
-        # return await self._show_options_form(user_input)
 
 
 class CannotConnect(HomeAssistantError):
