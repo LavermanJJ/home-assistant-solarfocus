@@ -32,7 +32,7 @@
           "boiler": "Enable Boiler",
           "heatpump": "Enable Heatpump",
           "photovoltaic": "Enable Photovoltaic",
-          "pelletsboiler": "Enable Pelletsboiler"
+          "pelletsboiler": "Enable Biomassboiler"
         }
       }
     },
