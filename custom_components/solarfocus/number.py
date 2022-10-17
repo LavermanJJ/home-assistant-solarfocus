@@ -16,7 +16,7 @@ from homeassistant.components.number import (
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_BOILER, CONF_HEATING_CIRCUIT, DOMAIN
+from .const import CONF_BOILER, CONF_HEATING_CIRCUIT, DATA_COORDINATOR, DOMAIN
 from .entity import SolarfocusEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,15 +28,18 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_HEATING_CIRCUIT]:
+    if (
+        config_entry.data[CONF_HEATING_CIRCUIT]
+        or config_entry.options[CONF_HEATING_CIRCUIT]
+    ):
         for description in HEATING_CIRCUIT_NUMBER_TYPES:
             entity = SolarfocusNumberEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BOILER]:
+    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
         for description in BOILER_NUMBER_TYPES:
             entity = SolarfocusNumberEntity(coordinator, description)
             entities.append(entity)

@@ -24,6 +24,7 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
+    DATA_COORDINATOR,
     DOMAIN,
     REVOLUTIONS_PER_MIN,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
@@ -38,34 +39,40 @@ async def async_setup_entry(
     hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities
 ):
     """Initialize sensor platform from config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
-    if config_entry.data[CONF_HEATING_CIRCUIT]:
+    if (
+        config_entry.data[CONF_HEATING_CIRCUIT]
+        or config_entry.options[CONF_HEATING_CIRCUIT]
+    ):
         for description in HEATING_CIRCUIT_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BUFFER]:
+    if config_entry.data[CONF_BUFFER] or config_entry.options[CONF_BUFFER]:
         for description in BUFFER_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BOILER]:
+    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
         for description in BOILER_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_HEATPUMP]:
+    if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_PHOTOVOLTAIC]:
+    if config_entry.data[CONF_PHOTOVOLTAIC] or config_entry.options[CONF_PHOTOVOLTAIC]:
         for description in PV_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_PELLETSBOILER]:
+    if (
+        config_entry.data[CONF_PELLETSBOILER]
+        or config_entry.options[CONF_PELLETSBOILER]
+    ):
         for description in PB_SENSOR_TYPES:
             entity = SolarfocusSensor(coordinator, description)
             entities.append(entity)

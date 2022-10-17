@@ -20,6 +20,7 @@ from .const import (
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
+    DATA_COORDINATOR,
     DOMAIN,
 )
 from .entity import SolarfocusEntity
@@ -33,25 +34,31 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_HEATING_CIRCUIT]:
+    if (
+        config_entry.data[CONF_HEATING_CIRCUIT]
+        or config_entry.options[CONF_HEATING_CIRCUIT]
+    ):
         for description in HEATING_CIRCUIT_BINARY_SENSOR_TYPES:
             entity = SolarfocusBinarySensorEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BUFFER]:
+    if config_entry.data[CONF_BUFFER] or config_entry.options[CONF_BUFFER]:
         for description in BUFFER_BINARY_SENSOR_TYPES:
             entity = SolarfocusBinarySensorEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_HEATPUMP]:
+    if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_BINARY_SENSOR_TYPES:
             entity = SolarfocusBinarySensorEntity(coordinator, description)
             entities.append(entity)
 
-    if config_entry.data[CONF_PELLETSBOILER]:
+    if (
+        config_entry.data[CONF_PELLETSBOILER]
+        or config_entry.options[CONF_PELLETSBOILER]
+    ):
         for description in PB_BINARY_SENSOR_TYPES:
             entity = SolarfocusBinarySensorEntity(coordinator, description)
             entities.append(entity)
