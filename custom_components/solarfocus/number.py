@@ -76,6 +76,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         """Return the current state."""
         sensor = self.entity_description.key
         value = getattr(self.coordinator.api, sensor)
+        _LOGGER.debug("native_value - name: %s, value: %f", sensor, value)
         if isinstance(value, float):
             try:
                 rounded_value = round(float(value), 2)
