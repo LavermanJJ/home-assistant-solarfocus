@@ -10,7 +10,10 @@
     "step": {
       "user": {
         "data": {
-          "host": "Host"
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Abfrage Intervall (s)",
+          "system": "Solarfocus System"
         }
       },
       "component": {

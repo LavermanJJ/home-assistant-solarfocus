@@ -48,19 +48,27 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
-        vol.Optional(
-            CONF_PORT, default=DEFAULT_PORT, description={"port": "Port"}
-        ): cv.port,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
         vol.Optional(
             CONF_SCAN_INTERVAL,
             default=DEFAULT_SCAN_INTERVAL,
-            description={"scan_interval": "Poll interval"},
         ): cv.positive_int,
         vol.Required(
             CONF_SOLARFOCUS_SYSTEM, default="Vampair"
         ): selector.SelectSelector(
             selector.SelectSelectorConfig(options=SOLARFOCUS_SYSTEMS),
         ),
+    }
+)
+
+STEP_COMP_SELECTION_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
+        vol.Optional(CONF_BUFFER, default=True): bool,
+        vol.Optional(CONF_BOILER, default=True): bool,
+        vol.Optional(CONF_HEATPUMP, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+        vol.Optional(CONF_PELLETSBOILER, default=True): bool,
     }
 )
 

@@ -3,7 +3,10 @@
     "step": {
       "user": {
         "data": {
-          "host": "[%key:common::config_flow::data::host%]"
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Polling interval (s)",
+          "system": "Solarfocus system"
         }
       },
       "component": {
@@ -15,7 +18,7 @@
           "boiler": "Enable Boiler",
           "heatpump": "Enable Heat Pump",
           "photovoltaic": "Enable Photovoltaic",
-          "pelletsboiler": "Enable Biomassboiler"
+          "pelletsboiler": "Enable Pelletsboiler"
         }
       }
     },
