@@ -61,17 +61,6 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
-STEP_COMP_SELECTION_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
-        vol.Optional(CONF_BUFFER, default=True): bool,
-        vol.Optional(CONF_BOILER, default=True): bool,
-        vol.Optional(CONF_HEATPUMP, default=True): bool,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
-        vol.Optional(CONF_PELLETSBOILER, default=True): bool,
-    }
-)
-
 STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
