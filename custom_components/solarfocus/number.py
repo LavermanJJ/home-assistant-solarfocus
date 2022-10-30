@@ -103,7 +103,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
             idx
         ]
         name = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Async_set_native_value - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,
@@ -124,7 +124,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
             idx
         ]
         sensor = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Native_value - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,

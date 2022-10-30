@@ -132,7 +132,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
             component = getattr(self.coordinator.api, self.entity_description.component)
 
         name = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Async_select_option - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,
@@ -150,11 +150,6 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         component: None
         idx = -1
 
-        _LOGGER.info(
-            "Current_option: self.entity_description.component_idx %s",
-            self.entity_description.component_idx,
-        )
-
         if self.entity_description.component_idx:
             idx = int(self.entity_description.component_idx) - 1
             component = getattr(
@@ -164,7 +159,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
             component = getattr(self.coordinator.api, self.entity_description.component)
 
         sensor = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Current_option - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,

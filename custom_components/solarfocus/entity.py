@@ -96,7 +96,7 @@ class SolarfocusEntity(Entity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        _LOGGER.info("Unique_id - %s", self.entity_description.key)
+        _LOGGER.debug("Unique_id - %s", self.entity_description.key)
         return f"{self._name}_{self.entity_description.key}"
 
     async def async_added_to_hass(self):

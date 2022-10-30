@@ -140,11 +140,6 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
         component: None
         idx = -1
 
-        _LOGGER.info(
-            "Is_on: self.entity_description.component_idx %s",
-            self.entity_description.component_idx,
-        )
-
         if self.entity_description.component_idx:
             idx = int(self.entity_description.component_idx) - 1
             component = getattr(
@@ -154,7 +149,7 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
             component = getattr(self.coordinator.api, self.entity_description.component)
 
         sensor = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Is_on - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,

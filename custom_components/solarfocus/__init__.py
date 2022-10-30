@@ -9,7 +9,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from pysolarfocus import SolarfocusAPI, Systems
 
-from .coordinator import SolarfocusDataUpdateCoordinator, SolarfocusServiceCoordinator
+from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import (
     CONF_BOILER,
     CONF_BUFFER,
@@ -23,10 +23,10 @@ from .const import (
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
-    # Platform.SELECT,
-    # Platform.NUMBER,
-    # Platform.BUTTON,
-    # Platform.BINARY_SENSOR,
+    Platform.SELECT,
+    Platform.NUMBER,
+    Platform.BUTTON,
+    Platform.BINARY_SENSOR,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +46,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]).name,
     )
     coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
-    service_coordinator = SolarfocusServiceCoordinator(coordinator)
 
     await coordinator.async_refresh()
 
@@ -68,22 +67,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # UPDATE_LISTENER: unsub_options_update_listener,
     }
 
-    hass.services.async_register(
-        DOMAIN, "set_operation_mode", service_coordinator.set_operation_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_heating_mode", service_coordinator.set_heating_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_boiler_mode", service_coordinator.set_boiler_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_smart_grid", service_coordinator.set_smart_grid
-    )
-
     return True
 
 
@@ -98,7 +81,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
 
-    _LOGGER.info("async_unload_entry is getting called! unload_ok: %s", unload_ok)
+    _LOGGER.info("Async_unload_entry is getting called! unload_ok: %s", unload_ok)
 
     return unload_ok
 

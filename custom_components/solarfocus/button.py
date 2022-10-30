@@ -73,13 +73,12 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Update the current value."""
-
         idx = int(self.entity_description.component_idx) - 1
         component = getattr(self.coordinator.api, self.entity_description.component)[
             idx
         ]
         name = self.entity_description.item
-        _LOGGER.info(
+        _LOGGER.debug(
             "Async_press - idx: %s, component: %s, sensor: %s",
             idx,
             self.entity_description.component,

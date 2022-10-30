@@ -174,7 +174,6 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the current state."""
-
         component: None
         idx = -1
 
@@ -398,11 +397,6 @@ HEATPUMP_SENSOR_TYPES = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    # SensorEntityDescription(
-    #    key="cop",
-    #    icon="mdi:poll",
-    #    state_class=SensorStateClass.MEASUREMENT,
-    # ),
     SensorEntityDescription(
         key="vampair_state",
         icon="mdi:heat-pump",
