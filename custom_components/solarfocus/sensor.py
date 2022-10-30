@@ -1,4 +1,5 @@
 """Sensors for the Solarfocus integration."""
+from dataclasses import dataclass
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -18,6 +19,12 @@ from homeassistant.const import (
 )
 
 from .const import (
+    BOILER_COMPONENT,
+    BOILER_COMPONENT_PREFIX,
+    BOILER_PREFIX,
+    BUFFER_COMPONENT,
+    BUFFER_COMPONENT_PREFIX,
+    BUFFER_PREFIX,
     CONF_BOILER,
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
@@ -26,11 +33,23 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     DATA_COORDINATOR,
     DOMAIN,
+    HEAT_PUMP_COMPONENT,
+    HEAT_PUMP_COMPONENT_PREFIX,
+    HEAT_PUMP_PREFIX,
+    HEATING_CIRCUIT_COMPONENT,
+    HEATING_CIRCUIT_COMPONENT_PREFIX,
+    HEATING_CIRCUIT_PREFIX,
+    PELLETS_BOILER_COMPONENT,
+    PELLETS_BOILER_COMPONENT_PREFIX,
+    PELLETS_BOILER_PREFIX,
+    PHOTOVOLTAIC_COMPONENT,
+    PHOTOVOLTAIC_COMPONENT_PREFIX,
+    PHOTOVOLTAIC_PREFIX,
     REVOLUTIONS_PER_MIN,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
-from .entity import SolarfocusEntity
+from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,43 +60,102 @@ async def async_setup_entry(
     """Initialize sensor platform from config entry."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
-    if (
-        config_entry.data[CONF_HEATING_CIRCUIT]
-        or config_entry.options[CONF_HEATING_CIRCUIT]
-    ):
+
+    for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
+
+            _description = create_description(
+                HEATING_CIRCUIT_PREFIX,
+                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BUFFER] or config_entry.options[CONF_BUFFER]:
-        for description in BUFFER_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
-            entities.append(entity)
-
-    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
+    for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
+
+            _description = create_description(
+                BOILER_PREFIX,
+                BOILER_COMPONENT,
+                BOILER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
+            entities.append(entity)
+
+    for i in range(config_entry.data[CONF_BUFFER]):
+        for description in BUFFER_SENSOR_TYPES:
+
+            _description = create_description(
+                BUFFER_PREFIX,
+                BUFFER_COMPONENT,
+                BUFFER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
     if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
-            entities.append(entity)
 
-    if config_entry.data[CONF_PHOTOVOLTAIC] or config_entry.options[CONF_PHOTOVOLTAIC]:
-        for description in PV_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
+            _description = create_description(
+                HEAT_PUMP_PREFIX,
+                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
     if (
         config_entry.data[CONF_PELLETSBOILER]
         or config_entry.options[CONF_PELLETSBOILER]
     ):
-        for description in PB_SENSOR_TYPES:
-            entity = SolarfocusSensor(coordinator, description)
+        for description in PELLETS_BOILER_SENSOR_TYPES:
+
+            _description = create_description(
+                PELLETS_BOILER_PREFIX,
+                PELLETS_BOILER_COMPONENT,
+                PELLETS_BOILER_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.data[CONF_PHOTOVOLTAIC] or config_entry.options[CONF_PHOTOVOLTAIC]:
+        for description in PHOTOVOLTAIC_SENSOR_TYPES:
+
+            _description = create_description(
+                PHOTOVOLTAIC_PREFIX,
+                PHOTOVOLTAIC_COMPONENT,
+                PHOTOVOLTAIC_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
     async_add_entities(entities)
+
+
+@dataclass
+class SolarfocusSensorEntityDescription(
+    SolarfocusEntityDescription, SensorEntityDescription
+):
+    """Description of a Solarfocus sensor entity"""
 
 
 class SolarfocusSensor(SolarfocusEntity, SensorEntity):
@@ -88,16 +166,34 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
     def __init__(
         self,
         coordinator: SolarfocusDataUpdateCoordinator,
-        description: SensorEntityDescription,
-    ):
+        description: SolarfocusSensorEntityDescription,
+    ) -> None:
         """Initialize a singular value sensor."""
         super().__init__(coordinator=coordinator, description=description)
 
     @property
     def native_value(self):
         """Return the current state."""
-        sensor = self.entity_description.key
-        value = getattr(self.coordinator.api, sensor)
+
+        component: None
+        idx = -1
+
+        if self.entity_description.component_idx:
+            idx = int(self.entity_description.component_idx) - 1
+            component = getattr(
+                self.coordinator.api, self.entity_description.component
+            )[idx]
+        else:
+            component = getattr(self.coordinator.api, self.entity_description.component)
+
+        sensor = self.entity_description.item
+        _LOGGER.debug(
+            "Native_value - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            sensor,
+        )
+        value = getattr(component, sensor).scaled_value
         if isinstance(value, float):
             try:
                 rounded_value = round(float(value), 2)
@@ -109,38 +205,33 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
 
 HEATING_CIRCUIT_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="hc1_supply_temp",
-        name="Heating supply temperature",
+        key="supply_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hc1_room_temp",
-        name="Heating room temperature",
+        key="room_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:home-thermometer-outline",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hc1_humidity",
-        name="Heating room humidity",
+        key="humidity",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:water-percent",
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hc1_mixer_valve",
-        name="Heating mixer valve",
+        key="mixer_valve",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:valve",
     ),
     SensorEntityDescription(
-        key="hc1_state",
-        name="Heating state",
+        key="state",
         icon="mdi:radiator",
         device_class="solarfocus__hcstate",
     ),
@@ -149,30 +240,26 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
 
 BUFFER_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="bu1_top_temp",
-        name="Buffer top temperature",
+        key="top_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="bu1_bottom_temp",
-        name="Buffer bottom temperature",
+        key="bottom_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="bu1_state",
-        name="Buffer state",
+        key="state",
         icon="mdi:database",
         device_class="solarfocus__bustate",
     ),
     SensorEntityDescription(
-        key="bu1_mode",
-        name="Buffer mode",
+        key="mode",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__bumode",
     ),
@@ -180,33 +267,28 @@ BUFFER_SENSOR_TYPES = [
 
 BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="bo1_temp",
-        name="Boiler temperature",
+        key="temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="bo1_state",
-        name="Boiler state",
+        key="state",
         icon="mdi:water-boiler",
         device_class="solarfocus__bostate",
     ),
     SensorEntityDescription(
-        key="bo1_mode",
-        name="Boiler mode",
+        key="mode",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__bomode",
     ),
     SensorEntityDescription(
-        key="bo1_single_charge",
-        name="Boiler single charge request",
+        key="single_charge",
         icon="mdi:pump",
     ),
     SensorEntityDescription(
-        key="bo1_ciruclation",
-        name="Boiler circulation",
+        key="circulation",
         icon="mdi:reload",
         device_class="solarfocus__bocirculation",
     ),
@@ -214,173 +296,151 @@ BOILER_SENSOR_TYPES = [
 
 HEATPUMP_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="hp_supply_temp",
-        name="Heatpump supply temperature",
+        key="supply_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-chevron-up",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_return_temp",
-        name="Heatpump return temperature",
+        key="return_temperatur",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-chevron-down",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_flow_rate",
-        name="Heatpump flow rate",
+        key="flow_rate",
         native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_compressor_speed",
-        name="Heatpump compressor speed",
+        key="compressor_speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MIN,
         icon="mdi:gauge",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_thermal_energy_total",
-        name="Heat pump total thermal energy",
+        key="thermal_energy_total",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_thermal_energy_drinking_water",
-        name="Heat pump drinking water thermal energy",
+        key="thermal_energy_drinking_water",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_thermal_energy_heating",
-        name="Heat pump heating thermal energy",
+        key="thermal_energy_heating",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_electrical_energy_total",
-        name="Heat pump total electrical energy",
+        key="electrical_energy_total",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_electrical_energy_drinking_water",
-        name="Heat pump drinking water electrical energy",
+        key="electrical_energy_drinking_water",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_eletrical_energy_heating",
-        name="Heat pump heating electrical energy",
+        key="electrical_energy_heating",  # revert
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_electrical_power",
-        name="Heat pump electrical power",
+        key="electrical_power",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:lightning-bolt",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_thermal_power_cooling",
-        name="Heat pump cooling thermal power",
+        key="thermal_power_cooling",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:snowflake",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_thermal_power_heating",
-        name="Heat pump heating thermal power",
+        key="thermal_power_heating",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:fire",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="hp_thermal_energy_cooling",
-        name="Heat pump cooling thermal energy",
+        key="thermal_energy_cooling",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="hp_electrical_energy_cooling",
-        name="Heat pump cooling electrical energy",
+        key="electrical_energy_cooling",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
+    # SensorEntityDescription(
+    #    key="cop",
+    #    icon="mdi:poll",
+    #    state_class=SensorStateClass.MEASUREMENT,
+    # ),
     SensorEntityDescription(
-        key="hp_cop",
-        name="Heat pump coefficient of performance",
-        icon="mdi:poll",
-        state_class=SensorStateClass.MEASUREMENT,
-    ),
-    SensorEntityDescription(
-        key="hp_vampair_state",
-        name="Heat pump state",
+        key="vampair_state",
         icon="mdi:heat-pump",
         device_class="solarfocus__hpstate",
     ),
 ]
 
-PV_SENSOR_TYPES = [
+PHOTOVOLTAIC_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="pv_power",
-        name="Photovoltaic power",
+        key="power",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:solar-power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pv_house_consumption",
-        name="Photovoltaic house consumption",
+        key="house_consumption",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-lightning-bolt-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pv_heatpump_consumption",
-        name="Photovoltaic heatpump consumption",
+        key="heatpump_consumption",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:heat-pump-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pv_grid_import",
-        name="Photovoltaic grid import",
+        key="grid_import",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-import-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pv_grid_export",
-        name="Photovoltaic grid export",
+        key="grid_export",
         native_unit_of_measurement=POWER_WATT,
         icon="mdi:home-export-outline",
         device_class=SensorDeviceClass.POWER,
@@ -388,72 +448,62 @@ PV_SENSOR_TYPES = [
     ),
 ]
 
-PB_SENSOR_TYPES = [
+PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
-        key="pb_temperature",
-        name="Biomass boiler temperature",
+        key="temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pb_status",
-        name="Biomass boiler status",
+        key="status",
         icon="mdi:fire-circle",
         device_class="solarfocus__pbstate",
     ),
     SensorEntityDescription(
-        key="pb_message_number",
-        name="Biomass boiler message number",
+        key="message_number",
         icon="mdi:message-text-outline",
     ),
     SensorEntityDescription(
-        key="pb_cleaning",
-        name="Biomass boiler cleaning",
+        key="cleaning",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:broom",
     ),
     SensorEntityDescription(
-        key="pb_ash_container",
-        name="Biomass boiler ash container",
+        key="ash_container",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:trash-can-outline",
     ),
     SensorEntityDescription(
-        key="pb_outdoor_temperature",
-        name="Biomass boiler outdoor temperature",
+        key="outdoor_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    # SensorEntityDescription(
-    #    key="pb_mode",
-    #    name="Biomass boiler mode",
-    #    icon="mdi:format-list-bulleted",
-    #    state_class=SensorStateClass.MEASUREMENT,
-    #    device_class="solarfocus__pbmode",
-    # ),
     SensorEntityDescription(
-        key="pb_octoplus_buffer_temperature_bottom",
-        name="Biomass boiler buffer bottom temperature",
+        key="boiler_operating_mode",
+        icon="mdi:format-list-bulleted",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class="solarfocus__pbmode",
+    ),
+    SensorEntityDescription(
+        key="octoplus_buffer_temperature_bottom",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pb_octoplus_buffer_temperature_top",
-        name="Biomass boiler buffer top temperature",
+        key="octoplus_buffer_temperature_top",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="pb_log_wood_therminator",
-        name="Biomass boiler mode",
+        key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__pblogwood",
     ),

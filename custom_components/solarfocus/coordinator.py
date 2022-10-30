@@ -4,7 +4,7 @@ from datetime import timedelta
 import logging
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from pysolarfocus import SolarfocusAPI
+
 
 from .const import (
     CONF_BOILER,
@@ -13,7 +13,6 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
-    CONF_SOLARFOCUS_SYSTEM,
     DOMAIN,
     FIELD_BOILER_MODE,
     FIELD_BOILER_MODE_DEFAULT,
@@ -31,10 +30,10 @@ _LOGGER = logging.getLogger(__name__)
 class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     """Get the latest data and update the states."""
 
-    def __init__(self, hass, modbus_client, entry):
+    def __init__(self, hass, entry, api):
         """Init the Solarfocus data object."""
 
-        self.api = SolarfocusAPI(modbus_client, entry.data[CONF_SOLARFOCUS_SYSTEM])
+        self.api = api
         self.api.connect()
 
         self.name = entry.title

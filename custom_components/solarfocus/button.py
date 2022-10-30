@@ -1,5 +1,6 @@
 """Buttons for Solarfocus integration"""
 
+from dataclasses import dataclass
 import logging
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 
@@ -7,13 +8,19 @@ from homeassistant.components.button import ButtonEntity, ButtonEntityDescriptio
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_BOILER, DATA_COORDINATOR, DOMAIN
-from .entity import SolarfocusEntity
+from .const import (
+    BOILER_COMPONENT,
+    BOILER_COMPONENT_PREFIX,
+    BOILER_PREFIX,
+    CONF_BOILER,
+    DATA_COORDINATOR,
+    DOMAIN,
+)
+from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,12 +34,28 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
+    for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_BUTTON_TYPES:
-            entity = SolarfocusButtonEntity(coordinator, description)
+
+            _description = create_description(
+                BOILER_PREFIX,
+                BOILER_COMPONENT,
+                BOILER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusButtonEntity(coordinator, _description)
             entities.append(entity)
 
     async_add_entities(entities)
+
+
+@dataclass
+class SolarfocusButtonEntityDescription(
+    SolarfocusEntityDescription, ButtonEntityDescription
+):
+    """Description of a Solarfocus number entity"""
 
 
 class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
@@ -43,7 +66,7 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
-        description: EntityDescription,
+        description: SolarfocusButtonEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
@@ -51,22 +74,32 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Update the current value."""
 
-        _name = self.entity_description.key
-        _updater = getattr(self.coordinator, "trigger_" + _name)
-        _LOGGER.debug("async_press: %s", _name)
+        idx = int(self.entity_description.component_idx) - 1
+        component = getattr(self.coordinator.api, self.entity_description.component)[
+            idx
+        ]
+        name = self.entity_description.item
+        _LOGGER.info(
+            "Async_press - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            name,
+        )
+        button = getattr(component, name)
+        button.set_unscaled_value(True)
+        button.commit()
+        component.update()
 
-        await _updater()
+        self.async_write_ha_state()
 
 
 BOILER_BUTTON_TYPES = [
-    ButtonEntityDescription(
-        key="bo1_enable_single_charge",
-        name="Boiler trigger single charge",
+    SolarfocusButtonEntityDescription(
+        key="enable_single_charge",
         icon="mdi:water-boiler",
     ),
-    ButtonEntityDescription(
-        key="bo1_enable_circulation",
-        name="Boiler trigger circulation",
+    SolarfocusButtonEntityDescription(
+        key="enable_circulation",
         icon="mdi:reload",
     ),
 ]

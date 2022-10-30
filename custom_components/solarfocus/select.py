@@ -5,21 +5,30 @@ from dataclasses import dataclass
 import logging
 
 
-from homeassistant.components.select import SelectEntity
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory, EntityDescription
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
+    BOILER_COMPONENT,
+    BOILER_COMPONENT_PREFIX,
+    BOILER_PREFIX,
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     DATA_COORDINATOR,
     DOMAIN,
+    HEAT_PUMP_COMPONENT,
+    HEAT_PUMP_COMPONENT_PREFIX,
+    HEAT_PUMP_PREFIX,
+    HEATING_CIRCUIT_COMPONENT,
+    HEATING_CIRCUIT_COMPONENT_PREFIX,
+    HEATING_CIRCUIT_PREFIX,
 )
-from .entity import SolarfocusEntity
+from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,33 +43,61 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if (
-        config_entry.data[CONF_HEATING_CIRCUIT]
-        or config_entry.options[CONF_HEATING_CIRCUIT]
-    ):
+    for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SELECT_TYPES:
-            entity = SolarfocusSelectEntity(coordinator, description)
+
+            _description = create_description(
+                HEATING_CIRCUIT_PREFIX,
+                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSelectEntity(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
+    for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_SELECT_TYPES:
-            entity = SolarfocusSelectEntity(coordinator, description)
+
+            _description = create_description(
+                BOILER_PREFIX,
+                BOILER_COMPONENT,
+                BOILER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSelectEntity(coordinator, _description)
             entities.append(entity)
 
     if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SELECT_TYPES:
-            entity = SolarfocusSelectEntity(coordinator, description)
+
+            _description = create_description(
+                HEAT_PUMP_PREFIX,
+                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusSelectEntity(coordinator, _description)
             entities.append(entity)
 
     async_add_entities(entities)
 
 
 @dataclass
-class SolarfocusSelectEntityDescription(EntityDescription):
+class SolarfocusSelectEntityDescription(
+    SolarfocusEntityDescription, SelectEntityDescription
+):
     """Description of a Solarfocus select entity"""
 
     current_option: str | None = None
-    options: list[str] = None
+    # kept for compatibility reasons. Removing it would make 2022.11 the min
+    # required version.
+    solarfocus_options: list[str] = None
 
 
 class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
@@ -77,35 +114,73 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         super().__init__(coordinator, description)
 
         # self._attr_current_option = description.current_option
-        self._attr_options = description.options
+        self._attr_options = description.solarfocus_options
 
     async def async_select_option(self, option: str) -> None:
         """Update the current selected option."""
         self._attr_current_option = option
-        _name = self.entity_description.key
-        _updater = getattr(self.coordinator, "update_" + _name)
 
-        _LOGGER.debug("async_select_option - name: %s, option: %s", _name, option)
+        component: None
+        idx = -1
 
-        await _updater(option)
+        if self.entity_description.component_idx:
+            idx = int(self.entity_description.component_idx) - 1
+            component = getattr(
+                self.coordinator.api, self.entity_description.component
+            )[idx]
+        else:
+            component = getattr(self.coordinator.api, self.entity_description.component)
+
+        name = self.entity_description.item
+        _LOGGER.info(
+            "Async_select_option - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            name,
+        )
+        select = getattr(component, name)
+        select.set_unscaled_value(option)
+        select.commit()
+        component.update()
+
         self.async_write_ha_state()
 
     @property
     def current_option(self) -> str:
-        sensor = self.entity_description.key
-        value = getattr(self.coordinator.api, sensor)
-        _LOGGER.debug("current_option - name: %s, option: %s", sensor, value)
+        component: None
+        idx = -1
+
+        _LOGGER.info(
+            "Current_option: self.entity_description.component_idx %s",
+            self.entity_description.component_idx,
+        )
+
+        if self.entity_description.component_idx:
+            idx = int(self.entity_description.component_idx) - 1
+            component = getattr(
+                self.coordinator.api, self.entity_description.component
+            )[idx]
+        else:
+            component = getattr(self.coordinator.api, self.entity_description.component)
+
+        sensor = self.entity_description.item
+        _LOGGER.info(
+            "Current_option - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            sensor,
+        )
+        value = getattr(component, sensor).scaled_value
         return str(value)
 
 
 HEATPUMP_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="hp_smart_grid",
-        name="Heatpump smart grid",
+        key="smart_grid",
         icon="mdi:leaf",
         device_class="solarfocus__hpsmartgrid",
         current_option="2",
-        options=[
+        solarfocus_options=[
             "2",
             "4",
         ],
@@ -114,24 +189,22 @@ HEATPUMP_SELECT_TYPES = [
 
 HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="hc1_cooling",
-        name="Heating circuit cooling",
+        key="cooling",
         icon="mdi:snowflake",
         device_class="solarfocus__hccooling",
         current_option="0",
-        options=[
+        solarfocus_options=[
             "0",
             "1",
         ],
     ),
     SolarfocusSelectEntityDescription(
-        key="hc1_mode_holding",
-        name="Heating circuit mode",
+        key="mode",
         icon="mdi:radiator",
         device_class="solarfocus__hcmode",
         entity_category=EntityCategory.CONFIG,
         current_option="3",
-        options=[
+        solarfocus_options=[
             "0",
             "1",
             "2",
@@ -142,13 +215,12 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="bo1_mode_holding",
-        name="Boiler mode",
+        key="holding_mode",
         icon="mdi:water-boiler",
         device_class="solarfocus__bomode",
         entity_category=EntityCategory.CONFIG,
         current_option="0",
-        options=[
+        solarfocus_options=[
             "0",
             "1",
             "2",

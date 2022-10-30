@@ -7,19 +7,26 @@ from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from pysolarfocus import SolarfocusAPI, Systems
 
 from .coordinator import SolarfocusDataUpdateCoordinator, SolarfocusServiceCoordinator
-from .const import DATA_COORDINATOR, DOMAIN
+from .const import (
+    CONF_BOILER,
+    CONF_BUFFER,
+    CONF_HEATING_CIRCUIT,
+    CONF_SOLARFOCUS_SYSTEM,
+    DATA_COORDINATOR,
+    DOMAIN,
+)
 
 # TODO List the platforms that you want to support.
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
-    Platform.SELECT,
-    Platform.NUMBER,
-    Platform.BUTTON,
-    Platform.BINARY_SENSOR,
+    # Platform.SELECT,
+    # Platform.NUMBER,
+    # Platform.BUTTON,
+    # Platform.BINARY_SENSOR,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,8 +37,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    modbus_client = ModbusClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
-    coordinator = SolarfocusDataUpdateCoordinator(hass, modbus_client, entry)
+    api = SolarfocusAPI(
+        ip=entry.data[CONF_HOST],
+        port=entry.data[CONF_PORT],
+        heating_circuit_count=entry.data[CONF_HEATING_CIRCUIT],
+        buffer_count=entry.data[CONF_BUFFER],
+        boiler_count=entry.data[CONF_BOILER],
+        system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]).name,
+    )
+    coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
     service_coordinator = SolarfocusServiceCoordinator(coordinator)
 
     await coordinator.async_refresh()
