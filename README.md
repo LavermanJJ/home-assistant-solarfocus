@@ -30,8 +30,10 @@ Add custom integration using the web interface and follow instruction on screen.
 
 - Go to `Configuration -> Integrations` and add "Solarfocus" integration
 - Provide name for the device and it's IP-address
-- Select components for which you would like to add the sensors
-- Provide area where the heat pump is located
+- Select components for which you would like to add to home-assistant
+- Provide area where the heating system is located
+
+<img src="images/sf-configflow-1.png?raw=true" width="300">   <img src="images/sf-configflow-2.png?raw=true" width="300">
 
 ## What's Supported 
 
