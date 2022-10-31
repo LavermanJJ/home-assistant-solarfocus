@@ -44,25 +44,18 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 
 | Components | Supported |
 |---|---|
-| Heating Circuit 1 (_Heizkreis_)| :white_check_mark: |
-| Buffer 1 (_Puffer_) | :white_check_mark: |
+| Heating Circuit 1 - 8 (_Heizkreis_)| :white_check_mark: |
+| Buffer 1 - 4 (_Puffer_) | :white_check_mark: |
 | Solar (_Solar_)| :x:|
-| Boiler 1 (_Boiler_) | :white_check_mark: |
+| Boiler 1 - 4 (_Boiler_) | :white_check_mark: |
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Biomassboiler (_Kessel_) | :white_check_mark: | 
-
-> **Note**
-> The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future
 
 
 ### Provided Controls
 <img src="images/sf-controls.png?raw=true" width="500">
 
 <img src="images/sf-configuration.png?raw=true" width="500">
-
-### Provided Services
-
-<img src="images/sf-services.png?raw=true" width="500">
 
 ### Provided Sensors
 
