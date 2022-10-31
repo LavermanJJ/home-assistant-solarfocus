@@ -94,11 +94,11 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
 
 BOILER_BUTTON_TYPES = [
     SolarfocusButtonEntityDescription(
-        key="enable_single_charge",
+        key="single_charge",
         icon="mdi:water-boiler",
     ),
     SolarfocusButtonEntityDescription(
-        key="enable_circulation",
+        key="circulation",
         icon="mdi:reload",
     ),
 ]

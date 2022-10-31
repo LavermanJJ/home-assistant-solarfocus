@@ -2,7 +2,6 @@
 
 from typing import Final
 
-
 DOMAIN = "solarfocus"
 UPDATE_LISTENER = "update-listener"
 DATA_COORDINATOR = "data-coordinator"
@@ -16,31 +15,16 @@ DEFAULT_SCAN_INTERVAL = 10
 """Configuration and options"""
 CONF_SOLARFOCUS_SYSTEM = "system"
 CONF_HEATING_CIRCUIT = "heating_circuit"
-CONF_HEATING_CIRCUIT_COUNT = "heating_circuit_count"
 CONF_BUFFER = "buffer"
-CONF_BUFFER_COUNT = "buffer_count"
 CONF_BOILER = "boiler"
-CONF_BOILER_COUNT = "boiler_count"
 CONF_HEATPUMP = "heatpump"
 CONF_PHOTOVOLTAIC = "photovoltaic"
 CONF_PELLETSBOILER = "pelletsboiler"
 
 """Custom Measurement Units"""
 VOLUME_FLOW_RATE_LITER_PER_HOUR: Final = "l/h"
-REVOLUTIONS_PER_MIN: Final = "rpm"
 
-
-"""Service keys"""
-FIELD_SMARTGRID_STATE = "state"
-FIELD_SMARTGRID_STATE_DEFAULT = "2"
-FIELD_HEATING_MODE = "mode"
-FIELD_HEATING_MODE_DEFAULT = "3"
-FIELD_HEATING_OPERATION_MODE = "mode"
-FIELD_HEATING_OPERATION_MODE_DEFAULT = "0"
-FIELD_BOILER_MODE = "mode"
-FIELD_BOILER_MODE_DEFAULT = "0"
-
-
+"""Entity naming"""
 HEATING_CIRCUIT_PREFIX = "Heating circuit"
 HEATING_CIRCUIT_COMPONENT = "heating_circuits"
 HEATING_CIRCUIT_COMPONENT_PREFIX = "hc"

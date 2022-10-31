@@ -15,6 +15,7 @@ from homeassistant.const import (
     ENERGY_KILO_WATT_HOUR,
     PERCENTAGE,
     POWER_WATT,
+    REVOLUTIONS_PER_MINUTE,
     TEMP_CELSIUS,
 )
 
@@ -45,7 +46,6 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     PHOTOVOLTAIC_PREFIX,
-    REVOLUTIONS_PER_MIN,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
@@ -316,7 +316,7 @@ HEATPUMP_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="compressor_speed",
-        native_unit_of_measurement=REVOLUTIONS_PER_MIN,
+        native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         icon="mdi:gauge",
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -356,7 +356,7 @@ HEATPUMP_SENSOR_TYPES = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="electrical_energy_heating",  # revert
+        key="eletrical_energy_heating",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,

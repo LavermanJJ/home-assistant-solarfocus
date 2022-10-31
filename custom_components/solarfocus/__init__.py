@@ -90,3 +90,32 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    version = config_entry.version
+
+    _LOGGER.info("Migrating from version %s", version)
+
+    if version == 1:
+        # Config allows multiple heatings, buffers, and boilers
+        # and differentiates system (vampair, therminator)
+        new = {**config_entry.data}
+
+        new[CONF_HEATING_CIRCUIT] = 1 if config_entry.data[CONF_HEATING_CIRCUIT] else 0
+        new[CONF_BUFFER] = 1 if config_entry.data[CONF_BUFFER] else 0
+        new[CONF_BOILER] = 1 if config_entry.data[CONF_BOILER] else 0
+
+        new[CONF_SOLARFOCUS_SYSTEM] = (
+            config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+            if CONF_SOLARFOCUS_SYSTEM in config_entry.data
+            else Systems.Vampair
+        )
+
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+    return True

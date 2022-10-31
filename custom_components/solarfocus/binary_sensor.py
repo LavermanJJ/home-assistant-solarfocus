@@ -163,7 +163,7 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
 
 HEATING_CIRCUIT_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
-        key="limit_temperature",  # "limit_thermostat",
+        key="limit_thermostat",
         device_class=BinarySensorDeviceClass.PROBLEM,
         on_state="0",
     ),
@@ -195,7 +195,7 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
         on_state="1",
     ),
     SolarfocusBinarySensorEntityDescription(
-        key="boilder_charge",
+        key="boiler_charge",
         device_class=BinarySensorDeviceClass.RUNNING,
         on_state="1",
     ),
