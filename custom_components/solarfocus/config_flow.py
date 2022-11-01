@@ -14,9 +14,8 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 
-
 from pysolarfocus import SolarfocusAPI, Systems
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+
 
 from .const import (
     CONF_BOILER,
@@ -35,14 +34,30 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# TODO adjust the data schema to the data that you need
-
 SOLARFOCUS_SYSTEMS = [
     selector.SelectOptionDict(value="Vampair", label="Heat pump vampair"),
     selector.SelectOptionDict(
         value="Therminator", label=" Biomass boiler therminator II touch"
     ),
 ]
+
+_COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = vol.All(
+    selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0, max=8, mode=selector.NumberSelectorMode.SLIDER
+        ),
+    ),
+    vol.Coerce(int),
+)
+
+_COMPONENT_COUNT_ZERO_FOUR_SELECTOR = vol.All(
+    selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=0, max=4, mode=selector.NumberSelectorMode.SLIDER
+        ),
+    ),
+    vol.Coerce(int),
+)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -63,10 +78,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 STEP_COMP_SELECTION_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
-        vol.Optional(CONF_BUFFER, default=True): bool,
-        vol.Optional(CONF_BOILER, default=True): bool,
-        vol.Optional(CONF_HEATPUMP, default=True): bool,
+        vol.Optional(
+            CONF_HEATING_CIRCUIT, default=1
+        ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
+        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
     }
@@ -74,9 +90,11 @@ STEP_COMP_SELECTION_SCHEMA = vol.Schema(
 
 STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
-        vol.Optional(CONF_BUFFER, default=True): bool,
-        vol.Optional(CONF_BOILER, default=True): bool,
+        vol.Optional(
+            CONF_HEATING_CIRCUIT, default=1
+        ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
+        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
     }
@@ -84,9 +102,11 @@ STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
 
 STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_HEATING_CIRCUIT, default=True): bool,
-        vol.Optional(CONF_BUFFER, default=True): bool,
-        vol.Optional(CONF_BOILER, default=True): bool,
+        vol.Optional(
+            CONF_HEATING_CIRCUIT, default=1
+        ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
+        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
     }
@@ -96,13 +116,16 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
 class Solarfocus:
     """Solarfocus Configflow"""
 
-    def __init__(self, hass, host: str, port) -> None:
+    def __init__(self, hass, data) -> None:
         """Initialize."""
-        self.host = host
-        self.port = port
+        self.host = data[CONF_HOST]
+        self.port = data[CONF_PORT]
         self.hass = hass
-        client = ModbusClient(host, port)
-        self.api = SolarfocusAPI(client, Systems.Vampair)
+        self.api = SolarfocusAPI(
+            ip=data[CONF_HOST],
+            port=data[CONF_PORT],
+            system=Systems(data[CONF_SOLARFOCUS_SYSTEM]).name,
+        )
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -110,7 +133,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    client = Solarfocus(hass, data["host"], data["port"])
+    client = Solarfocus(hass, data=data)
 
     if not await hass.async_add_executor_job(client.api.connect):
         raise CannotConnect
@@ -125,7 +148,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 1
+    VERSION = 2
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]

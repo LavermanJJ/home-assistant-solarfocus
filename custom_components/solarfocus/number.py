@@ -1,5 +1,6 @@
 """Numbers for Solarfocus integration"""
 
+from dataclasses import dataclass
 import logging
 
 from homeassistant.components.sensor import SensorDeviceClass
@@ -16,8 +17,19 @@ from homeassistant.components.number import (
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_BOILER, CONF_HEATING_CIRCUIT, DATA_COORDINATOR, DOMAIN
-from .entity import SolarfocusEntity
+from .const import (
+    BOILER_COMPONENT,
+    BOILER_COMPONENT_PREFIX,
+    BOILER_PREFIX,
+    CONF_BOILER,
+    CONF_HEATING_CIRCUIT,
+    DATA_COORDINATOR,
+    DOMAIN,
+    HEATING_CIRCUIT_COMPONENT,
+    HEATING_CIRCUIT_COMPONENT_PREFIX,
+    HEATING_CIRCUIT_PREFIX,
+)
+from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,20 +43,42 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if (
-        config_entry.data[CONF_HEATING_CIRCUIT]
-        or config_entry.options[CONF_HEATING_CIRCUIT]
-    ):
+    for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_NUMBER_TYPES:
-            entity = SolarfocusNumberEntity(coordinator, description)
+
+            _description = create_description(
+                HEATING_CIRCUIT_PREFIX,
+                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusNumberEntity(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.data[CONF_BOILER] or config_entry.options[CONF_BOILER]:
+    for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_NUMBER_TYPES:
-            entity = SolarfocusNumberEntity(coordinator, description)
+
+            _description = create_description(
+                BOILER_PREFIX,
+                BOILER_COMPONENT,
+                BOILER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusNumberEntity(coordinator, _description)
             entities.append(entity)
 
     async_add_entities(entities)
+
+
+@dataclass
+class SolarfocusNumberEntityDescription(
+    SolarfocusEntityDescription, NumberEntityDescription
+):
+    """Description of a Solarfocus number entity"""
 
 
 class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
@@ -55,7 +89,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
-        description: NumberEntityDescription,
+        description: SolarfocusNumberEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
@@ -63,20 +97,40 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         self._attr_native_value = value
-        _name = self.entity_description.key
-        _updater = getattr(self.coordinator, "update_" + _name)
 
-        _LOGGER.debug("async_set_native_value - name: %s, value: %f", _name, value)
+        idx = int(self.entity_description.component_idx) - 1
+        component = getattr(self.coordinator.api, self.entity_description.component)[
+            idx
+        ]
+        name = self.entity_description.item
+        _LOGGER.debug(
+            "Async_set_native_value - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            name,
+        )
+        number = getattr(component, name)
+        number.set_unscaled_value(value)
+        number.commit()
+        component.update()
 
-        await _updater(value)
         self.async_write_ha_state()
 
     @property
     def native_value(self):
         """Return the current state."""
-        sensor = self.entity_description.key
-        value = getattr(self.coordinator.api, sensor)
-        _LOGGER.debug("native_value - name: %s, value: %f", sensor, value)
+        idx = int(self.entity_description.component_idx) - 1
+        component = getattr(self.coordinator.api, self.entity_description.component)[
+            idx
+        ]
+        sensor = self.entity_description.item
+        _LOGGER.debug(
+            "Native_value - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            sensor,
+        )
+        value = getattr(component, sensor).scaled_value
         if isinstance(value, float):
             try:
                 rounded_value = round(float(value), 2)
@@ -87,9 +141,8 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
 
 
 HEATING_CIRCUIT_NUMBER_TYPES = [
-    NumberEntityDescription(
-        key="hc1_target_temperatur",
-        name="Heating circuit target supply temperature",
+    SolarfocusNumberEntityDescription(
+        key="target_supply_temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
@@ -101,9 +154,8 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
 ]
 
 BOILER_NUMBER_TYPES = [
-    NumberEntityDescription(
-        key="bo1_target_temperatur",
-        name="Boiler target temperature",
+    SolarfocusNumberEntityDescription(
+        key="target_temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,

@@ -7,10 +7,17 @@ from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from pysolarfocus import SolarfocusAPI, Systems
 
-from .coordinator import SolarfocusDataUpdateCoordinator, SolarfocusServiceCoordinator
-from .const import DATA_COORDINATOR, DOMAIN
+from .coordinator import SolarfocusDataUpdateCoordinator
+from .const import (
+    CONF_BOILER,
+    CONF_BUFFER,
+    CONF_HEATING_CIRCUIT,
+    CONF_SOLARFOCUS_SYSTEM,
+    DATA_COORDINATOR,
+    DOMAIN,
+)
 
 # TODO List the platforms that you want to support.
 # For your initial PR, limit it to 1 platform.
@@ -30,9 +37,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    modbus_client = ModbusClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
-    coordinator = SolarfocusDataUpdateCoordinator(hass, modbus_client, entry)
-    service_coordinator = SolarfocusServiceCoordinator(coordinator)
+    api = SolarfocusAPI(
+        ip=entry.data[CONF_HOST],
+        port=entry.data[CONF_PORT],
+        heating_circuit_count=entry.data[CONF_HEATING_CIRCUIT],
+        buffer_count=entry.data[CONF_BUFFER],
+        boiler_count=entry.data[CONF_BOILER],
+        system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]).name,
+    )
+    coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
 
     await coordinator.async_refresh()
 
@@ -54,22 +67,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # UPDATE_LISTENER: unsub_options_update_listener,
     }
 
-    hass.services.async_register(
-        DOMAIN, "set_operation_mode", service_coordinator.set_operation_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_heating_mode", service_coordinator.set_heating_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_boiler_mode", service_coordinator.set_boiler_mode
-    )
-
-    hass.services.async_register(
-        DOMAIN, "set_smart_grid", service_coordinator.set_smart_grid
-    )
-
     return True
 
 
@@ -84,7 +81,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
 
-    _LOGGER.info("async_unload_entry is getting called! unload_ok: %s", unload_ok)
+    _LOGGER.info("Async_unload_entry is getting called! unload_ok: %s", unload_ok)
 
     return unload_ok
 
@@ -93,3 +90,32 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    version = config_entry.version
+
+    _LOGGER.info("Migrating from version %s", version)
+
+    if version == 1:
+        # Config allows multiple heatings, buffers, and boilers
+        # and differentiates system (vampair, therminator)
+        new = {**config_entry.data}
+
+        new[CONF_HEATING_CIRCUIT] = 1 if config_entry.data[CONF_HEATING_CIRCUIT] else 0
+        new[CONF_BUFFER] = 1 if config_entry.data[CONF_BUFFER] else 0
+        new[CONF_BOILER] = 1 if config_entry.data[CONF_BOILER] else 0
+
+        new[CONF_SOLARFOCUS_SYSTEM] = (
+            config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+            if CONF_SOLARFOCUS_SYSTEM in config_entry.data
+            else Systems.Vampair
+        )
+
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+    return True

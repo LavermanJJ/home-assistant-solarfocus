@@ -30,8 +30,10 @@ Add custom integration using the web interface and follow instruction on screen.
 
 - Go to `Configuration -> Integrations` and add "Solarfocus" integration
 - Provide name for the device and it's IP-address
-- Select components for which you would like to add the sensors
-- Provide area where the heat pump is located
+- Select components for which you would like to add to home-assistant
+- Provide area where the heating system is located
+
+<img src="images/sf-configflow-1.png?raw=true" width="300">   <img src="images/sf-configflow-2.png?raw=true" width="300">
 
 ## What's Supported 
 
@@ -44,25 +46,18 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 
 | Components | Supported |
 |---|---|
-| Heating Circuit 1 (_Heizkreis_)| :white_check_mark: |
-| Buffer 1 (_Puffer_) | :white_check_mark: |
+| Heating Circuit 1 - 8 (_Heizkreis_)| :white_check_mark: |
+| Buffer 1 - 4 (_Puffer_) | :white_check_mark: |
 | Solar (_Solar_)| :x:|
-| Boiler 1 (_Boiler_) | :white_check_mark: |
+| Boiler 1 - 4 (_Boiler_) | :white_check_mark: |
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Biomassboiler (_Kessel_) | :white_check_mark: | 
-
-> **Note**
-> The number of supported Heating Circuits, Buffers, and Boilers could be extended in the future
 
 
 ### Provided Controls
 <img src="images/sf-controls.png?raw=true" width="500">
 
 <img src="images/sf-configuration.png?raw=true" width="500">
-
-### Provided Services
-
-<img src="images/sf-services.png?raw=true" width="500">
 
 ### Provided Sensors
 
