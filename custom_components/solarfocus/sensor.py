@@ -302,7 +302,7 @@ HEATPUMP_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="return_temperatur",
+        key="return_temperature",
         native_unit_of_measurement=TEMP_CELSIUS,
         icon="mdi:thermometer-chevron-down",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -356,7 +356,7 @@ HEATPUMP_SENSOR_TYPES = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="eletrical_energy_heating",
+        key="electrical_energy_heating",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
