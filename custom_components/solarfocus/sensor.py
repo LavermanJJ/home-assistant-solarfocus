@@ -13,10 +13,13 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     ENERGY_KILO_WATT_HOUR,
+    ENERGY_WATT_HOUR,
     PERCENTAGE,
+    POWER_KILO_WATT,
     POWER_WATT,
     REVOLUTIONS_PER_MINUTE,
     TEMP_CELSIUS,
+    VOLUME_LITERS,
 )
 
 from .const import (
@@ -32,6 +35,7 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
+    CONF_SOLAR,
     DATA_COORDINATOR,
     DOMAIN,
     HEAT_PUMP_COMPONENT,
@@ -46,6 +50,9 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     PHOTOVOLTAIC_PREFIX,
+    SOLAR_COMPONENT,
+    SOLAR_COMPONENT_PREFIX,
+    SOLAR_PREFIX,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
@@ -141,6 +148,20 @@ async def async_setup_entry(
                 PHOTOVOLTAIC_PREFIX,
                 PHOTOVOLTAIC_COMPONENT,
                 PHOTOVOLTAIC_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.data[CONF_SOLAR] or config_entry.options[CONF_SOLAR]:
+        for description in SOLAR_SENSOR_TYPES:
+
+            _description = create_description(
+                SOLAR_PREFIX,
+                SOLAR_COMPONENT,
+                SOLAR_COMPONENT_PREFIX,
                 "",
                 description,
             )
@@ -500,5 +521,89 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__pblogwood",
+    ),
+]
+
+SOLAR_SENSOR_TYPES = [
+    SensorEntityDescription(
+        key="collector_temperature_1",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="collector_temperature_2",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="collector_supply_temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="collector_return_temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="flow_heat_meter",
+        native_unit_of_measurement=VOLUME_LITERS,
+        icon="mdi:speedometer",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="curent_power",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        icon="mdi:lightning-bolt",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="curent_yield_heat_meter",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        icon="mdi:meter-electric",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="today_yield",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        icon="mdi:meter-electric",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="buffer_sensor_1",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="buffer_sensor_2",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="buffer_sensor_3",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="state",
+        icon="mdi:solar-power-variant",
+        device_class="solarfocus__sostate",
     ),
 ]

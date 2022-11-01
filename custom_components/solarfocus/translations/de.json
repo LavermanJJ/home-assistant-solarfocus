@@ -22,10 +22,11 @@
         "data": {
           "boiler": "Boiler",
           "buffer": "Pufferspeicher",
-          "heating_circuit": "Heizkreis",
+          "heating_circuit": "Heizkreise",
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
-          "pelletsboiler": "Kessel"
+          "pelletsboiler": "Kessel",
+          "solar": "Solar"
         }
       }
     }

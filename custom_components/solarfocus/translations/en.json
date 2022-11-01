@@ -13,12 +13,13 @@
         "title": "Component Selection",
         "description": "Which components should be integrated?",
         "data": {
-          "heating_circuit": "Enable Heating Circuit",
-          "buffer": "Enable Buffer",
-          "boiler": "Enable Boiler",
-          "heatpump": "Enable Heat Pump",
-          "photovoltaic": "Enable Photovoltaic",
-          "pelletsboiler": "Enable Pelletsboiler"
+          "heating_circuit": "Heating circuits",
+          "buffer": "Buffers",
+          "boiler": "Boilers",
+          "heatpump": "Heat pump",
+          "photovoltaic": "Photovoltaic",
+          "pelletsboiler": "Biomass boiler",
+          "solar" : "Solar"
         }
       }
     },
