@@ -148,7 +148,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=TEMP_CELSIUS,
         native_min_value=0.0,
-        native_max_value=35.0,
+        native_max_value=80.0,
         native_step=0.5,
     ),
 ]
