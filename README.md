@@ -48,7 +48,7 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 |---|---|
 | Heating Circuit 1 - 8 (_Heizkreis_)| :white_check_mark: |
 | Buffer 1 - 4 (_Puffer_) | :white_check_mark: |
-| Solar (_Solar_)| :x:|
+| Solar (_Solar_)| :white_check_mark: |
 | Boiler 1 - 4 (_Boiler_) | :white_check_mark: |
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Biomassboiler (_Kessel_) | :white_check_mark: | 
