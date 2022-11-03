@@ -19,7 +19,6 @@ from homeassistant.const import (
     POWER_WATT,
     REVOLUTIONS_PER_MINUTE,
     TEMP_CELSIUS,
-    VOLUME_LITERS,
 )
 
 from .const import (
