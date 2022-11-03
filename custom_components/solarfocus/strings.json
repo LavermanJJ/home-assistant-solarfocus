@@ -13,12 +13,13 @@
         "title": "Component Selection",
         "description": "Select which components are available in your setup and should be read.",
         "data": {
-          "heating_circuit": "Enable Heating Circuit",
-          "buffer": "Enable Buffer",
-          "boiler": "Enable Boiler",
-          "heatpump": "Enable Heatpump",
-          "photovoltaic": "Enable Photovoltaic",
-          "pelletsboiler": "Enable Biomass boiler"
+          "heating_circuit": "Heating circuits",
+          "buffer": "Buffers",
+          "boiler": "Boilers",
+          "heatpump": "Heat pump",
+          "photovoltaic": "Photovoltaic",
+          "pelletsboiler": "Biomass boiler",
+          "solar" : "Solar"
         }
       }
     },

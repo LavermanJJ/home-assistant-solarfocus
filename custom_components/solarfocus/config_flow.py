@@ -24,6 +24,7 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
+    CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
     DEFAULT_HOST,
     DEFAULT_NAME,
@@ -83,8 +84,9 @@ STEP_COMP_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
         vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
+        vol.Optional(CONF_SOLAR, default=False): bool,
     }
 )
 
@@ -96,7 +98,8 @@ STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
+        vol.Optional(CONF_SOLAR, default=False): bool,
     }
 )
 
@@ -107,8 +110,9 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
         vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=True): bool,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
+        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
+        vol.Optional(CONF_SOLAR, default=False): bool,
     }
 )
 
@@ -148,7 +152,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 2
+    VERSION = 3
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -201,6 +205,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.data[CONF_BUFFER] = user_input[CONF_BUFFER]
         self.data[CONF_HEATING_CIRCUIT] = user_input[CONF_HEATING_CIRCUIT]
         self.data[CONF_PHOTOVOLTAIC] = user_input[CONF_PHOTOVOLTAIC]
+        self.data[CONF_SOLAR] = user_input[CONF_SOLAR]
 
         if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]

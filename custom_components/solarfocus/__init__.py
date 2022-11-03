@@ -14,13 +14,12 @@ from .const import (
     CONF_BOILER,
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
+    CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
     DATA_COORDINATOR,
     DOMAIN,
 )
 
-# TODO List the platforms that you want to support.
-# For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.SELECT,
@@ -114,6 +113,15 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         )
 
         config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
+
+    if version == 2:
+        # Add option to configure solar
+        new = {**config_entry.data}
+
+        new[CONF_SOLAR] = False
+
+        config_entry.version = 3
         hass.config_entries.async_update_entry(config_entry, data=new)
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
