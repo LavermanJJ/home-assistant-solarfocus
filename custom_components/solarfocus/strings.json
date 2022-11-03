@@ -13,10 +13,10 @@
         "title": "Component Selection",
         "description": "Select which components are available in your setup and should be read.",
         "data": {
-          "heating_circuit": "Heating Circuit",
-          "buffer": "Buffer",
-          "boiler": "Boiler",
-          "heatpump": "Heat Pump",
+          "heating_circuit": "Heating circuits",
+          "buffer": "Buffers",
+          "boiler": "Boilers",
+          "heatpump": "Heat pump",
           "photovoltaic": "Photovoltaic",
           "pelletsboiler": "Biomass boiler",
           "solar" : "Solar"
