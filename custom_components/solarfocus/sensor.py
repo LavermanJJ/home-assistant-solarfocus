@@ -555,7 +555,7 @@ SOLAR_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="flow_heat_meter",
-        native_unit_of_measurement=VOLUME_LITERS,
+        native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
