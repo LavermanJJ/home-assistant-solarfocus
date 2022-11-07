@@ -422,6 +422,31 @@ HEATPUMP_SENSOR_TYPES = [
         icon="mdi:heat-pump",
         device_class="solarfocus__hpstate",
     ),
+    SensorEntityDescription(
+        key="cop_cooling",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="cop_heating",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="performance_overall",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="performance_overall_heating",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="performance_overall_drinking_water",
+        icon="mdi:poll",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
 ]
 
 PHOTOVOLTAIC_SENSOR_TYPES = [
