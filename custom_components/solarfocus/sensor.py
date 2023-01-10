@@ -524,7 +524,6 @@ PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="boiler_operating_mode",
         icon="mdi:format-list-bulleted",
-        state_class=SensorStateClass.MEASUREMENT,
         device_class="solarfocus__pbmode",
     ),
     SensorEntityDescription(
