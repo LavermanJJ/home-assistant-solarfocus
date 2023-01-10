@@ -1,9 +1,9 @@
 {
-    "name": "Solarfocus eco manager-touch",
+    "name": "Solarfocus eco manager-touch for eco top light",
     "country": [
       "DE", "AT", "CH"
     ],
-    "homeassistant": "2021.12.8",
-    "hacs": "1.18.0",
+    "homeassistant": "2022.12.7",
+    "hacs": "1.29.1",
     "render_readme": true
 }
