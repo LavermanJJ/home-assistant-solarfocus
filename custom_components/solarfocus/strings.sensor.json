@@ -156,6 +156,15 @@
       "0": "Aus",
       "1": "An"
     },
+    "solarfocus__bocharge": {
+      "-1": "Gesperrt",
+      "0": "Aus",
+      "1": "An"
+    },
+    "solarfocus_pbmessagenumber":{
+      "0": "Keine Meldung",
+      "1": "Interner Speicher ist ungültig"
+    },
     "solarfocus__pbstate": {
       "0": "Bereitschaft",
       "1": "Zündphase",
