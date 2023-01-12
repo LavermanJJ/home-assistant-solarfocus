@@ -305,6 +305,7 @@ BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="single_charge",
         icon="mdi:pump",
+        device_class="solarfocus__bocharge"
     ),
     SensorEntityDescription(
         key="circulation",
@@ -503,6 +504,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="message_number",
         icon="mdi:message-text-outline",
+        device_class="solarfocus_pbmessagenumber"
     ),
     SensorEntityDescription(
         key="cleaning",
