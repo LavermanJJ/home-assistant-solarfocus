@@ -19,6 +19,7 @@ from homeassistant.const import (
     POWER_WATT,
     REVOLUTIONS_PER_MINUTE,
     TEMP_CELSIUS,
+    MASS_KILOGRAMS,
 )
 
 from .const import (
@@ -546,6 +547,27 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class="solarfocus__pblogwood",
+    ),
+    SensorEntityDescription(
+        key="pellet_usage_last_fill",
+        native_unit_of_measurement=MASS_KILOGRAMS,
+        icon="mdi:gradient-vertical",
+        device_class=SensorDeviceClass.MASS,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pellet_usage_total",
+        native_unit_of_measurement=MASS_KILOGRAMS,
+        icon="mdi:alpha-t-box",
+        device_class=SensorDeviceClass.MASS,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="heat_energy_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:fire-circle",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
 ]
 
