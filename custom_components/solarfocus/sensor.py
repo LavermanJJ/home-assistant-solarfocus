@@ -552,14 +552,14 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="pellet_usage_last_fill",
         native_unit_of_measurement=MASS_KILOGRAMS,
         icon="mdi:gradient-vertical",
-        device_class=SensorDeviceClass.MASS,
+        device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="pellet_usage_total",
         native_unit_of_measurement=MASS_KILOGRAMS,
         icon="mdi:alpha-t-box",
-        device_class=SensorDeviceClass.MASS,
+        device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
