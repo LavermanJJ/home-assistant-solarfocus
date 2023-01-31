@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/lavermanjj/home-assistant-solarfocus",
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
-  "requirements": ["git+https://github.com/lein1013/pysolarfocus.git@main#pysolarfocus==3.4.2", "pymodbus==3.1.2"],
+  "requirements": ["git+https://github.com/lein1013/pysolarfocus.git@develop#pysolarfocus==3.4.2", "pymodbus==3.1.2"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
