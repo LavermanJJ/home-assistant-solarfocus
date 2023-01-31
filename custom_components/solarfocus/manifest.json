@@ -4,12 +4,12 @@
   "config_flow": true,
   "documentation": "https://github.com/lavermanjj/home-assistant-solarfocus",
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
-  "requirements": ["pysolarfocus==3.3.1", "pymodbus==2.5.3"],
+  "requirements": ["git+https://github.com/lein1013/pysolarfocus.git@main#pysolarfocus", "pymodbus==3.1.2"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
   "codeowners": ["@lavermanjj"],
   "iot_class": "local_polling",
-  "version": "0.0.1"
+  "version": "0.0.2"
 }
