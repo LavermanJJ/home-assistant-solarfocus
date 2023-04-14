@@ -246,7 +246,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         key="state",
         icon="mdi:radiator",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 31)) + list(range(200, 228)),
+        options=list(range(0, 32)) + list(range(200, 229)),
     ),
 ]
 
@@ -270,13 +270,13 @@ BUFFER_SENSOR_TYPES = [
         key="state",
         icon="mdi:database",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 7)) + list(range(200, 208)),
+        options=list(range(0, 8)) + list(range(200, 209)),
     ),
     SensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 2)),
+        options=list(range(0, 3)),
     ),
 ]
 
@@ -292,13 +292,13 @@ BOILER_SENSOR_TYPES = [
         key="state",
         icon="mdi:water-boiler",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 13)) + list(range(200, 212)),
+        options=list(range(0, 14)) + list(range(200, 213)),
     ),
     SensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 2)),
+        options=list(range(0, 3)),
     ),
     SensorEntityDescription(
         key="single_charge",
@@ -308,7 +308,7 @@ BOILER_SENSOR_TYPES = [
         key="circulation",
         icon="mdi:reload",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(-1, 1)),
+        options=list(range(-1, 2)),
     ),
 ]
 
@@ -420,7 +420,7 @@ HEATPUMP_SENSOR_TYPES = [
         key="vampair_state",
         icon="mdi:heat-pump",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 12)),
+        options=list(range(0, 13)),
     ),
     SensorEntityDescription(
         key="cop_cooling",
@@ -499,7 +499,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="status",
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(200, 246)) + list(range(300, 344)),
+        options=list(range(200, 247)) + list(range(300, 345)),
     ),
     SensorEntityDescription(
         key="message_number",
@@ -527,7 +527,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         icon="mdi:format-list-bulleted",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 5)),
+        options=list(range(0, 6)),
     ),
     SensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
@@ -547,7 +547,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 1)),
+        options=list(range(0, 2)),
     ),
 ]
 
@@ -632,6 +632,6 @@ SOLAR_SENSOR_TYPES = [
         key="state",
         icon="mdi:solar-power-variant",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 18)) + list(range(200, 222)),
+        options=list(range(0, 19)) + list(range(200, 223)),
     ),
 ]
