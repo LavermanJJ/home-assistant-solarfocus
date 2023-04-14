@@ -204,7 +204,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="mode",
+        key="holding_mode",
         icon="mdi:water-boiler",
         entity_category=EntityCategory.CONFIG,
         current_option="0",
