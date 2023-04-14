@@ -3,14 +3,25 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT, Platform
+from homeassistant.const import (
+    CONF_API_VERSION,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
+    Platform,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from pysolarfocus import SolarfocusAPI, Systems
+from pysolarfocus import SolarfocusAPI, Systems, ApiVersions
+
+from packaging import version
 
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import (
+    CONF_PHOTOVOLTAIC,
+    CONF_HEATPUMP,
+    CONF_PELLETSBOILER,
     CONF_BOILER,
     CONF_BUFFER,
     CONF_HEATING_CIRCUIT,
@@ -37,12 +48,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data.setdefault(DOMAIN, {})
 
     api = SolarfocusAPI(
-        ip=entry.data[CONF_HOST],
-        port=entry.data[CONF_PORT],
-        heating_circuit_count=entry.data[CONF_HEATING_CIRCUIT],
-        buffer_count=entry.data[CONF_BUFFER],
-        boiler_count=entry.data[CONF_BOILER],
+        ip=entry.options[CONF_HOST],
+        port=entry.options[CONF_PORT],
+        heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
+        buffer_count=entry.options[CONF_BUFFER],
+        boiler_count=entry.options[CONF_BOILER],
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]).name,
+        api_version=ApiVersions(entry.options[CONF_API_VERSION]),
     )
     coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
 
@@ -124,6 +136,45 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         config_entry.version = 3
         hass.config_entries.async_update_entry(config_entry, data=new)
 
+    if version == 3:
+        new_data = {**config_entry.data}
+        new_options = {**config_entry.options}
+
+        # Add option to select api version
+        new_options[CONF_API_VERSION] = "21.140"
+
+        # Move options from data to options
+        new_options[CONF_HOST] = new_data[CONF_HOST]
+        new_options[CONF_PORT] = new_data[CONF_PORT]
+        new_options[CONF_SCAN_INTERVAL] = new_data[CONF_SCAN_INTERVAL]
+        new_options[CONF_BOILER] = new_data[CONF_BOILER]
+        new_options[CONF_BUFFER] = new_data[CONF_BUFFER]
+        new_options[CONF_HEATING_CIRCUIT] = new_data[CONF_HEATING_CIRCUIT]
+        new_options[CONF_PHOTOVOLTAIC] = new_data[CONF_PHOTOVOLTAIC]
+        new_options[CONF_SOLAR] = new_data[CONF_SOLAR]
+        new_options[CONF_HEATPUMP] = new_data[CONF_HEATPUMP]
+        new_options[CONF_PELLETSBOILER] = new_data[CONF_PELLETSBOILER]
+
+        # Remove moved data
+        del new_data[CONF_HOST]
+        del new_data[CONF_PORT]
+        del new_data[CONF_SCAN_INTERVAL]
+        del new_data[CONF_BOILER]
+        del new_data[CONF_BUFFER]
+        del new_data[CONF_HEATING_CIRCUIT]
+        del new_data[CONF_PHOTOVOLTAIC]
+        del new_data[CONF_SOLAR]
+        del new_data[CONF_HEATPUMP]
+        del new_data[CONF_PELLETSBOILER]
+
+        config_entry.version = 4
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options
+        )
+
     _LOGGER.info("Migration to version %s successful", config_entry.version)
+    _LOGGER.debug(
+        f"Config Entries data: {config_entry.data}, options: {config_entry.options}"
+    )
 
     return True

@@ -1,5 +1,5 @@
 # Home Assistant Sensor for Solarfocus eco<sup>_manager-touch_</sup>
-Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarfocus.com/) eco<sup>_manager-touch_</sup>
+Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarfocus.com/) heating systems eco<sup>_manager-touch_</sup> and thermi<sup>nator</sup> II into Home Assistant.
 
 ## Getting Started
 ### 1: Installation
@@ -39,8 +39,11 @@ Add custom integration using the web interface and follow instruction on screen.
 
 ### Software Version
 
-This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `21.040`.
+This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `23.020`.
 [->Link to specification](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010)
+
+Supported versions: `21.140` - `23.020`. Features added in later versions are not yet supported.
+
 
 ### Solarfocus Components
 
@@ -52,6 +55,7 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 | Boiler 1 - 4 (_Boiler_) | :white_check_mark: |
 | Heatpump (_Wärmepumpe_) | :white_check_mark: |
 | Biomassboiler (_Kessel_) | :white_check_mark: | 
+| Fresh water module 1 - 4 (_Frischwassermodul_) | :white_check_mark: |
 
 
 ### Provided Controls
