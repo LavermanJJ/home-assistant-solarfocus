@@ -319,7 +319,7 @@
           "3": "Heizkreis ausgeschaltet (nur Frostwache)"
         }
       },
-      "bo_mode" : {
+      "bo_holding_mode" : {
         "state" : {
           "0": "Immer Aus",
           "1": "Immer Ein",

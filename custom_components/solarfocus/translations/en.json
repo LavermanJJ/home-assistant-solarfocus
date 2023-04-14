@@ -320,7 +320,7 @@
           "3": "Heating off (frost protection only)"
         }
       },
-      "bo_mode" : {
+      "bo_holding_mode" : {
         "state" : {
           "0": "Always on",
           "1": "Always off",
