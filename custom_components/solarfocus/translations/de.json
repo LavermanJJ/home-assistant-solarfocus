@@ -1,4 +1,27 @@
 {
+  "options": {
+    "step": {
+      "init": {
+        "title": "Aktualisiere Komponenten Auswahl",
+        "description": "Welche Komponenten sollen integriert werden?",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Abfrage Intervall (s)",
+          "api_version": "Solarfocus API Version",
+          "boiler": "Boiler",
+          "buffer": "Pufferspeicher",
+          "heating_circuit": "Heizkreise",
+          "heatpump": "Wärmepumpe",
+          "photovoltaic": "Photovoltaik",
+          "pelletsboiler": "Kessel",
+          "solar": "Solar",
+          "fresh_water_module" : "Frischwassermodule"
+        }
+      }
+    }
+  },
   "config": {
     "abort": {
       "already_configured": "Device is already configured"
@@ -10,10 +33,12 @@
     "step": {
       "user": {
         "data": {
+          "name": "Name",
           "host": "Host",
           "port": "Port",
           "scan_interval": "Abfrage Intervall (s)",
-          "system": "Solarfocus System"
+          "system": "Solarfocus System",
+          "api_version": "Solarfocus API Version"
         }
       },
       "component": {
@@ -26,13 +51,23 @@
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
           "pelletsboiler": "Kessel",
-          "solar": "Solar"
+          "solar": "Solar",
+          "fresh_water_module" : "Frischwassermodule"
         }
       }
     }
   },
   "entity": {
     "sensor": {
+      "fm_state" : {
+        "state" : {
+          "0": "Vorlauffühler nicht angeschlossen",
+          "1": "Pumpe ausgeschaltet",
+          "2": "Pumpe eingeschaltet",
+          "3": "Handbetrieb aktiv",
+          "4": "Handbetrieb deaktiviert"
+        }
+      },
       "bo_mode" : {
         "state" : {
           "0": "Immer Aus",
@@ -319,7 +354,7 @@
           "3": "Heizkreis ausgeschaltet (nur Frostwache)"
         }
       },
-      "bo_mode" : {
+      "bo_holding_mode" : {
         "state" : {
           "0": "Immer Aus",
           "1": "Immer Ein",
@@ -331,4 +366,3 @@
     }
   }
 }
-

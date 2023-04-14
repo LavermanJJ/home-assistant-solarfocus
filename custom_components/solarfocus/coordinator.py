@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
@@ -23,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     """Get the latest data and update the states."""
 
-    def __init__(self, hass, entry, api):
+    def __init__(self, hass, entry, api) -> None:
         """Init the Solarfocus data object."""
 
         self.api = api
@@ -33,11 +34,16 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         self._entry = entry
         self.hass = hass
 
+        _LOGGER.info(
+            "SolarfocusDataUpdateCoordinator.__init__(), SCAN Interval: %s",
+            self._entry.options[CONF_SCAN_INTERVAL],
+        )
+
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=self._entry.data[CONF_SCAN_INTERVAL]),
+            update_interval=timedelta(seconds=self._entry.options[CONF_SCAN_INTERVAL]),
         )
 
     async def _async_update_data(self):
@@ -48,39 +54,44 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
         success = True
 
-        if self._entry.data[CONF_HEATING_CIRCUIT]:
+        if self._entry.options[CONF_HEATING_CIRCUIT]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_heating
             )
 
-        if self._entry.data[CONF_BUFFER]:
+        if self._entry.options[CONF_BUFFER]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_buffer
             )
 
-        if self._entry.data[CONF_BOILER]:
+        if self._entry.options[CONF_BOILER]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_boiler
             )
 
-        if self._entry.data[CONF_HEATPUMP]:
+        if self._entry.options[CONF_HEATPUMP]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_heatpump
             )
 
-        if self._entry.data[CONF_PHOTOVOLTAIC]:
+        if self._entry.options[CONF_PHOTOVOLTAIC]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_photovoltaic
             )
 
-        if self._entry.data[CONF_PELLETSBOILER]:
+        if self._entry.options[CONF_PELLETSBOILER]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_pelletsboiler
             )
-        
-        if self._entry.data[CONF_SOLAR]:
+
+        if self._entry.options[CONF_SOLAR]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_solar
+            )
+
+        if self._entry.options[CONF_FRESH_WATER_MODULE]:
+            success &= True and await self.hass.async_add_executor_job(
+                self.api.update_fresh_water_modules
             )
 
         if not success:

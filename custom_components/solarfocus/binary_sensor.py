@@ -49,9 +49,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
+    for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_BINARY_SENSOR_TYPES:
-
             _description = create_description(
                 HEATING_CIRCUIT_PREFIX,
                 HEATING_CIRCUIT_COMPONENT,
@@ -63,9 +62,8 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    for i in range(config_entry.data[CONF_BUFFER]):
+    for i in range(config_entry.options[CONF_BUFFER]):
         for description in BUFFER_BINARY_SENSOR_TYPES:
-
             _description = create_description(
                 BUFFER_PREFIX,
                 BUFFER_COMPONENT,
@@ -77,9 +75,8 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
+    if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_BINARY_SENSOR_TYPES:
-
             _description = create_description(
                 HEAT_PUMP_PREFIX,
                 HEAT_PUMP_COMPONENT,
@@ -91,12 +88,8 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    if (
-        config_entry.data[CONF_PELLETSBOILER]
-        or config_entry.options[CONF_PELLETSBOILER]
-    ):
+    if config_entry.options[CONF_PELLETSBOILER]:
         for description in PB_BINARY_SENSOR_TYPES:
-
             _description = create_description(
                 PELLETS_BOILER_PREFIX,
                 PELLETS_BOILER_COMPONENT,

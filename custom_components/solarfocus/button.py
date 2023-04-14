@@ -34,9 +34,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    for i in range(config_entry.data[CONF_BOILER]):
+    for i in range(config_entry.options[CONF_BOILER]):
         for description in BOILER_BUTTON_TYPES:
-
             _description = create_description(
                 BOILER_PREFIX,
                 BOILER_COMPONENT,

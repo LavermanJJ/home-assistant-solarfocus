@@ -1,25 +1,51 @@
 {
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Component Selection",
+        "description": "Select which components are available in your setup and should be read.",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Polling interval (s)",
+          "api_version": "Solarfocus API Version",
+          "heating_circuit": "Heating Circuit",
+          "buffer": "Buffer",
+          "boiler": "Boiler",
+          "heatpump": "Heat Pump",
+          "photovoltaic": "Photovoltaic",
+          "pelletsboiler": "Biomass boiler",
+          "solar" : "Solar",
+          "fresh_water_module" : "Fresh water module"
+        }
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "data": {
+          "name": "Name",
           "host": "Host",
           "port": "Port",
           "scan_interval": "Polling interval (s)",
-          "system": "Solarfocus System"
+          "system": "Solarfocus System",
+          "api_version": "Solarfocus API Version"
         }
       },
       "component": {
         "title": "Component Selection",
         "description": "Select which components are available in your setup and should be read.",
         "data": {
-          "heating_circuit": "Heating circuits",
-          "buffer": "Buffers",
-          "boiler": "Boilers",
-          "heatpump": "Heat pump",
+          "heating_circuit": "Heating Circuit",
+          "buffer": "Buffer",
+          "boiler": "Boiler",
+          "heatpump": "Heat Pump",
           "photovoltaic": "Photovoltaic",
           "pelletsboiler": "Biomass boiler",
-          "solar" : "Solar"
+          "solar" : "Solar",
+          "fresh_water_module" : "Fresh water module"
         }
       }
     },
@@ -34,6 +60,15 @@
   },
   "entity": {
     "sensor": {
+      "fm_state" : {
+        "state" : {
+          "0": "Vorlauffühler nicht angeschlossen",
+          "1": "Pumpe ausgeschaltet",
+          "2": "Pumpe eingeschaltet",
+          "3": "Handbetrieb aktiv",
+          "4": "Handbetrieb deaktiviert"
+        }
+      },
       "bo_mode" : {
         "state" : {
           "0": "Always Off",
@@ -320,7 +355,7 @@
           "3": "Heating off (frost protection only)"
         }
       },
-      "bo_mode" : {
+      "bo_holding_mode" : {
         "state" : {
           "0": "Always on",
           "1": "Always off",

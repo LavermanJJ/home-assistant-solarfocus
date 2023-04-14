@@ -91,11 +91,12 @@ class SolarfocusEntity(Entity):
         """Return info for device registry."""
         device = self._name
         model = self.coordinator.api.system
+        version = self.coordinator.api.api_version.value
         return {
             "identifiers": {(DOMAIN, device)},
             "name": "Solarfocus",
             "model": {model},
-            "sw_version": "21.040",
+            "sw_version": {version},
             "manufacturer": "Solarfocus",
         }
 
