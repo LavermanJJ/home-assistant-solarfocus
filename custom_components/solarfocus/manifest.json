@@ -1,15 +1,15 @@
 {
   "domain": "solarfocus",
   "name": "Solarfocus",
+  "codeowners": ["@lavermanjj"],
   "config_flow": true,
+  "dependencies": [],
   "documentation": "https://github.com/lavermanjj/home-assistant-solarfocus",
+  "homekit": {},
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
+  "iot_class": "local_polling",
   "requirements": ["pysolarfocus==3.3.1", "pymodbus==2.5.3"],
   "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
-  "dependencies": [],
-  "codeowners": ["@lavermanjj"],
-  "iot_class": "local_polling",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "zeroconf": []
 }
