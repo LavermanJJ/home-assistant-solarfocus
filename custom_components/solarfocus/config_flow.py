@@ -7,19 +7,26 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    CONF_API_VERSION,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
+)
+from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 
-from pysolarfocus import SolarfocusAPI, Systems
+from pysolarfocus import SolarfocusAPI, Systems, ApiVersions
 
 
 from .const import (
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
@@ -40,6 +47,14 @@ SOLARFOCUS_SYSTEMS = [
     selector.SelectOptionDict(
         value="Therminator", label=" Biomass boiler therminator II and eco top zero light"
     ),
+]
+
+# CONF_API_VERSION
+SOLARFOCUS_API_VERSIONS = [
+    selector.SelectOptionDict(value="23.020", label="v23.020"),
+    selector.SelectOptionDict(value="23.010", label="v23.010"),
+    selector.SelectOptionDict(value="22.090", label="v22.090"),
+    selector.SelectOptionDict(value="21.140", label="v21.140"),
 ]
 
 _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = vol.All(
@@ -72,7 +87,15 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(
             CONF_SOLARFOCUS_SYSTEM, default="Vampair"
         ): selector.SelectSelector(
-            selector.SelectSelectorConfig(options=SOLARFOCUS_SYSTEMS),
+            selector.SelectSelectorConfig(
+                options=SOLARFOCUS_SYSTEMS, mode=selector.SelectSelectorMode.DROPDOWN
+            ),
+        ),
+        vol.Required(CONF_API_VERSION, default="23.020"): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=SOLARFOCUS_API_VERSIONS,
+                mode=selector.SelectSelectorMode.DROPDOWN,
+            ),
         ),
     }
 )
@@ -97,6 +120,12 @@ STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
         vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(
+            CONF_FRESH_WATER_MODULE, default=0
+        ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(
+            CONF_FRESH_WATER_MODULE, default=False
+        ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
         vol.Optional(CONF_SOLAR, default=False): bool,
@@ -110,6 +139,9 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
         vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(
+            CONF_FRESH_WATER_MODULE, default=0
+        ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_PELLETSBOILER, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
         vol.Optional(CONF_SOLAR, default=False): bool,
@@ -120,15 +152,17 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
 class Solarfocus:
     """Solarfocus Configflow"""
 
-    def __init__(self, hass, data) -> None:
+    def __init__(self, hass: HomeAssistant, data) -> None:
         """Initialize."""
         self.host = data[CONF_HOST]
         self.port = data[CONF_PORT]
         self.hass = hass
+
         self.api = SolarfocusAPI(
             ip=data[CONF_HOST],
             port=data[CONF_PORT],
             system=Systems(data[CONF_SOLARFOCUS_SYSTEM]).name,
+            api_version=ApiVersions(data[CONF_API_VERSION]),
         )
 
 
@@ -152,7 +186,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 3
+    VERSION = 4
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -170,7 +204,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         try:
-            info = await validate_input(self.hass, user_input)
+            await validate_input(self.hass, user_input)
         except CannotConnect:
             errors["base"] = "cannot_connect"
         except InvalidAuth:
@@ -201,12 +235,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
                 )
 
-        self.data[CONF_BOILER] = user_input[CONF_BOILER]
-        self.data[CONF_BUFFER] = user_input[CONF_BUFFER]
-        self.data[CONF_HEATING_CIRCUIT] = user_input[CONF_HEATING_CIRCUIT]
-        self.data[CONF_PHOTOVOLTAIC] = user_input[CONF_PHOTOVOLTAIC]
-        self.data[CONF_SOLAR] = user_input[CONF_SOLAR]
-
         if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.data[CONF_PELLETSBOILER] = False
@@ -215,80 +243,213 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data[CONF_HEATPUMP] = False
 
         return self.async_create_entry(
-            title=self.data["name"], data=self.data, options=self.data
+            title=self.data[CONF_NAME],
+            data={
+                CONF_NAME: self.data[CONF_NAME],
+                CONF_SOLARFOCUS_SYSTEM: self.data[CONF_SOLARFOCUS_SYSTEM],
+            },
+            options={
+                CONF_HOST: self.data[CONF_HOST],
+                CONF_PORT: self.data[CONF_PORT],
+                CONF_SCAN_INTERVAL: self.data[CONF_SCAN_INTERVAL],
+                CONF_API_VERSION: self.data[CONF_API_VERSION],
+                CONF_BOILER: user_input[CONF_BOILER],
+                CONF_BUFFER: user_input[CONF_BUFFER],
+                CONF_HEATING_CIRCUIT: user_input[CONF_HEATING_CIRCUIT],
+                CONF_PHOTOVOLTAIC: user_input[CONF_PHOTOVOLTAIC],
+                CONF_SOLAR: user_input[CONF_SOLAR],
+                CONF_HEATPUMP: self.data[CONF_HEATPUMP],
+                CONF_PELLETSBOILER: self.data[CONF_PELLETSBOILER],
+                CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
+            },
         )
 
-    # @staticmethod
-    # @callback
-    # def async_get_options_flow(config_entry):
-    #    """Get options flow."""
-    #    return SolarfocusOptionsFlowHandler(config_entry)
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return SolarfocusOptionsFlowHandler(config_entry)
 
 
 class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
     """Solarfocus config flow options handler."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Solarfocus options flow."""
+
         self.config_entry = config_entry
         self.options = dict(config_entry.options)
         self._errors = {}
 
-    async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Manage the options."""
 
         errors = {}
 
-        if user_input is not None:
-            _LOGGER.debug(f"OptionsFlow: going to update configuration {user_input}")
-            # if not (errors := check_input(self.hass, user_input)):
+        if user_input is None:
+            return await self._show_init_form(user_input, errors)
+
+        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+            self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
+            self.options[CONF_PELLETSBOILER] = False
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+            self.options[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
+            self.options[CONF_HEATPUMP] = False
+
+        try:
+            await validate_input(
+                self.hass,
+                {
+                    CONF_NAME: self.config_entry.data[CONF_NAME],
+                    CONF_HOST: user_input[CONF_HOST],
+                    CONF_PORT: user_input[CONF_PORT],
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                    CONF_API_VERSION: user_input[CONF_API_VERSION],
+                    CONF_SOLARFOCUS_SYSTEM: self.config_entry.data[
+                        CONF_SOLARFOCUS_SYSTEM
+                    ],
+                },
+            )
+        except CannotConnect:
+            errors["base"] = "cannot_connect"
+        except InvalidAuth:
+            errors["base"] = "invalid_auth"
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception")
+            errors["base"] = "unknown"
+        else:
             return self.async_create_entry(
-                title=self.config_entry.data["name"], data=user_input
+                title="",
+                data={
+                    CONF_HOST: user_input[CONF_HOST],
+                    CONF_PORT: user_input[CONF_PORT],
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                    CONF_API_VERSION: user_input[CONF_API_VERSION],
+                    CONF_BOILER: user_input[CONF_BOILER],
+                    CONF_BUFFER: user_input[CONF_BUFFER],
+                    CONF_HEATING_CIRCUIT: user_input[CONF_HEATING_CIRCUIT],
+                    CONF_PHOTOVOLTAIC: user_input[CONF_PHOTOVOLTAIC],
+                    CONF_SOLAR: user_input[CONF_SOLAR],
+                    CONF_HEATPUMP: self.options[CONF_HEATPUMP],
+                    CONF_PELLETSBOILER: self.options[CONF_PELLETSBOILER],
+                    CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
+                },
             )
 
-        return await self._show_options_form(user_input)
+        return await self._show_init_form(user_input, errors)
 
-    async def _show_options_form(self, user_input):
+    async def _show_init_form(self, user_input, errors):
         """Show the options form to edit info."""
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
+
+        data_schema = {}
+
+        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+            data_schema = vol.Schema(
                 {
                     vol.Required(
-                        CONF_HOST, default=self.options.get(CONF_HOST, DEFAULT_HOST)
-                    ): str,
-                    vol.Required(
-                        CONF_PORT, default=self.options.get(CONF_PORT, DEFAULT_PORT)
-                    ): int,
+                        CONF_HOST, default=self.config_entry.options[CONF_HOST]
+                    ): cv.string,
+                    vol.Optional(
+                        CONF_PORT, default=self.config_entry.options[CONF_PORT]
+                    ): cv.port,
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
-                        default=self.options.get(
-                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                        default=self.config_entry.options[CONF_SCAN_INTERVAL],
+                    ): cv.positive_int,
+                    vol.Required(
+                        CONF_API_VERSION,
+                        default=self.config_entry.options[CONF_API_VERSION],
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=SOLARFOCUS_API_VERSIONS,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
                         ),
-                    ): int,
+                    ),
                     vol.Optional(
                         CONF_HEATING_CIRCUIT,
-                        default=self.options.get(CONF_HEATING_CIRCUIT, True),
-                    ): bool,
+                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
+                    ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
                     vol.Optional(
-                        CONF_BUFFER, default=self.options.get(CONF_BUFFER, True)
-                    ): bool,
+                        CONF_BUFFER, default=self.config_entry.options[CONF_BUFFER]
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
                     vol.Optional(
-                        CONF_BOILER, default=self.options.get(CONF_BOILER, True)
-                    ): bool,
+                        CONF_BOILER, default=self.config_entry.options[CONF_BOILER]
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
                     vol.Optional(
-                        CONF_HEATPUMP, default=self.options.get(CONF_HEATPUMP, True)
+                        CONF_FRESH_WATER_MODULE,
+                        default=self.config_entry.options[CONF_FRESH_WATER_MODULE],
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+                    vol.Optional(
+                        CONF_HEATPUMP,
+                        default=self.config_entry.options[CONF_HEATPUMP],
                     ): bool,
                     vol.Optional(
                         CONF_PHOTOVOLTAIC,
-                        default=self.options.get(CONF_PHOTOVOLTAIC, True),
+                        default=self.config_entry.options[CONF_PHOTOVOLTAIC],
                     ): bool,
                     vol.Optional(
-                        CONF_PELLETSBOILER,
-                        default=self.options.get(CONF_PELLETSBOILER, True),
+                        CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
                     ): bool,
                 }
-            ),
+            )
+
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+            data_schema = vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HOST, default=self.config_entry.options[CONF_HOST]
+                    ): cv.string,
+                    vol.Optional(
+                        CONF_PORT, default=self.config_entry.options[CONF_PORT]
+                    ): cv.port,
+                    vol.Optional(
+                        CONF_SCAN_INTERVAL,
+                        default=self.config_entry.options[CONF_SCAN_INTERVAL],
+                    ): cv.positive_int,
+                    vol.Required(
+                        CONF_API_VERSION,
+                        default=self.config_entry.options[CONF_API_VERSION],
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(options=SOLARFOCUS_API_VERSIONS),
+                    ),
+                    vol.Optional(
+                        CONF_HEATING_CIRCUIT,
+                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
+                    ): bool,
+                    vol.Optional(
+                        CONF_HEATING_CIRCUIT,
+                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
+                    ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
+                    vol.Optional(
+                        CONF_BUFFER, default=self.config_entry.options[CONF_BUFFER]
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+                    vol.Optional(
+                        CONF_BOILER, default=self.config_entry.options[CONF_BOILER]
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+                    vol.Optional(
+                        CONF_FRESH_WATER_MODULE,
+                        default=self.config_entry.options[CONF_FRESH_WATER_MODULE],
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+                    vol.Optional(
+                        CONF_PELLETSBOILER,
+                        default=self.config_entry.options[CONF_PELLETSBOILER],
+                    ): bool,
+                    vol.Optional(
+                        CONF_PHOTOVOLTAIC,
+                        default=self.config_entry.options[CONF_PHOTOVOLTAIC],
+                    ): bool,
+                    vol.Optional(
+                        CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
+                    ): bool,
+                }
+            )
+
+        return self.async_show_form(
+            step_id="init", data_schema=data_schema, errors=errors
         )
 
 

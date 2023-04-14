@@ -7,7 +7,7 @@ UPDATE_LISTENER = "update-listener"
 DATA_COORDINATOR = "data-coordinator"
 
 """Default values for configuration"""
-DEFAULT_HOST = "solarfocus.local"
+DEFAULT_HOST = "solarfocus"
 DEFAULT_PORT = 502
 DEFAULT_NAME = "Solarfocus"
 DEFAULT_SCAN_INTERVAL = 10
@@ -21,6 +21,7 @@ CONF_HEATPUMP = "heatpump"
 CONF_PHOTOVOLTAIC = "photovoltaic"
 CONF_PELLETSBOILER = "pelletsboiler"
 CONF_SOLAR = "solar"
+CONF_FRESH_WATER_MODULE = "fresh_water_module"
 
 """Custom Measurement Units"""
 VOLUME_FLOW_RATE_LITER_PER_HOUR: Final = "l/h"
@@ -53,3 +54,7 @@ PHOTOVOLTAIC_COMPONENT_PREFIX = "pv"
 SOLAR_PREFIX = "Solar"
 SOLAR_COMPONENT = "solar"
 SOLAR_COMPONENT_PREFIX = "so"
+
+FRESH_WATER_MODULE_PREFIX = "Fresh water module"
+FRESH_WATER_MODULE_COMPONENT = "fresh_water_modules"
+FRESH_WATER_MODULE_COMPONENT_PREFIX = "fm"

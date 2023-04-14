@@ -6,7 +6,7 @@ import logging
 from homeassistant.components.sensor import SensorDeviceClass
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import UnitOfTemperature
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
@@ -43,9 +43,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
+    for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_NUMBER_TYPES:
-
             _description = create_description(
                 HEATING_CIRCUIT_PREFIX,
                 HEATING_CIRCUIT_COMPONENT,
@@ -57,9 +56,8 @@ async def async_setup_entry(
             entity = SolarfocusNumberEntity(coordinator, _description)
             entities.append(entity)
 
-    for i in range(config_entry.data[CONF_BOILER]):
+    for i in range(config_entry.options[CONF_BOILER]):
         for description in BOILER_NUMBER_TYPES:
-
             _description = create_description(
                 BOILER_PREFIX,
                 BOILER_COMPONENT,
@@ -146,9 +144,9 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
-        native_unit_of_measurement=TEMP_CELSIUS,
-        native_min_value=7.0,
-        native_max_value=35.0,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=0.0,
+        native_max_value=80.0,
         native_step=0.5,
     ),
 ]
@@ -159,7 +157,7 @@ BOILER_NUMBER_TYPES = [
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=20.0,
         native_max_value=80.0,
         native_step=1,
