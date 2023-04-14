@@ -142,6 +142,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         # Add option to select api version
         new_options[CONF_API_VERSION] = "21.140"
+        new_options[CONF_FRESH_WATER_MODULE] = 0
 
         # Move options from data to options
         new_options[CONF_HOST] = new_data[CONF_HOST]
