@@ -55,6 +55,17 @@ def create_description(
         )
     )
 
+    _description.translation_key = "".join(
+        filter(
+            None,
+            (
+                prefix,
+                "_",
+                _description.item,
+            ),
+        )
+    )
+
     return _description
 
 
@@ -98,6 +109,12 @@ class SolarfocusEntity(Entity):
         """Return a unique ID to use for this entity."""
         _LOGGER.debug("Unique_id - %s", self.entity_description.key)
         return f"{self._name}_{self.entity_description.key}"
+
+    @property
+    def translation_key(self):
+        """Return a translation key to use for this entity."""
+        _LOGGER.debug("Translation_key - %s", self.entity_description.translation_key)
+        return f"{self.entity_description.translation_key}"
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
