@@ -30,5 +30,305 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "bo_mode" : {
+        "state" : {
+          "0": "Immer Aus",
+          "1": "Immer Ein",
+          "2": "Montag \u2013 Sontag",
+          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
+          "4": "Tageweise"
+        }
+      },
+      "bu_mode" : {
+        "state" : {
+          "0": "Immer Aus",
+          "1": "Immer Ein",
+          "2": "Zeitschaltung"
+        }
+      },
+      "pb_mode" : {
+        "state" : {
+          "0": "Stückholz",
+          "1": "Stückholz Automatik",
+          "2": "Stückholz + Pellets",
+          "3": "Stückholz Automatik + Pellets",
+          "4": "Pellets",
+          "5": "Hackgut"
+        }
+      },
+      "pb_log_wood" : {
+        "state" : {
+          "0": "Stückholz anheizen/ nachlegen nicht notwendig/möglich",
+          "1": "Stückholz kann angeheizt/ nachgelegt werden"
+        }
+      },
+      "pb_state" : {
+        "state" : {
+          "200": "Standby",
+          "201": "Zündphase",
+          "202": "Pelletsbetrieb ",
+          "203": "Kesselsolltemperatur erreicht, Nachlauf ",
+          "204": "Nachlauf",
+          "205": "Keine Anforderung, Nachlauf",
+          "206": "Brenner ausgeschaltet",
+          "207": "Pelletsvorratsbehälter ist leer, Nachlauf ",
+          "208": "Wärmetauscherreinigung ist aktiv ",
+          "209": "Wärmetauscherreinigung benötigt, Nachlauf ",
+          "210": "Stromausfall, Nachlauf",
+          "212": "Einschubtemperatur zu hoch, Nachlauf",
+          "216": "Brenner ausgeschaltet, Nachlauf",
+          "217": "Sicherheitskette ist offen",
+          "218": "Sicherheitskette ist offen, Nachlauf ",
+          "219": "Restsauerstoffgehalt zu hoch oder zu niedrig, Nachlauf ",
+          "220": "Abgastemperaturabfall, Nachlauf ",
+          "221": "Abgastemperatur ist noch größer als {RGT_Start}, Bereitschaft",
+          "222": "Abgasfühler ist defekt, Bereitschaft ",
+          "223": "Einschubtemperatur zu hoch, Bereitschaft",
+          "224": "Lambdasonde ist defekt, Nachlauf ",
+          "225": "Kesseltemperatur ist ausreichend, Bereitschaft",
+          "226": "",
+          "227": "Kesselfühler ist defekt, Bereitschaft",
+          "228": "Kesselfühler ist defekt, Nachlauf",
+          "229": "Lambdasonde wird beheizt ",
+          "230": "Wärmetauscherreinigung wartet auf eine Freigabe, Zeit ",
+          "231": "Wärmetauscherreinigung wartet auf eine Freigabe, AGT",
+          "232": "Wärmetauscherreinigung wartet auf eine Freigabe, KT ",
+          "233": "Saugaustragung wartet auf eine Freigabe ",
+          "234": "Pelletsvorratsbehälter wird befüllt ",
+          "235": "Einschubfühlerkurzschluss, Bereitschaft ",
+          "236": "Rückbrandschieber öffnet",
+          "237": "Kessel wird befüllt",
+          "238": "Lambdasonde wird kalibriert",
+          "239": "Kaminkehrer Messfreigabe",
+          "240": "Alarm aktiv!",
+          "241": "Tür schließen! Überwachung AGT und Restsauerstoff inaktiv",
+          "242": "Tür war zu lange offen, Nachlauf",
+          "243": "Keine Brennerfreigabe, Zeit",
+          "244": "Keine Brennerzeitfreigabe, Nachlauf ",
+          "245": "Lambdasonde muss kalibriert werden, Nachlauf ",
+          "246": "Kesselreinigung",
+          "300": "Brenner ausgeschaltet, Vorratsbehälter wird befüllt",
+          "301": "Abbrand Stückholz ist beendet",
+          "302": "_s warten bis Einschub entleert ist!",
+          "303": "Stückholz manuell anzünden",
+          "304": "Automatische Zündung Stückholz",
+          "305": "Stückholz",
+          "306": "Stückholz Teillast, Tür nicht öffnen!",
+          "307": "Stückholz, anschließend Pellets",
+          "308": "Verbrennung Stückholz gestoppt, Tür nicht öffnen! ",
+          "309": "Tür ist offen!",
+          "310": "Startphase",
+          "311": "Hackgutbetrieb",
+          "312": "Blockade Einschub erkannt",
+          "313": "Kein Stromfluss Einschubmotor",
+          "314": "Blockade Raumaustragung erkannt",
+          "315": "Kein Stromfluss Austragungsmotor",
+          "316": "Stückholz Automatik wartet auf nächste Zeitfreigabe ",
+          "317": "Alarm! Alle Ausgaenge ausgeschaltet!",
+          "318": "Tür ist offen! Ein Kesselstart ist nicht möglich!",
+          "319": "Tür ist offen! Tür in spätestens _s schließen! ",
+          "320": "Störung, Nachlauf",
+          "321": "Positionsfahrt Saugsondenumschalteinheit ",
+          "322": "Ausgangtest Kessel",
+          "323": "Freisaugen Saugsonde aktiv",
+          "324": "Rüttler manuell",
+          "325": "Rüttler ist aktiv",
+          "326": "Drehrichtungsänderung",
+          "327": "Kein Stromfluss M1 erkannt",
+          "328": "Kein Stromfluss M1 erkannt",
+          "329": "Blockade Einschub erkannt",
+          "330": "Kein Stromfluss Einschub erkannt",
+          "331": "Kein Stromfluss M2 erkannt",
+          "332": "Kein Stromfluss M2 erkannt",
+          "333": "Fremdkessel Aktiv, Nachlauf",
+          "334": "Fremdkessel Aktiv, Bereitschaft",
+          "335": "Login: Administrator",
+          "336": "Login: Servicepersonal",
+          "337": "Login: Fachpersonal",
+          "338": "Kaminkehrermessung beendet, Nachlauf",
+          "339": "Warten bis die Raumluftklappe offen ist",
+          "340": "Keine Brennerfreigabe, Außentemperatur + Prognose ",
+          "341": "Keine Brennerfreigabe, Außentemperatur ",
+          "342": "Puffertemperatur ausreichend, Bereitschaft ",
+          "343": "Differenzdruckschalter hat ausgelöst, Nachlauf ",
+          "344": "WT-Spülung Brennwertmodul aktiv"
+        }
+      },
+      "bo_circulation" : {
+        "state" : {
+          "-1": "Gesperrt",
+          "0": "Aus",
+          "1": "An"
+        }
+      },
+      "bu_state" : {
+        "state" : {
+          "0": "Status nicht vorhanden",
+          "1": "Bereitschaft",
+          "2": "Puffer wird beladen",
+          "3": "Frostschutzbetrieb",
+          "4": "Kaminkehrer",
+          "5": "W\u00e4rmeableitung",
+          "6": "Testlauf Pumpe ist aktiv ",
+          "7": "Trinkwasserspeicher wird beladen",
+          "200": "Puffer ist nicht freigeschaltet ",
+          "201": "Bereitschaft",
+          "202": "Puffer wird beladen",
+          "203": "Frostschutzbetrieb",
+          "204": "Kaminkehrer",
+          "205": "Wärmeableitung",
+          "206": "Testlauf Pufferpumpe ist aktiv ",
+          "207": "Testlauf RLA-Pumpe ist aktiv ",
+          "208": "Puffer benötigt Energie"
+        }
+      },
+      "bo_state" : {
+        "state" : {
+          "0": "Boilerstatus nicht vorhanden",
+          "1": "Bereitschaft",
+          "10": "F\u00fchler Kurzschluss",
+          "11": "F\u00fchler Unterbrechung",
+          "12": "Ferienbetrieb",
+          "13": "Defrost",
+          "2": "Laden",
+          "3": "Frostschutz",
+          "4": "Rauchfangkehrermodus",
+          "5": "Legionellenschutz",
+          "6": "Anforderung",
+          "7": "Energiequelle zu hei\u00df",
+          "8": "Blockadeschutz",
+          "9": "einmalige Freigabe aktiv",
+          "200": "Trinkwasserspeicher ist nicht freigeschaltet ",
+          "201": "Bereitschaft",
+          "202": "Trinkwasserspeicher wird beladen",
+          "203": "Frostschutzbetrieb",
+          "204": "Kaminkehrer",
+          "205": "Legionellenschutzbetrieb",
+          "206": "Trinkwasserspeicher fordert an",
+          "207": "Wärmeableitung",
+          "208": "Pumpentestlauf ist aktiv",
+          "209": "Einmalladung",
+          "210": "Trinkwasserspeicherfühler hat einen Kurzschluss! ",
+          "211": "Trinkwasserspeicherfühler hat eine Unterbrechung! ",
+          "212": "Ferienbetrieb"
+        }
+      },
+      "hc_state" : {
+        "state": {
+          "0": "Heizkreis ist ausgeschaltet",
+          "1": "Absenkbetrieb",
+          "10": "Raumsolltemperatur Heizbetrieb erreicht",
+          "11": "Trinkwasserspeichervorrang ist aktiv",
+          "12": "Dauerheizbetrieb",
+          "13": "Dauerabsenkbetrieb",
+          "14": "Aussenf\u00fchlerunterbrechung",
+          "15": "min. Energiequellentemperatur unterschritten",
+          "16": "Vorlauff\u00fchler defekt",
+          "17": "min. Energiequellentemperatur unterschritten, Frostschutzbetrieb",
+          "18": "Testlauf Pumpe ist aktiv",
+          "19": "Partybetrieb",
+          "2": "Heizbetrieb",
+          "20": "Begrenzungsthermostat ist offen",
+          "21": "Pumpen Nachlauf",
+          "22": "Defrost",
+          "23": "K\u00fchlbetrieb",
+          "24": "K\u00fchlen hat Vorrang",
+          "25": "Heizen hat Vorrang",
+          "26": "Pool hat Vorrang",
+          "27": "Au\u00dfenabschalttemperatur Absenkbetrieb erreicht",
+          "28": "Raumsolltemperatur Absenkbetrieb erreicht",
+          "29": "Min. R\u00fccklauftemperatur \u2013 Regelung vampair",
+          "3": "Ferienbetrieb",
+          "30": "Au\u00dfenabschalttemperatur K\u00fchlen erreicht",
+          "31": "warte auf K\u00fchlbetrieb der W\u00e4rmepumpe",
+          "4": "Estrichprogramm",
+          "5": "Frostschutzbetrieb",
+          "6": "Kaminkehrer",
+          "7": "Heizkreis nicht freigeschaltet",
+          "8": "W\u00e4rmeableitung",
+          "9": "Au\u00dfenabschalttemperatur Heizbetrieb erreicht",
+          "200": "Heizkreis ist ausgeschaltet",
+          "201": "Dauerheizbetrieb",
+          "202": "Trinkwasserspeichervorrang ist aktiv",
+          "203": "Dauerabsenkbetrieb",
+          "204": "Außenfühler Unterbrechung oder Kurzschluss",
+          "205": "Min. Energiequellentemperatur unterschritten",
+          "206": "Absenkbetrieb",
+          "207": "Heizbetrieb",
+          "208": "Ferienbetrieb",
+          "209": "Estrichprogramm",
+          "210": "Frostschutzbetrieb",
+          "211": "Kaminkehrer",
+          "212": "Heizkreis ist nicht freigeschaltet",
+          "213": "Wärmeableitung",
+          "214": "Außenabschalttemperatur Heizbetrieb erreicht",
+          "215": "Raumsolltemperatur Heizbetrieb erreicht",
+          "217": "Min. Energiequellentemperatur unterschritten, Frostschutzbetrieb",
+          "218": "Begrenzungsthermostat ist offen",
+          "219": "Testlauf Pumpe ist aktiv",
+          "220": "Min. Puffertemperatur oben ist unterschritten",
+          "221": "Min. Puffertemperatur oben ist unterschritten, Frostschutzbetrieb",
+          "222": "Außenabschalttemperatur Absenkbetrieb erreicht",
+          "223": "Absenkbetrieb, verminderter Vorrang des TWS aktiv",
+          "224": "Raumsolltemperatur Absenkbetrieb erreicht",
+          "225": "Testlauf Mischer ist aktiv",
+          "226": "Partybetrieb",
+          "227": "Raumsolltemperatur Partybetrieb erreicht",
+          "228": "Außenabschalttemperatur Partybetrieb erreicht"
+        }
+      },
+      "hp_vampair_state": {
+        "state" : {
+          "0": "Bereitschaft",
+          "1": "Heizbetrieb",
+          "10": "K\u00fchlanforderung",
+          "11": "manuelle Leistungsvorgabe",
+          "12": "W\u00e4rmepumpe ausgeschaltet",
+          "2": "Heizbetrieb, Trinkwasserspeicherladung",
+          "3": "K\u00fchlbetrieb",
+          "4": "Manueller Betrieb",
+          "5": "EVU-Lock aktiv",
+          "6": "keine Zeitfreigabe, W\u00e4rmepumpe aus",
+          "7": "Au\u00dfentemperatursperre, W\u00e4rmepumpe aus",
+          "8": "elektrische Zusatzheizung aktiv",
+          "9": "Fremdkessel aktiv, W\u00e4rmepumpe aus"
+        }
+      }
+    },
+    "select" : {
+      "hp_smart_grid": {
+        "state": {
+          "2": "Normalbetrieb",
+          "4": "Einschaltung"
+        }
+      },
+      "hc_cooling" : {
+        "state" : {
+          "0": "Heizen",
+          "1": "Kühlen"
+        }
+      },
+      "hc_mode" : {
+        "state" : {
+          "0": "Dauerbetrieb",
+          "1": "Absenkbetrieb",
+          "2": "Automatik (Zeiteinstellung wird beachtet)",
+          "3": "Heizkreis ausgeschaltet (nur Frostwache)"
+        }
+      },
+      "bo_mode" : {
+        "state" : {
+          "0": "Immer Aus",
+          "1": "Immer Ein",
+          "2": "Montag \u2013 Sontag",
+          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
+          "4": "Tageweise"
+        }
+      }
+    }
   }
 }
+

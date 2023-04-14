@@ -45,7 +45,6 @@ async def async_setup_entry(
 
     for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SELECT_TYPES:
-
             _description = create_description(
                 HEATING_CIRCUIT_PREFIX,
                 HEATING_CIRCUIT_COMPONENT,
@@ -59,7 +58,6 @@ async def async_setup_entry(
 
     for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_SELECT_TYPES:
-
             _description = create_description(
                 BOILER_PREFIX,
                 BOILER_COMPONENT,
@@ -73,7 +71,6 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SELECT_TYPES:
-
             _description = create_description(
                 HEAT_PUMP_PREFIX,
                 HEAT_PUMP_COMPONENT,
@@ -173,7 +170,6 @@ HEATPUMP_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="smart_grid",
         icon="mdi:leaf",
-        device_class="solarfocus__hpsmartgrid",
         current_option="2",
         solarfocus_options=[
             "2",
@@ -186,7 +182,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="cooling",
         icon="mdi:snowflake",
-        device_class="solarfocus__hccooling",
         current_option="0",
         solarfocus_options=[
             "0",
@@ -196,7 +191,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="mode",
         icon="mdi:radiator",
-        device_class="solarfocus__hcmode",
         entity_category=EntityCategory.CONFIG,
         current_option="3",
         solarfocus_options=[
@@ -210,9 +204,8 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
-        key="holding_mode",
+        key="mode",
         icon="mdi:water-boiler",
-        device_class="solarfocus__bomode",
         entity_category=EntityCategory.CONFIG,
         current_option="0",
         solarfocus_options=[

@@ -69,7 +69,6 @@ async def async_setup_entry(
 
     for i in range(config_entry.data[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SENSOR_TYPES:
-
             _description = create_description(
                 HEATING_CIRCUIT_PREFIX,
                 HEATING_CIRCUIT_COMPONENT,
@@ -83,7 +82,6 @@ async def async_setup_entry(
 
     for i in range(config_entry.data[CONF_BOILER]):
         for description in BOILER_SENSOR_TYPES:
-
             _description = create_description(
                 BOILER_PREFIX,
                 BOILER_COMPONENT,
@@ -97,7 +95,6 @@ async def async_setup_entry(
 
     for i in range(config_entry.data[CONF_BUFFER]):
         for description in BUFFER_SENSOR_TYPES:
-
             _description = create_description(
                 BUFFER_PREFIX,
                 BUFFER_COMPONENT,
@@ -111,7 +108,6 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_HEATPUMP] or config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SENSOR_TYPES:
-
             _description = create_description(
                 HEAT_PUMP_PREFIX,
                 HEAT_PUMP_COMPONENT,
@@ -128,7 +124,6 @@ async def async_setup_entry(
         or config_entry.options[CONF_PELLETSBOILER]
     ):
         for description in PELLETS_BOILER_SENSOR_TYPES:
-
             _description = create_description(
                 PELLETS_BOILER_PREFIX,
                 PELLETS_BOILER_COMPONENT,
@@ -142,7 +137,6 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_PHOTOVOLTAIC] or config_entry.options[CONF_PHOTOVOLTAIC]:
         for description in PHOTOVOLTAIC_SENSOR_TYPES:
-
             _description = create_description(
                 PHOTOVOLTAIC_PREFIX,
                 PHOTOVOLTAIC_COMPONENT,
@@ -156,7 +150,6 @@ async def async_setup_entry(
 
     if config_entry.data[CONF_SOLAR] or config_entry.options[CONF_SOLAR]:
         for description in SOLAR_SENSOR_TYPES:
-
             _description = create_description(
                 SOLAR_PREFIX,
                 SOLAR_COMPONENT,
@@ -252,7 +245,8 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
     SensorEntityDescription(
         key="state",
         icon="mdi:radiator",
-        device_class="solarfocus__hcstate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 31)) + list(range(200, 228)),
     ),
 ]
 
@@ -275,12 +269,14 @@ BUFFER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="state",
         icon="mdi:database",
-        device_class="solarfocus__bustate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 7)) + list(range(200, 208)),
     ),
     SensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
-        device_class="solarfocus__bumode",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 2)),
     ),
 ]
 
@@ -295,12 +291,14 @@ BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="state",
         icon="mdi:water-boiler",
-        device_class="solarfocus__bostate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 13)) + list(range(200, 212)),
     ),
     SensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
-        device_class="solarfocus__bomode",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 2)),
     ),
     SensorEntityDescription(
         key="single_charge",
@@ -309,7 +307,8 @@ BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="circulation",
         icon="mdi:reload",
-        device_class="solarfocus__bocirculation",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(-1, 1)),
     ),
 ]
 
@@ -420,7 +419,8 @@ HEATPUMP_SENSOR_TYPES = [
     SensorEntityDescription(
         key="vampair_state",
         icon="mdi:heat-pump",
-        device_class="solarfocus__hpstate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 12)),
     ),
     SensorEntityDescription(
         key="cop_cooling",
@@ -498,7 +498,8 @@ PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="status",
         icon="mdi:fire-circle",
-        device_class="solarfocus__pbstate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(200, 246)) + list(range(300, 344)),
     ),
     SensorEntityDescription(
         key="message_number",
@@ -525,7 +526,8 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="boiler_operating_mode",
         icon="mdi:format-list-bulleted",
         state_class=SensorStateClass.MEASUREMENT,
-        device_class="solarfocus__pbmode",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 5)),
     ),
     SensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
@@ -544,7 +546,8 @@ PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="log_wood",
         icon="mdi:format-list-bulleted",
-        device_class="solarfocus__pblogwood",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 1)),
     ),
 ]
 
@@ -628,6 +631,7 @@ SOLAR_SENSOR_TYPES = [
     SensorEntityDescription(
         key="state",
         icon="mdi:solar-power-variant",
-        device_class="solarfocus__sostate",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 18)) + list(range(200, 222)),
     ),
 ]
