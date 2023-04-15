@@ -6,10 +6,11 @@
   "dependencies": [],
   "documentation": "https://github.com/lavermanjj/home-assistant-solarfocus",
   "homekit": {},
+  "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
   "requirements": ["pysolarfocus==3.6.4", "pymodbus==3.2.2"],
   "ssdp": [],
-  "version": "0.0.1",
+  "version": "3.0.0-beta",
   "zeroconf": []
 }
