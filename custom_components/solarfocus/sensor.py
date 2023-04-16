@@ -314,7 +314,7 @@ BOILER_SENSOR_TYPES = [
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 3)),
+        options=list(range(0, 5)),
     ),
     SensorEntityDescription(
         key="single_charge",
