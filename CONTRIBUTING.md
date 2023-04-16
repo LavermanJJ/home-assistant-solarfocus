@@ -8,7 +8,7 @@ There are several ways to contribute to this integration. Depending on your skil
 ### Direct edit via github.com
 For small edits, like fixing typos, formating, etc. the edit could be done directly using the web github page. Choose the file and `Edit this file`. Github will guide you through the process. It must be considered that each change will lead to a pull request. Further testing is also not possible.
 
-### Qick and Dirty 
+### Quick and Dirty 
 1) Fork the this repository
 2) create an additional branch (don't use the main)
 3) make you changes
