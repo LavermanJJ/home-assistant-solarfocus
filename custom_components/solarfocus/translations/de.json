@@ -140,7 +140,7 @@
           "29": "Lambdasonde wird beheizt",
           "30": "Wärmetauscherreinigung wartet auf eine Freigabe, Zeit",
           "31": "Wärmetauscherreinigung wartet auf eine Freigabe, AGT",
-          "32": " Wärmetauscherreinigung wartet auf eine Freigabe, KT",
+          "32": "Wärmetauscherreinigung wartet auf eine Freigabe, KT",
           "33": "Saugaustragung wartet auf nächste Freigabezeit",
           "34": "Pelletsvorratsbehälter wird befüllt",
           "35": "Einschubfühlerkurzschluss, Bereitschaft",
@@ -151,7 +151,7 @@
           "40": "Alarm aktiv!",
           "41": "Kesseltür ist offen, Bereitschaft",
           "42": "Tür war zu lange offen, Nachlauf",
-          "44": "keine Brennerzeitfreigabe, Nachlauf",
+          "44": "Keine Brennerzeitfreigabe, Nachlauf",
           "45": "Luftzahl Zündphase zu tief, Nachlauf",
           "46": "Ascheaustragung aktiv",
           "47": "Kesseltür/Aschebox ist offen, Bereitschaft",
@@ -160,12 +160,12 @@
           "50": "Saugaustragung wartet auf Umschalteinheit",
           "51": "Brenner ausgeschaltet, Mindestkessellaufzeit aktiv",
           "52": "Kaminkehrermessung beendet, Nachlauf",
-          "53": "warten bis die Raumluftklappe offen ist",
+          "53": "Warten bis die Raumluftklappe offen ist",
           "54": "Stromausfall, Bereitschaft",
           "55": "Stromausfall, Nachlauf",
           "56": "WT-Spülung Brennwertmodul aktiv",
           "57": "Differenzdruckschalter hat ausgelöst, Nachlauf",
-          "58": "warten auf Freigabe von Differenzdruckschalter",
+          "58": "Warten auf Freigabe von Differenzdruckschalter",
           "59": "WT-Spülung Brennwertmodul wartet auf eine Freigabe",    
           "200": "Standby",
           "201": "Zündphase",
@@ -264,7 +264,7 @@
           "1": "An"
         }
       },
-      "bo_charge" : {
+      "bo_single_charge" : {
         "state" : {
           "-1": "Gesperrt",
           "0": "Aus",

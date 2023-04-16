@@ -198,6 +198,6 @@ PB_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
-        on_state="0", # might be one for terminator, but is 0 for eco top light 
+        on_state="1",
     ),
 ]

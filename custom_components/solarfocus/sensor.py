@@ -319,6 +319,8 @@ BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="single_charge",
         icon="mdi:pump",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0,2)),
     ),
     SensorEntityDescription(
         key="circulation",

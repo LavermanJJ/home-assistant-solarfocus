@@ -9,8 +9,7 @@ Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarf
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 - Install [Home Assistant Community Store (HACS)](https://hacs.xyz/)
-- Add custom repository https://github.com/lavermanjj/home-assistant-solarfocus to HACS (original)
-- or forked version for eco top light https://github.com/lein1013/home-assistant-solarfocus
+- Add custom repository https://github.com/lavermanjj/home-assistant-solarfocus to HACS
 - Add integration repository (search for "Solarfocus" in "Explore & Download Repositories")
     - Select latest version or `master`
 - Restart Home Assistant to install all dependencies
