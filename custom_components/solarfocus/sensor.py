@@ -17,6 +17,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
+    UnitOfMass,
 )
 
 from .const import (
@@ -512,15 +513,16 @@ PELLETS_BOILER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="status",
+        key="state",
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(200, 247)) + list(range(300, 345)),
+        options=list(range(0, 60)) + list(range(200, 247)) + list(range(300, 345)),
     ),
     SensorEntityDescription(
         key="message_number",
         icon="mdi:message-text-outline",
-        device_class="solarfocus_pbmessagenumber"
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 2)),
     ),
     SensorEntityDescription(
         key="cleaning",
@@ -568,21 +570,21 @@ PELLETS_BOILER_SENSOR_TYPES = [
     ),
     SensorEntityDescription(
         key="pellet_usage_last_fill",
-        native_unit_of_measurement=MASS_KILOGRAMS,
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         icon="mdi:gradient-vertical",
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="pellet_usage_total",
-        native_unit_of_measurement=MASS_KILOGRAMS,
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         icon="mdi:alpha-t-box",
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="heat_energy_total",
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,

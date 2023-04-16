@@ -100,8 +100,73 @@
           "1": "Stückholz kann angeheizt/ nachgelegt werden"
         }
       },
+      "pb_message_number" : {
+        "state" : {
+          "0": "Keine Meldung",
+          "1": "Interner Speicher ist ungültig"
+        }
+      },
       "pb_state" : {
         "state" : {
+          "0": "Bereitschaft",
+          "1": "Zündphase",
+          "2": "Pelletsbetrieb",
+          "3": "Kesselsolltemperatur erreicht, Nachlauf",
+          "4": "Nachlauf",
+          "5": "keine Anforderung, Nachlauf",
+          "6": "Brenner ausgeschaltet",
+          "7": "Pelletsvorratsbehälter ist leer, Nachlauf",
+          "8": "Wärmetauscherreinigung ist aktiv",
+          "9": "Wärmetauscherreinigung benötigt, Nachlauf",
+          "10": "Stromausfall, Nachlauf",
+          "11": "zweiter Zündversuch, Nachlauf",
+          "12": "Füllraumtemperatur überschritten, Nachlauf",
+          "13": "Einschub überlastet, Nachlauf",
+          "14": "Fremdkessel aktiv, Nachlauf",
+          "15": "Fremdkessel aktiv, Bereitschaft",
+          "16": "Brenner ausgeschaltet, Nachlauf",
+          "17": "Sicherheitskette ist offen",
+          "18": "Sicherheitskette ist offen, Nachlauf",
+          "19": "Restsauerstoffgehalt zu hoch, Nachlauf",
+          "20": "Abgastemperatur zu gering, Nachlauf",
+          "21": "Abgastemperatur zu hoch, Bereitschaft",
+          "22": "Abgasfühler ist defekt, Bereitschaft",
+          "23": "Einschubtemperatur zu hoch, Bereitschaft",
+          "24": "Lambdasonde ist defekt, Nachlauf",
+          "25": "Kesseltemperatur ist ausreichend, Bereitschaft",
+          "26": "kein Stromfluss Einschubmotor, Nachlauf",
+          "27": "Kesselfühler ist defekt, Bereitschaft",
+          "28": "Kesselfühler ist defekt, Nachlauf",
+          "29": "Lambdasonde wird beheizt",
+          "30": "Wärmetauscherreinigung wartet auf eine Freigabe, Zeit",
+          "31": "Wärmetauscherreinigung wartet auf eine Freigabe, AGT",
+          "32": " Wärmetauscherreinigung wartet auf eine Freigabe, KT",
+          "33": "Saugaustragung wartet auf nächste Freigabezeit",
+          "34": "Pelletsvorratsbehälter wird befüllt",
+          "35": "Einschubfühlerkurzschluss, Bereitschaft",
+          "36": "Rückbrandschieber öffnet",
+          "37": "Kessel wird befüllt",
+          "38": "Lambdasonde wird kalibriert",
+          "39": "Kaminkehrer Messfreigabe",
+          "40": "Alarm aktiv!",
+          "41": "Kesseltür ist offen, Bereitschaft",
+          "42": "Tür war zu lange offen, Nachlauf",
+          "44": "keine Brennerzeitfreigabe, Nachlauf",
+          "45": "Luftzahl Zündphase zu tief, Nachlauf",
+          "46": "Ascheaustragung aktiv",
+          "47": "Kesseltür/Aschebox ist offen, Bereitschaft",
+          "48": "Kesseltür/Aschebox wurde geöffnet, Nachlauf",
+          "49": "Kessel aktiv",
+          "50": "Saugaustragung wartet auf Umschalteinheit",
+          "51": "Brenner ausgeschaltet, Mindestkessellaufzeit aktiv",
+          "52": "Kaminkehrermessung beendet, Nachlauf",
+          "53": "warten bis die Raumluftklappe offen ist",
+          "54": "Stromausfall, Bereitschaft",
+          "55": "Stromausfall, Nachlauf",
+          "56": "WT-Spülung Brennwertmodul aktiv",
+          "57": "Differenzdruckschalter hat ausgelöst, Nachlauf",
+          "58": "warten auf Freigabe von Differenzdruckschalter",
+          "59": "WT-Spülung Brennwertmodul wartet auf eine Freigabe",    
           "200": "Standby",
           "201": "Zündphase",
           "202": "Pelletsbetrieb ",
@@ -193,6 +258,13 @@
         }
       },
       "bo_circulation" : {
+        "state" : {
+          "-1": "Gesperrt",
+          "0": "Aus",
+          "1": "An"
+        }
+      },
+      "bo_charge" : {
         "state" : {
           "-1": "Gesperrt",
           "0": "Aus",
