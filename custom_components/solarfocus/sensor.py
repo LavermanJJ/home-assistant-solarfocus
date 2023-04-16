@@ -319,7 +319,6 @@ BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="single_charge",
         icon="mdi:pump",
-        device_class="solarfocus__bocharge"
     ),
     SensorEntityDescription(
         key="circulation",
@@ -513,7 +512,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="state",
+        key="status",
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 60)) + list(range(200, 247)) + list(range(300, 345)),
@@ -585,7 +584,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
     SensorEntityDescription(
         key="heat_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        icon="mdi:fire-circle",
+        icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
