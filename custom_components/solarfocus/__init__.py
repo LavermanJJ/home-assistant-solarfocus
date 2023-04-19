@@ -19,6 +19,7 @@ from packaging import version
 
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import (
+    CONF_FRESH_WATER_MODULE,
     CONF_PHOTOVOLTAIC,
     CONF_HEATPUMP,
     CONF_PELLETSBOILER,
@@ -27,7 +28,6 @@ from .const import (
     CONF_HEATING_CIRCUIT,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
-    CONF_FRESH_WATER_MODULE,
     DATA_COORDINATOR,
     DOMAIN,
 )
