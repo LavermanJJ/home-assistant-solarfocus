@@ -22,6 +22,12 @@ If you're interested in contributing code to the Home Assistant Solarfocus Custo
 4. Verify your changes (see Testing section)
 6. Submit a pull request.
 
+Please ensure that your code adheres to the following guidelines:
+
+* Ensure that your code is well-documented.
+* Avoid breaking changes whenever possible.
+* Keep your pull request small and focused on a single issue or feature.
+
 ### Testing
 
 #### Using devcontainer (recommended)
@@ -29,7 +35,7 @@ If you're interested in contributing code to the Home Assistant Solarfocus Custo
 To make development easier and more consistent across contributors, we recommend using the devcontainer setup provided by Home Assistant. This allows you to run Home Assistant Core in a Docker container and use Visual Studio Code as your development environment. For more information, please see the [Home Assistant Development Environment documentation](https://developers.home-assistant.io/docs/development_environment#developing-with-visual-studio-code--devcontainer).
 
 
-### Test on production (not recommended)
+#### Test on production (not recommended)
 
 Copy your changes manually (see [README.md -> Installation](README.md)) to your home assistant instance for testing (you can use the Home Assistant Visual Studio Code Add-on)
     - this method has the drawback, that you might modify something directly on your Home Assistant instance and forget to copy the change to your local repository.
