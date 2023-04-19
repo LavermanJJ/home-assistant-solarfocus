@@ -1,26 +1,41 @@
 # Contributing to Solarfocus Home Assistant Integration
 
-There are several ways to contribute to this integration. Depending on your skill it could be beta testing, documenting, adding new registers, adding new functions.
+Thank you for considering contributing to the Home Assistant Solarfocus Custom Component. Before you get started, please read through this guide to ensure that your contributions can be accepted as quickly and easily as possible.There are several ways to contribute to this integration. Depending on your skill it could be beta testing, documenting, adding new registers, adding new functions.
+
+## Reporting Issues
+
+If you encounter any problems with the Home Assistant Solarfocus Custom Component, please create a GitHub Issue in the project's repository. When creating an issue, please provide as much detail as possible, including:
+
+1. A clear and descriptive title
+2. A detailed description of the issue
+3. Steps to reproduce the issue
+4. Any relevant error messages or log output
+5. Your Home Assistant and Solarfocus integration and firmware versions
+
+## Contributing Code
+
+If you're interested in contributing code to the Home Assistant Solarfocus Custom Component, please follow these steps:
+
+1. Fork the project's repository.
+2. Create a new branch for your changes.
+3. Make your changes in the new branch.
+4. Verify your changes (see Testing section)
+6. Submit a pull request.
+
+### Testing
+
+#### Using devcontainer (recommended)
+
+To make development easier and more consistent across contributors, we recommend using the devcontainer setup provided by Home Assistant. This allows you to run Home Assistant Core in a Docker container and use Visual Studio Code as your development environment. For more information, please see the [Home Assistant Development Environment documentation](https://developers.home-assistant.io/docs/development_environment#developing-with-visual-studio-code--devcontainer).
 
 
-## Contribution methods
+### Test on production (not recommended)
 
-### Direct edit via github.com
-For small edits, like fixing typos, formating, etc. the edit could be done directly using the web github page. Choose the file and `Edit this file`. Github will guide you through the process. It must be considered that each change will lead to a pull request. Further testing is also not possible.
-
-### Quick and Dirty 
-1) Fork the this repository
-2) create an additional branch (don't use the main)
-3) make you changes
-4) copy your changes manually (see [README.md -> Installation](README.md)) to your home assistant instance for testing (you can use the Home Assistant Visual Studio Code Add-on)
+Copy your changes manually (see [README.md -> Installation](README.md)) to your home assistant instance for testing (you can use the Home Assistant Visual Studio Code Add-on)
     - this method has the drawback, that you might modify something directly on your Home Assistant instance and forget to copy the change to your local repository.
     - for testing you can also install the modified integration from
     `https://github.com/YOURNAME/home-assistant-solarfocus`
-5) push your changes to your forked repository
-6) create a pull request from your branch
 
-### Expert
-Use the docker devcontainer workflow as described in [Home Assistant Developer Docs](https://developers.home-assistant.io/)
 
 ## Remarks - Important Files
 
@@ -41,3 +56,11 @@ Use the docker devcontainer workflow as described in [Home Assistant Developer D
 - [Home Assistant Developer Environment](https://developers.home-assistant.io/docs/development_environment/
 )
 - [Home Assistant Translation](https://developers.home-assistant.io/docs/internationalization/core)
+
+## Code of Conduct
+
+We are committed to providing a friendly, safe, and welcoming environment for all, regardless of gender, sexual orientation, ability, ethnicity, religion, or other personal characteristics. By participating in this project, you agree to abide by our Code of Conduct.
+
+## License
+
+By contributing to the Home Assistant SolarFocus Custom Component, you agree that your contributions will be licensed under the project's Apache-2.0 License.
