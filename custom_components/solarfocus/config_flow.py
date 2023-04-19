@@ -45,7 +45,7 @@ _LOGGER = logging.getLogger(__name__)
 SOLARFOCUS_SYSTEMS = [
     selector.SelectOptionDict(value="Vampair", label="Heat pump vampair"),
     selector.SelectOptionDict(
-        value="Therminator", label=" Biomass boiler therminator II touch"
+        value="Therminator", label=" Biomass boiler therminator II touch OR ecotop light with ecomanager-touch"
     ),
 ]
 
