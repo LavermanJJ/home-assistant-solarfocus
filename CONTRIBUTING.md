@@ -34,6 +34,9 @@ Please ensure that your code adheres to the following guidelines:
 
 To make development easier and more consistent across contributors, we recommend using the devcontainer setup provided by Home Assistant. This allows you to run Home Assistant Core in a Docker container and use Visual Studio Code as your development environment. For more information, please see the [Home Assistant Development Environment documentation](https://developers.home-assistant.io/docs/development_environment#developing-with-visual-studio-code--devcontainer).
 
+* copy `custom_components/solarfocus` folder to `core/config/` directory.
+* once testing is done, make sure to copy the changes back to the git repository.
+
 
 #### Test on production (not recommended)
 
