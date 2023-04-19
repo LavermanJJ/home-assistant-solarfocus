@@ -61,12 +61,12 @@
   "entity": {
     "sensor": {
       "fm_state" : {
-        "state" : {
-          "0": "Vorlauffühler nicht angeschlossen",
-          "1": "Pumpe ausgeschaltet",
-          "2": "Pumpe eingeschaltet",
-          "3": "Handbetrieb aktiv",
-          "4": "Handbetrieb deaktiviert"
+        "state": {
+          "0": "Flow sensor not connected",
+          "1": "Pump turned off",
+          "2": "Pump turned on",
+          "3": "Manual mode activated",
+          "4": "Manual mode deactivated"
         }
       },
       "bo_mode" : {

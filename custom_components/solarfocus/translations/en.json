@@ -62,11 +62,11 @@
     "sensor": {
       "fm_state" : {
         "state": {
-          "0": "preliminary sensor not connected",
-          "1": "pump turned off",
-          "2": "pump turned on",
-          "3": "manual mode activated",
-          "4": "manual mode deactivated"
+          "0": "Flow sensor not connected",
+          "1": "Pump turned off",
+          "2": "Pump turned on",
+          "3": "Manual mode activated",
+          "4": "Manual mode deactivated"
         }
       },
       "bo_mode" : {
