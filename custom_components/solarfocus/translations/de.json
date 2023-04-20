@@ -253,8 +253,7 @@
           "84": "Warnung elektrostatischer Staubabscheider",
           "85": "Hochspannungskabel Staubabscheider",
           "86": "Notbetrieb Differenzdrucksensor",
-          "87": "Differenzdruck - Kessel Sofortstopp",
-          "_comment": "21 and 22 has been translated from the english user-manual and added here, it is not available in the original german user-manual"
+          "87": "Differenzdruck - Kessel Sofortstopp"
         }
       }, 
       "bo_circulation" : {
