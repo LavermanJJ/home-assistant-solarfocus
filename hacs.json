@@ -3,7 +3,7 @@
     "country": [
       "DE", "AT", "CH"
     ],
-    "homeassistant": "2021.12.8",
-    "hacs": "1.18.0",
+    "homeassistant": "2023.1.2",
+    "hacs": "1.29.1",
     "render_readme": true
 }

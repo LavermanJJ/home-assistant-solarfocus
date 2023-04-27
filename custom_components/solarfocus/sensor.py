@@ -17,6 +17,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
+    UnitOfMass,
 )
 
 from .const import (
@@ -313,11 +314,13 @@ BOILER_SENSOR_TYPES = [
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 3)),
+        options=list(range(0, 5)),
     ),
     SensorEntityDescription(
         key="single_charge",
         icon="mdi:pump",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0,2)),
     ),
     SensorEntityDescription(
         key="circulation",
@@ -514,11 +517,13 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="status",
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(200, 247)) + list(range(300, 345)),
+        options=list(range(0, 60)) + list(range(200, 247)) + list(range(300, 345)),
     ),
     SensorEntityDescription(
         key="message_number",
         icon="mdi:message-text-outline",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(range(0, 2)),
     ),
     SensorEntityDescription(
         key="cleaning",
@@ -563,6 +568,27 @@ PELLETS_BOILER_SENSOR_TYPES = [
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 2)),
+    ),
+    SensorEntityDescription(
+        key="pellet_usage_last_fill",
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
+        icon="mdi:gradient-vertical",
+        device_class=SensorDeviceClass.WEIGHT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pellet_usage_total",
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
+        icon="mdi:alpha-t-box",
+        device_class=SensorDeviceClass.WEIGHT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="heat_energy_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        icon="mdi:meter-gas",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
 ]
 
