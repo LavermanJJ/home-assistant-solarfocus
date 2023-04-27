@@ -100,12 +100,6 @@
           "1": "Stückholz kann angeheizt/ nachgelegt werden"
         }
       },
-      "pb_message_number" : {
-        "state" : {
-          "0": "Keine Meldung",
-          "1": "Interner Speicher ist ungültig"
-        }
-      },
       "pb_state" : {
         "state" : {
           "0": "Bereitschaft",

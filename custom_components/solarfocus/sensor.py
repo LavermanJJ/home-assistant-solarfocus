@@ -523,7 +523,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         key="message_number",
         icon="mdi:message-text-outline",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 2)),
+        options=list(range(0, 88)),
     ),
     SensorEntityDescription(
         key="cleaning",

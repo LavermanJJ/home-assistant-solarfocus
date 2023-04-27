@@ -101,12 +101,6 @@
           "1": "More Log wood can be put on the fire"
         }
       },
-      "pb_message_number" : {
-        "state" : {
-          "0": "Keine Meldung",
-          "1": "Interner Speicher ist ungültig"
-        }
-      },
       "pb_state" : {
         "state" : {
           "0": "Bereitschaft",
