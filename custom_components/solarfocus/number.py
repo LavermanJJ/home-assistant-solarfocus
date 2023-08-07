@@ -29,7 +29,12 @@ from .const import (
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
 )
-from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
+from .entity import (
+    SolarfocusEntity,
+    SolarfocusEntityDescription,
+    create_description,
+    filterVersionAndSystem,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,7 +74,7 @@ async def async_setup_entry(
             entity = SolarfocusNumberEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(entities)
+    async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
 @dataclass
@@ -147,6 +152,16 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=0.0,
         native_max_value=80.0,
+        native_step=0.5,
+    ),
+    SolarfocusNumberEntityDescription(
+        key="target_room_temperatur",
+        icon="mdi:thermostat",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=0.0,
+        native_max_value=45.0,
         native_step=0.5,
     ),
 ]

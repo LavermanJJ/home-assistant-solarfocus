@@ -58,7 +58,12 @@ from .const import (
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
-from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
+from .entity import (
+    SolarfocusEntity,
+    SolarfocusEntityDescription,
+    create_description,
+    filterVersionAndSystem,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +182,7 @@ async def async_setup_entry(
             entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(entities)
+    async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
 @dataclass
@@ -232,33 +237,33 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
 
 
 HEATING_CIRCUIT_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="room_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:home-thermometer-outline",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="humidity",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:water-percent",
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="mixer_valve",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:valve",
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="state",
         icon="mdi:radiator",
         device_class=SensorDeviceClass.ENUM,
@@ -268,61 +273,96 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
 
 
 BUFFER_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="top_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="bottom_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="state",
         icon="mdi:database",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 8)) + list(range(200, 209)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 3)),
     ),
+    SolarfocusSensorEntityDescription(
+        key="x35_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer-high",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        biomass_boiler_only=True,
+    ),
+    SolarfocusSensorEntityDescription(
+        key="external_top_temperature_x44",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer-high",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="22.090",
+        entity_registry_enabled_default=False,
+    ),
+    SolarfocusSensorEntityDescription(
+        key="external_middle_temperature_x36",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="22.090",
+        entity_registry_enabled_default=False,
+    ),
+    SolarfocusSensorEntityDescription(
+        key="external_bottom_temperature_x35",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer-low",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="22.090",
+        entity_registry_enabled_default=False,
+    ),
 ]
 
 BOILER_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="state",
         icon="mdi:water-boiler",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 14)) + list(range(200, 213)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 5)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="single_charge",
         icon="mdi:pump",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0,2)),
+        options=list(range(0, 2)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="circulation",
         icon="mdi:reload",
         device_class=SensorDeviceClass.ENUM,
@@ -331,136 +371,136 @@ BOILER_SENSOR_TYPES = [
 ]
 
 HEATPUMP_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-chevron-up",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="return_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-chevron-down",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="flow_rate",
         native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="compressor_speed",
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         icon="mdi:gauge",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_energy_drinking_water",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_energy_heating",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="electrical_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="electrical_energy_drinking_water",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="electrical_energy_heating",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="electrical_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:lightning-bolt",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_power_cooling",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:snowflake",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_power_heating",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:fire",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="thermal_energy_cooling",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="electrical_energy_cooling",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="vampair_state",
         icon="mdi:heat-pump",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 13)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="cop_cooling",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="cop_heating",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="performance_overall",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="performance_overall_heating",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="performance_overall_drinking_water",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
@@ -468,35 +508,35 @@ HEATPUMP_SENSOR_TYPES = [
 ]
 
 PHOTOVOLTAIC_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="power",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:solar-power",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="house_consumption",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:home-lightning-bolt-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="heatpump_consumption",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:heat-pump-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="grid_import",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:home-import-outline",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="grid_export",
         native_unit_of_measurement=UnitOfPower.WATT,
         icon="mdi:home-export-outline",
@@ -506,170 +546,173 @@ PHOTOVOLTAIC_SENSOR_TYPES = [
 ]
 
 PELLETS_BOILER_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="status",
         icon="mdi:fire-circle",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 60)) + list(range(200, 247)) + list(range(300, 345)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="message_number",
         icon="mdi:message-text-outline",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 88)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="cleaning",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:broom",
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="ash_container",
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:trash-can-outline",
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="outdoor_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="boiler_operating_mode",
         icon="mdi:format-list-bulleted",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 6)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 2)),
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",
         native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         icon="mdi:gradient-vertical",
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="23.010",
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="pellet_usage_total",
         native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         icon="mdi:alpha-t-box",
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="23.010",
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="heat_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:meter-gas",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        min_required_version="23.010",
     ),
 ]
 
 SOLAR_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="collector_temperature_1",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="collector_temperature_2",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="collector_supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="collector_return_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="flow_heat_meter",
         native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="curent_power",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         icon="mdi:lightning-bolt",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="curent_yield_heat_meter",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="today_yield",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="buffer_sensor_1",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="buffer_sensor_2",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="buffer_sensor_3",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="state",
         icon="mdi:solar-power-variant",
         device_class=SensorDeviceClass.ENUM,
@@ -678,10 +721,11 @@ SOLAR_SENSOR_TYPES = [
 ]
 
 FRESH_WATER_MODULE_SENSOR_TYPES = [
-    SensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="state",
         icon="mdi:faucet",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 5)),
+        min_required_version="23.020",
     ),
 ]

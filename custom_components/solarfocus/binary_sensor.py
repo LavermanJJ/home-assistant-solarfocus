@@ -35,7 +35,12 @@ from .const import (
     PELLETS_BOILER_COMPONENT_PREFIX,
     PELLETS_BOILER_PREFIX,
 )
-from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
+from .entity import (
+    SolarfocusEntity,
+    SolarfocusEntityDescription,
+    create_description,
+    filterVersionAndSystem,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,7 +106,7 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(entities)
+    async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
 @dataclass

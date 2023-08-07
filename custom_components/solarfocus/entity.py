@@ -4,11 +4,14 @@
 import copy
 from dataclasses import dataclass
 import logging
+from packaging import version
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_API_VERSION
 
 from homeassistant.helpers.entity import Entity, EntityDescription
 
 from .coordinator import SolarfocusDataUpdateCoordinator
-from .const import DOMAIN
+from .const import CONF_SOLARFOCUS_SYSTEM, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +24,9 @@ class SolarfocusEntityDescription(EntityDescription):
     component: str = None
     component_prefix: str = None
     component_idx: str = None
+    min_required_version: str = "21.140"
+    heat_pump_only: bool = False
+    biomass_boiler_only: bool = False
 
 
 def create_description(
@@ -67,6 +73,31 @@ def create_description(
     )
 
     return _description
+
+
+def filterVersionAndSystem(config_entry: ConfigEntry, entities):
+    api_version = version.parse(config_entry.options[CONF_API_VERSION])
+
+    version_filtered_entities = filter(
+        lambda entity: version.parse(entity.entity_description.min_required_version)
+        <= api_version,
+        entities,
+    )
+
+    system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+
+    if system == "Vampair":
+        filtered_entities = filter(
+            lambda entity: entity.entity_description.biomass_boiler_only == False,
+            version_filtered_entities,
+        )
+    elif system == "Therminator":
+        filtered_entities = filter(
+            lambda entity: entity.entity_description.heat_pump_only == False,
+            version_filtered_entities,
+        )
+
+    return filtered_entities
 
 
 class SolarfocusEntity(Entity):

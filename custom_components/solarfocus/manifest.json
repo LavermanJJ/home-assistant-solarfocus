@@ -11,6 +11,6 @@
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
   "requirements": ["pysolarfocus==3.6.4", "pymodbus==3.2.2"],
   "ssdp": [],
-  "version": "3.0.0-beta",
+  "version": "3.1.0",
   "zeroconf": []
 }
