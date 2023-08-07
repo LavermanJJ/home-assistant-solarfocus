@@ -20,7 +20,12 @@ from .const import (
     DATA_COORDINATOR,
     DOMAIN,
 )
-from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
+from .entity import (
+    SolarfocusEntity,
+    SolarfocusEntityDescription,
+    create_description,
+    filterVersionAndSystem,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +52,7 @@ async def async_setup_entry(
             entity = SolarfocusButtonEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(entities)
+    async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
 @dataclass

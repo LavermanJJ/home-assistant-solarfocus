@@ -1,29 +1,34 @@
 """Water Heater for Solarfocus integration"""
 
+from dataclasses import dataclass
 import logging
+from typing import Any
 from homeassistant.components.water_heater import (
     ATTR_OPERATION_MODE,
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
+    WaterHeaterEntityEntityDescription,
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    ATTR_TEMPERATURE,
-    PRECISION_TENTHS,
-    TEMP_CELSIUS,
-)
+
+from homeassistant.const import ATTR_TEMPERATURE, PRECISION_TENTHS, UnitOfTemperature
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-
-from .const import CONF_BOILER, DOMAIN
-from .entity import SolarfocusEntity
+from .const import (
+    BOILER_COMPONENT,
+    BOILER_COMPONENT_PREFIX,
+    BOILER_PREFIX,
+    CONF_BOILER,
+    DATA_COORDINATOR,
+    DOMAIN,
+)
+from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,29 +36,29 @@ _LOGGER = logging.getLogger(__name__)
 PRESET_AUTO = "auto"
 
 SOLARFOCUS_MODE_ALWAYS_OFF = 0
-SOLARFOCUS_MODE_ALWAY_ON = 1
+SOLARFOCUS_MODE_ALWAYS_ON = 1
 SOLARFOCUS_MODE_MO_TO_SUN = 2
 SOLARFOCUS_MODE_BLOCKWISE = 3
 SOLARFOCUS_MODE_DAYWISE = 4
 
 
-HA_DISPLAY_MODE_ALWAY_ON = "Immer Aus"
-HA_DISPLAY_MODE_ALWAYS_OFF = "Immer An"
+HA_DISPLAY_MODE_ALWAYS_ON = "Immer An"
+HA_DISPLAY_MODE_ALWAYS_OFF = "Immer Aus"
 HA_DISPLAY_MODE_MO_TO_SUN = "Montag - Sonntag"
 HA_DISPLAY_MODE_BLOCKWISE = "Blockweise"
 HA_DISPLAY_MODE_DAYWISE = "Tageweise"
 
 HA_MODE_TO_SOLARFOCUS = {
     HA_DISPLAY_MODE_ALWAYS_OFF: SOLARFOCUS_MODE_ALWAYS_OFF,
-    HA_DISPLAY_MODE_ALWAY_ON: SOLARFOCUS_MODE_ALWAY_ON,
+    HA_DISPLAY_MODE_ALWAYS_ON: SOLARFOCUS_MODE_ALWAYS_ON,
     HA_DISPLAY_MODE_MO_TO_SUN: SOLARFOCUS_MODE_MO_TO_SUN,
     HA_DISPLAY_MODE_BLOCKWISE: SOLARFOCUS_MODE_BLOCKWISE,
     HA_DISPLAY_MODE_DAYWISE: SOLARFOCUS_MODE_DAYWISE,
 }
 
 SOLARFOCUS_TO_HA_MODE = {
-    SOLARFOCUS_MODE_ALWAY_ON: HA_DISPLAY_MODE_ALWAYS_OFF,
-    SOLARFOCUS_MODE_ALWAYS_OFF: HA_DISPLAY_MODE_ALWAY_ON,
+    SOLARFOCUS_MODE_ALWAYS_ON: HA_DISPLAY_MODE_ALWAYS_ON,
+    SOLARFOCUS_MODE_ALWAYS_OFF: HA_DISPLAY_MODE_ALWAYS_OFF,
     SOLARFOCUS_MODE_MO_TO_SUN: HA_DISPLAY_MODE_MO_TO_SUN,
     SOLARFOCUS_MODE_BLOCKWISE: HA_DISPLAY_MODE_BLOCKWISE,
     SOLARFOCUS_MODE_DAYWISE: HA_DISPLAY_MODE_DAYWISE,
@@ -69,15 +74,30 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
     entities = []
 
-    if config_entry.data[CONF_BOILER]:
-        for description in SOLARFOCUS_WATER_HEATER_TYPES:
-            entity = SolarfocusWaterHeaterEntity(coordinator, description)
+    for i in range(config_entry.options[CONF_BOILER]):
+        for description in WATER_HEATER_TYPES:
+            _description = create_description(
+                BOILER_PREFIX,
+                BOILER_COMPONENT,
+                BOILER_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusWaterHeaterEntity(coordinator, _description)
             entities.append(entity)
 
     async_add_entities(entities)
+
+
+@dataclass
+class SolarfocusWaterHeaterEntityDescription(
+    SolarfocusEntityDescription, WaterHeaterEntityEntityDescription
+):
+    """Description of a Solarfocus number entity"""
 
 
 class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
@@ -93,15 +113,10 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
-        description: EntityDescription,
+        description: SolarfocusWaterHeaterEntityDescription,
     ) -> None:
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
-
-        title = self.coordinator._entry.title
-        name = self.entity_description.name
-        self.entity_id = f"water_heater.{title}"
-        self._attr_name = f"{name}"
 
     @property
     def operation_list(self) -> list[str]:
@@ -110,24 +125,24 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     @property
     def temperature_unit(self):
         """Return the unit of measurement."""
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def current_temperature(self):
         """Return the current temperature."""
-        value = self.coordinator.api.bo1_temp
-        return round(float(value), 2)
+        return self._get_native_value("temperature")
 
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        value = self.coordinator.api.bo1_target_temperatur
-        return round(float(value), 2)
+        return self._get_native_value("target_temperature")
 
     @property
     def current_operation(self):
         """Return current operation ie. heat, cool, idle."""
-        return SOLARFOCUS_TO_HA_MODE.get(self.coordinator.api.bo1_mode)
+        mode = self._get_native_value("mode")
+        _LOGGER.debug("Current_operation: %s", mode)
+        return SOLARFOCUS_TO_HA_MODE.get(mode)
 
     @property
     def min_temp(self):
@@ -147,20 +162,68 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
-            _LOGGER.info("Set Temperature: %s", temp)
-            await self.coordinator.update_bo1_target_temperatur(round(float(temp), 2))
+            self._set_native_value("target_temperature", temp)
+            _LOGGER.debug("Set Temperature: %s", temp)
 
     async def async_set_operation_mode(self, **kwargs) -> None:
         """Set new target temperature."""
         if (mode := kwargs.get(ATTR_OPERATION_MODE)) is not None:
             mapped_mode = HA_MODE_TO_SOLARFOCUS.get(mode)
-            _LOGGER.info("Set Operation Mode: %s (mapped to: %s)", mode, mapped_mode)
-            await self.coordinator.update_bo1_mode_holding(mapped_mode)
+            self._set_native_value("holding_mode", mapped_mode)
+            _LOGGER.debug("Set Operation Mode: %s (mapped to: %s)", mode, mapped_mode)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
+        _LOGGER.debug("async_turn_on")
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
+        _LOGGER.debug("async_turn_off")
+
+    def _set_native_value(self, item, value):
+        # self._attr_native_value = value
+
+        idx = int(self.entity_description.component_idx) - 1
+        component = getattr(self.coordinator.api, self.entity_description.component)[
+            idx
+        ]
+        _LOGGER.debug(
+            "_set_native_value - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            item,
+        )
+        number = getattr(component, item)
+        number.set_unscaled_value(value)
+        number.commit()
+        component.update()
+
+        self.async_write_ha_state()
+
+    def _get_native_value(self, item):
+        idx = int(self.entity_description.component_idx) - 1
+        component = getattr(self.coordinator.api, self.entity_description.component)[
+            idx
+        ]
+        # sensor = self.entity_description.item
+        _LOGGER.debug(
+            "_get_native_value - idx: %s, component: %s, sensor: %s",
+            idx,
+            self.entity_description.component,
+            item,
+        )
+        value = getattr(component, item).scaled_value
+        if isinstance(value, float):
+            try:
+                rounded_value = round(float(value), 2)
+                return rounded_value
+            except ValueError:
+                return value
+        return value
 
 
-SOLARFOCUS_WATER_HEATER_TYPES = [
-    EntityDescription(
-        key="bo_temperature",
-        name="Water Heater",
+WATER_HEATER_TYPES = [
+    SolarfocusWaterHeaterEntityDescription(
+        key="domestic_hot_water",
     )
 ]
