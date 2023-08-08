@@ -18,6 +18,7 @@
 <details open="open">
   <summary>Table of Contents</summary>
 
+5. [About](#about)
 1. [Home Assistant Device Types](#home-assistant-device-types)
 2. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
@@ -32,6 +33,10 @@
 
 
 ## About
+
+This Home Assistant custom component is not affiliated with the [SOLARFOCUS GmbH](https://www.solarfocus.com/en/footer-bar/about-us) but a community driven effort to integrate Solarfocus heating systems to Home Assistant allowing to monitor and control heat pumps, biomass boilers, domestic hot water, buffers, solar, and more. 
+
+The project uses the Python library [pysolarfocus](https://github.com/LavermanJJ/pysolarfocus) for retrieving values via Modbus TCP from the heating system.
 
 ## Home Assistant Device Types
 
@@ -56,6 +61,11 @@ This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> v
 Supported versions: `21.140` - `23.020`. Features added in later versions are not yet supported.
 
 ### Hardware
+
+The eco<sup>_manager-touch_</sup> can integrate the following heating systems
+- [Vamp<sup>_air_</sup>](https://www.solarfocus.com/en/products/air-source-heat-pump-vampair) heat pumps
+- [Thermin<sup>_nator_</sup>](https://www.solarfocus.com/en/products/biomassheating) biomass boilers
+- Ecotop light biomass boilers (_in progress_)
 
 | Components | Supported |
 |---|---|
