@@ -11,7 +11,7 @@
 <h3 align="center">Home Assistant Solarfocus eco<sup><i>manager-touch</i></sup> integration</h3>
 
 <p align="center">
-  Custom component for Home-Assistant to integrate [Solarfocus](https://www.solarfocus.com/) heating systems eco<sup><i>manager-touch</i></sup> and thermi<sup><i>nator</i></sup> II into Home Assistant.
+  Custom component for Home-Assistant to integrate <a href="https://www.solarfocus.com/">Solarfocus</a> heating systems eco<sup><i>manager-touch</i></sup> and thermi<sup><i>nator</i></sup> II into Home Assistant.
 </p>
 
 
