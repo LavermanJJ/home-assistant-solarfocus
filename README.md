@@ -49,7 +49,7 @@ There is currently support for the following device types within Home Assistant:
 - Selects
 - Water Heater
 
-![image](images/sf-screenshot.png?raw=true)
+![image](images/sf-screenshot.png)
 
 ## Supported Solarfocus Software and Hardware
 
@@ -90,7 +90,7 @@ You can find it in the default HACS repo. Just search `Solarfocus`.
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 
-#### Manual Installation
+### Manual Installation
 
 - Copy all files from `custom_components/solarfocus/` to `custom_components/solarfocus/` inside your config Home Assistant directory.
 - Restart Home Assistant to install all dependencies
