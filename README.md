@@ -51,7 +51,7 @@ There is currently support for the following device types within Home Assistant:
 - Selects
 - Water Heater
 
-![image](images/sf-screenshot.png)
+![image](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/images/sf-screenshot.png)
 
 ## Supported Solarfocus Software and Hardware
 
