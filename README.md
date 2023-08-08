@@ -1,6 +1,8 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![Installs][installs-shield]][installs]
 [![Version](https://img.shields.io/github/v/tag/lavermanjj/home-assistant-solarfocus?style=for-the-badge&label=Version&color=orange)](https://img.shields.io/github/v/tag/lavermanjj/home-assistant-solarfocus?style=for-the-badge&label=Version&color=orange)
+[![License](https://img.shields.io/github/license/lavermanjj/home-assistant-solarfocus?style=for-the-badge)](https://img.shields.io/github/license/lavermanjj/home-assistant-solarfocus?style=for-the-badge)
+
 
 <p align="center">
   <a href="https://github.com/leikoilja/ha-google-home">
