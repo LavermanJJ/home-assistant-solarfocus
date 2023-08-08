@@ -18,17 +18,17 @@
 <details open="open">
   <summary>Table of Contents</summary>
 
-5. [About](#about)
-1. [Home Assistant Device Types](#home-assistant-device-types)
-2. [Getting Started](#getting-started)
+1. [About](#about)
+2. [Home Assistant Device Types](#home-assistant-device-types)
+3. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
    - [HACS Installation](#hacs-installation)
    - [Manual Installation](#manual-installation)
    - [Integration Setup](#integration-setup)
-3. [Contribution](#contribution)
-4. [Localization](#localization)
-5. [Credits](#credits)
-
+4. [Contribution](#contribution)
+5. [Localization](#localization)
+6. [Credits](#credits)
+   
 </details>
 
 
