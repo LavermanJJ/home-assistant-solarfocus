@@ -485,10 +485,10 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "comfort": "Continuous operation",
+              "comfort": "On",
               "eco": "Reduced operation",
               "auto": "Automatic (time setting)",
-              "off": "Heating off (frost protection only)"
+              "off": "Off"
             }
           }
         }

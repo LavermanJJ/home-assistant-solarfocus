@@ -563,10 +563,10 @@
           },
           "preset_mode": {
             "state": {
-              "comfort": "Dauerbetrieb",
+              "comfort": "An",
               "eco": "Absenkbetrieb",
               "auto": "Automatik (Zeiteinstellung wird beachtet)",
-              "off": "Heizkreis ausgeschaltet (nur Frostwache)"
+              "off": "Aus"
             }
           }
         }
