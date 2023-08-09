@@ -190,7 +190,7 @@
           "341": "No burner release, outside temperature",
           "342": "Buffer cylinder temperature adequate, standby",
           "343": "Differential pressure switch triggered, lag",
-          "344": "HE-rinse condensing module active"          
+          "344": "HE-rinse condensing module active"
         }
       },
       "pb_message_number" : {
@@ -477,6 +477,20 @@
           "2": "Monday \u2013 Sunday",
           "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
           "4": "Daywise"
+        }
+      }
+    },
+    "climate": {
+      "hc_thermostat": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "comfort": "Continuous operation",
+              "eco": "Reduced operation",
+              "auto": "Automatic (time setting)",
+              "off": "Heating off (frost protection only)"
+            }
+          }
         }
       }
     }
