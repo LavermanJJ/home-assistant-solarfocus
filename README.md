@@ -36,7 +36,7 @@
 
 ## About
 
-This Home Assistant custom component is not affiliated with the [SOLARFOCUS GmbH](https://www.solarfocus.com/en/footer-bar/about-us) but a community driven effort to integrate Solarfocus heating systems to Home Assistant allowing to monitor and control heat pumps, biomass boilers, domestic hot water, buffers, solar, and more. 
+This Home Assistant custom component is a community driven effort to integrate Solarfocus heating systems to Home Assistant allowing to monitor and control heat pumps, biomass boilers, domestic hot water, buffers, solar, and more. It is not affiliated with the [SOLARFOCUS GmbH](https://www.solarfocus.com/en/footer-bar/about-us).
 
 The project uses the Python library [pysolarfocus](https://github.com/LavermanJJ/pysolarfocus) for retrieving values via Modbus TCP from the heating system.
 
