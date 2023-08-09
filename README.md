@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <a href="https://github.com/leikoilja/ha-google-home">
+  <a href="https://github.com/lavermanjj/home-assistant-solarfocus">
     <img src="https://brands.home-assistant.io/solarfocus/logo.png" alt="Logo" height="80">
   </a>
 </p>
@@ -29,14 +29,16 @@
    - [Integration Setup](#integration-setup)
 4. [Contribution](#contribution)
 5. [Localization](#localization)
-6. [Credits](#credits)
    
 </details>
 
 
 ## About
 
-This Home Assistant custom component is a community driven effort to integrate Solarfocus heating systems to Home Assistant allowing to monitor and control heat pumps, biomass boilers, domestic hot water, buffers, solar, and more. It is not affiliated with the [SOLARFOCUS GmbH](https://www.solarfocus.com/en/footer-bar/about-us).
+This Home Assistant custom component is a community driven effort to integrate Solarfocus heating systems to Home Assistant allowing to monitor and control heat pumps, biomass boilers, domestic hot water, buffers, solar, and more. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the [SOLARFOCUS GmbH](https://www.solarfocus.com/en/footer-bar/about-us).
+
+> **Warning**
+> Use with care, in case of doubt check with Solarfocus or your installer if a feature / functionality (e.g. cooling) is supported by your installation to avoid damages to your heating system or the building.
 
 The project uses the Python library [pysolarfocus](https://github.com/LavermanJJ/pysolarfocus) for retrieving values via Modbus TCP from the heating system.
 
@@ -50,6 +52,14 @@ There is currently support for the following device types within Home Assistant:
 - Buttons
 - Selects
 - Water Heater
+- Climate
+
+
+### Climate
+In a first version, the climate entity only supports heating. As some heat pump installations also support cooling, this may be added at a later point in time. However, as it is possible to use a heat pump system for cooling, which is not intent for that by the way it was built, damage to the building or system from condensate is possible. 
+
+Additionally, it is only possible to set the state (_preset_) and not to control the supply nor room temperature. A later version may add control as well. For now, we leave that to the programmed heating curve from Solarfocus. 
+
 
 ![image](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/images/sf-screenshot.png)
 
@@ -57,10 +67,12 @@ There is currently support for the following device types within Home Assistant:
 
 ### Software
 
-This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `23.020`.
-[->Link to specification](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010)
+> **Important**
+> This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `23.020`.
 
 Supported versions: `21.140` - `23.020`. Features added in later versions are not yet supported.
+
+The eco<sup>_manager-touch_</sup> Modbus TCP specification can be found [here](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010).
 
 ### Hardware
 
