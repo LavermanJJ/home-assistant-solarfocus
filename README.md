@@ -79,7 +79,7 @@ The eco<sup>_manager-touch_</sup> Modbus TCP specification can be found [here](h
 The eco<sup>_manager-touch_</sup> can integrate the following heating systems
 - [Vamp<sup>_air_</sup>](https://www.solarfocus.com/en/products/air-source-heat-pump-vampair) heat pumps
 - [Thermin<sup>_nator_</sup>](https://www.solarfocus.com/en/products/biomassheating) biomass boilers
-- Ecotop light biomass boilers (_in progress_)
+- [Ecotop<sup>light</sup> / Ecotop<sup>zero</sup>](https://www.solarfocus.com/de/produkte/biomasseheizung/pelletkessel/ecotop) biomass boilers (_in progress_)
 
 | Components | Supported |
 |---|---|
