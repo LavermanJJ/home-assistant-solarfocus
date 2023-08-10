@@ -68,7 +68,7 @@ Additionally, it is only possible to set the state (_preset_) and not to control
 ### Software
 
 > **Important**
-> This integration has been tested with Solarfocus eco<sup>_manager-touch_</sup> version `23.020`.
+> This integration has been tested with Solarfocus eco<sup>manager-touch</sup> version `23.020`.
 
 Supported versions: `21.140` - `23.020`. Features added in later versions are not yet supported.
 
@@ -77,8 +77,8 @@ The eco<sup>_manager-touch_</sup> Modbus TCP specification can be found [here](h
 ### Hardware
 
 The eco<sup>_manager-touch_</sup> can integrate the following heating systems
-- [Vamp<sup>_air_</sup>](https://www.solarfocus.com/en/products/air-source-heat-pump-vampair) heat pumps
-- [Thermin<sup>_nator_</sup>](https://www.solarfocus.com/en/products/biomassheating) biomass boilers
+- [Vamp<sup>air</sup>](https://www.solarfocus.com/en/products/air-source-heat-pump-vampair) heat pumps
+- [Thermin<sup>nator</sup>](https://www.solarfocus.com/en/products/biomassheating) biomass boilers
 - [Ecotop<sup>light</sup> / Ecotop<sup>zero</sup>](https://www.solarfocus.com/de/produkte/biomasseheizung/pelletkessel/ecotop) biomass boilers (_in progress_)
 
 | Components | Supported |
