@@ -134,26 +134,8 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
     @property
     def is_on(self):
         """Return the state of the binary sensor."""
-
-        component: None
-        idx = -1
-
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
-
-        sensor = self.entity_description.item
-        _LOGGER.debug(
-            "Is_on - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            sensor,
-        )
-        value = getattr(component, sensor).scaled_value
+        binary_sensor = self.entity_description.item
+        value = self._get_native_value(binary_sensor)
         on_state = self.entity_description.on_state
         state = int(value) == int(on_state)
         return state

@@ -49,10 +49,7 @@ SOLARFOCUS_MODE_TO_PRESET = {
 }
 
 PRESET_TO_SOLARFOCUS_MODE = {
-    PRESET_COMFORT: 0,
-    PRESET_ECO: 1,
-    PRESET_AUTO: 2,
-    PRESET_OFF: 3,
+    value: key for key, value in SOLARFOCUS_MODE_TO_PRESET.items()
 }
 
 
@@ -135,8 +132,8 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
         if self._get_native_value("state") in [0]:
             return HVACMode.OFF
 
-        #value = self._get_native_value("cooling")
-        #if value:
+        # value = self._get_native_value("cooling")
+        # if value:
         #    return HVACMode.COOL
 
         return HVACMode.HEAT
@@ -158,7 +155,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
         """Return the list of available operation modes."""
         modes = []
         modes.append(HVACMode.OFF)
-        #modes.append(HVACMode.COOL)
+        # modes.append(HVACMode.COOL)
         modes.append(HVACMode.HEAT)
         return modes
 
@@ -190,7 +187,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
         if hvac_mode == HVACMode.OFF:
             self._set_native_value("mode", "3")
 
-        #if hvac_mode == HVACMode.COOL:
+        # if hvac_mode == HVACMode.COOL:
         #    if self._get_native_value("state") in [0]:
         #        self._set_native_value("mode", "0")
         #    self._set_native_value("cooling", "1")
@@ -211,44 +208,6 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
     #     if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
     #         _LOGGER.info("Set Temperature: %s", temp)
     #         self._set_native_value("target_supply_temperature", temp)
-
-    def _set_native_value(self, item, value):
-        idx = int(self.entity_description.component_idx) - 1
-        component = getattr(self.coordinator.api, self.entity_description.component)[
-            idx
-        ]
-        _LOGGER.debug(
-            "_set_native_value - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            item,
-        )
-        number = getattr(component, item)
-        number.set_unscaled_value(value)
-        number.commit()
-        component.update()
-
-        self.async_write_ha_state()
-
-    def _get_native_value(self, item):
-        idx = int(self.entity_description.component_idx) - 1
-        component = getattr(self.coordinator.api, self.entity_description.component)[
-            idx
-        ]
-        _LOGGER.debug(
-            "_get_native_value - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            item,
-        )
-        value = getattr(component, item).scaled_value
-        if isinstance(value, float):
-            try:
-                rounded_value = round(float(value), 2)
-                return rounded_value
-            except ValueError:
-                return value
-        return value
 
 
 CLIMATE_TYPES = [

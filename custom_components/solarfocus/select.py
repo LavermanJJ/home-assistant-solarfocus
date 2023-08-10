@@ -114,61 +114,18 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
     ) -> None:
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
-
-        # self._attr_current_option = description.current_option
         self._attr_options = description.solarfocus_options
 
     async def async_select_option(self, option: str) -> None:
         """Update the current selected option."""
         self._attr_current_option = option
-
-        component: None
-        idx = -1
-
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
-
-        name = self.entity_description.item
-        _LOGGER.debug(
-            "Async_select_option - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            name,
-        )
-        select = getattr(component, name)
-        select.set_unscaled_value(option)
-        select.commit()
-        component.update()
-
-        self.async_write_ha_state()
+        select = self.entity_description.item
+        return self._set_native_value(select, option)
 
     @property
     def current_option(self) -> str:
-        component: None
-        idx = -1
-
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
-
-        sensor = self.entity_description.item
-        _LOGGER.debug(
-            "Current_option - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            sensor,
-        )
-        value = getattr(component, sensor).scaled_value
-        return str(value)
+        select = self.entity_description.item
+        return str(self._get_native_value(select))
 
 
 HEATPUMP_SELECT_TYPES = [
@@ -187,6 +144,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="cooling",
         icon="mdi:snowflake",
+        entity_registry_enabled_default=False,
         current_option="0",
         solarfocus_options=[
             "0",
@@ -197,6 +155,7 @@ HEATING_CIRCUIT_SELECT_TYPES = [
         key="mode",
         icon="mdi:radiator",
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         current_option="3",
         solarfocus_options=[
             "0",
@@ -212,6 +171,7 @@ BOILER_SELECT_TYPES = [
         key="holding_mode",
         icon="mdi:water-boiler",
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         current_option="0",
         solarfocus_options=[
             "0",

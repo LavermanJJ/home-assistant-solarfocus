@@ -122,12 +122,12 @@ class SolarfocusEntity(Entity):
         """Return info for device registry."""
         device = self._name
         model = self.coordinator.api.system
-        version = self.coordinator.api.api_version.value
+        api_version = self.coordinator.api.api_version.value
         return {
             "identifiers": {(DOMAIN, device)},
             "name": "Solarfocus",
             "model": {model},
-            "sw_version": {version},
+            "sw_version": {api_version},
             "manufacturer": "Solarfocus",
         }
 
@@ -157,3 +157,48 @@ class SolarfocusEntity(Entity):
     async def async_update(self):
         """Update entity."""
         await self.coordinator.async_request_refresh()
+
+    def _set_native_value(self, item, value):
+        component: None
+        idx = -1
+
+        if self.entity_description.component_idx:
+            idx = int(self.entity_description.component_idx) - 1
+            component = getattr(
+                self.coordinator.api, self.entity_description.component
+            )[idx]
+        else:
+            component = getattr(self.coordinator.api, self.entity_description.component)
+        _LOGGER.debug(
+            "_set_native_value - idx: %s, component: %s, entity: %s",
+            idx,
+            self.entity_description.component,
+            item,
+        )
+        entity = getattr(component, item)
+        entity.set_unscaled_value(value)
+        entity.commit()
+        component.update()
+
+        self.async_write_ha_state()
+
+    def _get_native_value(self, item):
+        component: None
+        idx = -1
+
+        if self.entity_description.component_idx:
+            idx = int(self.entity_description.component_idx) - 1
+            component = getattr(
+                self.coordinator.api, self.entity_description.component
+            )[idx]
+        else:
+            component = getattr(self.coordinator.api, self.entity_description.component)
+
+        _LOGGER.debug(
+            "_get_native_value - idx: %s, component: %s, entity: %s",
+            idx,
+            self.entity_description.component,
+            item,
+        )
+
+        return getattr(component, item).scaled_value

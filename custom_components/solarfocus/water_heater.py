@@ -51,14 +51,6 @@ HA_DISPLAY_MODE_MO_TO_SUN = "Montag - Sonntag"
 HA_DISPLAY_MODE_BLOCKWISE = "Blockweise"
 HA_DISPLAY_MODE_DAYWISE = "Tageweise"
 
-HA_MODE_TO_SOLARFOCUS = {
-    STATE_OFF: SOLARFOCUS_MODE_ALWAYS_OFF,
-    HA_DISPLAY_MODE_ALWAYS_ON: SOLARFOCUS_MODE_ALWAYS_ON,
-    HA_DISPLAY_MODE_MO_TO_SUN: SOLARFOCUS_MODE_MO_TO_SUN,
-    HA_DISPLAY_MODE_BLOCKWISE: SOLARFOCUS_MODE_BLOCKWISE,
-    HA_DISPLAY_MODE_DAYWISE: SOLARFOCUS_MODE_DAYWISE,
-}
-
 SOLARFOCUS_TO_HA_MODE = {
     SOLARFOCUS_MODE_ALWAYS_ON: HA_DISPLAY_MODE_ALWAYS_ON,
     SOLARFOCUS_MODE_ALWAYS_OFF: STATE_OFF,
@@ -66,6 +58,8 @@ SOLARFOCUS_TO_HA_MODE = {
     SOLARFOCUS_MODE_BLOCKWISE: HA_DISPLAY_MODE_BLOCKWISE,
     SOLARFOCUS_MODE_DAYWISE: HA_DISPLAY_MODE_DAYWISE,
 }
+
+HA_MODE_TO_SOLARFOCUS = {value: key for key, value in SOLARFOCUS_TO_HA_MODE.items()}
 
 SOLARFOCUS_TEMP_WATER_MIN = 20
 SOLARFOCUS_TEMP_WATER_MAX = 80
@@ -182,47 +176,6 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
         _LOGGER.debug("async_turn_off")
-
-    def _set_native_value(self, item, value):
-        # self._attr_native_value = value
-
-        idx = int(self.entity_description.component_idx) - 1
-        component = getattr(self.coordinator.api, self.entity_description.component)[
-            idx
-        ]
-        _LOGGER.debug(
-            "_set_native_value - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            item,
-        )
-        number = getattr(component, item)
-        number.set_unscaled_value(value)
-        number.commit()
-        component.update()
-
-        self.async_write_ha_state()
-
-    def _get_native_value(self, item):
-        idx = int(self.entity_description.component_idx) - 1
-        component = getattr(self.coordinator.api, self.entity_description.component)[
-            idx
-        ]
-        # sensor = self.entity_description.item
-        _LOGGER.debug(
-            "_get_native_value - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            item,
-        )
-        value = getattr(component, item).scaled_value
-        if isinstance(value, float):
-            try:
-                rounded_value = round(float(value), 2)
-                return rounded_value
-            except ValueError:
-                return value
-        return value
 
 
 WATER_HEATER_TYPES = [
