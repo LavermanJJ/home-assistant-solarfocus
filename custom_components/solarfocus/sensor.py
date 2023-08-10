@@ -207,33 +207,8 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
 
     @property
     def native_value(self):
-        """Return the current state."""
-        component: None
-        idx = -1
-
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
-
         sensor = self.entity_description.item
-        _LOGGER.debug(
-            "Native_value - idx: %s, component: %s, sensor: %s",
-            idx,
-            self.entity_description.component,
-            sensor,
-        )
-        value = getattr(component, sensor).scaled_value
-        if isinstance(value, float):
-            try:
-                rounded_value = round(float(value), 2)
-                return rounded_value
-            except ValueError:
-                return value
-        return value
+        return self._get_native_value(sensor)
 
 
 HEATING_CIRCUIT_SENSOR_TYPES = [
@@ -243,6 +218,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
     ),
     SolarfocusSensorEntityDescription(
         key="room_temperature",
@@ -343,6 +319,7 @@ BOILER_SENSOR_TYPES = [
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
     ),
     SolarfocusSensorEntityDescription(
         key="state",
@@ -355,6 +332,7 @@ BOILER_SENSOR_TYPES = [
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 5)),
+        entity_registry_enabled_default=False,
     ),
     SolarfocusSensorEntityDescription(
         key="single_charge",

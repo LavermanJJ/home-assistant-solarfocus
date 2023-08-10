@@ -15,8 +15,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from pysolarfocus import SolarfocusAPI, Systems, ApiVersions
 
-from packaging import version
-
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import (
     CONF_FRESH_WATER_MODULE,
