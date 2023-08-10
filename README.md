@@ -10,7 +10,7 @@
   </a>
 </p>
 
-<h3 align="center">Home Assistant Solarfocus eco<sup><i>manager-touch</i></sup> integration</h3>
+<h3 align="center">Home Assistant Solarfocus eco<sup>manager-touch</sup> integration</h3>
 
 <p align="center">
   Custom component for Home-Assistant to integrate <a href="https://www.solarfocus.com/">Solarfocus</a> heating systems into Home Assistant.
