@@ -142,7 +142,25 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
     def hvac_action(self) -> HVACAction:
         state = self._get_native_value("state")
 
-        if state in [0, 6, 7, 9, 10, 27, 28, 30]:
+        if state in [
+            0,
+            6,
+            7,
+            9,
+            10,
+            11,
+            27,
+            28,
+            30,
+            200,
+            202,
+            212,
+            214,
+            215,
+            227,
+            228,
+            211,
+        ]:
             return HVACAction.OFF
         if state in [31]:
             return HVACAction.IDLE
