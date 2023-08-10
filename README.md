@@ -58,10 +58,9 @@ There is currently support for the following device types within Home Assistant:
 ### Climate
 In a first version, the climate entity only supports heating. As some heat pump installations also support cooling, this may be added at a later point in time. However, as it is possible to use a heat pump system for cooling, which is not intent for that by the way it was built, damage to the building or system from condensate is possible. 
 
-Additionally, it is only possible to set the state (_preset_) and not to control the supply nor room temperature. A later version may add control as well. For now, we leave that to the programmed heating curve from Solarfocus. 
+Additionally, it is only possible to set the state (_preset_) but not setting the supply nor room temperature. This can be done using the `number` entities. A later version may add control as well. For now, we leave that to the programmed heating curve from Solarfocus. 
 
-
-![image](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/images/sf-screenshot.png)
+![example](img/example.png)
 
 ## Supported Solarfocus Software and Hardware
 
@@ -72,7 +71,7 @@ Additionally, it is only possible to set the state (_preset_) and not to control
 
 Supported versions: `21.140` - `23.020`. Features added in later versions are not yet supported.
 
-The eco<sup>_manager-touch_</sup> Modbus TCP specification can be found [here](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010).
+The eco<sup>manager-touch</sup> Modbus TCP specification can be found [here](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010).
 
 ### Hardware
 
