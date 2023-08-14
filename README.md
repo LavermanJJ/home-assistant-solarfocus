@@ -22,13 +22,14 @@
 
 1. [About](#about)
 2. [Home Assistant Device Types](#home-assistant-device-types)
-3. [Getting Started](#getting-started)
+3. [Supported Solarfocus Software and Hardware](#supported-solarfocus-software-and-hardware)
+4. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
    - [HACS Installation](#hacs-installation)
    - [Manual Installation](#manual-installation)
    - [Integration Setup](#integration-setup)
-4. [Contribution](#contribution)
-5. [Localization](#localization)
+5. [Contribution](#contribution)
+6. [Localization](#localization)
    
 </details>
 
