@@ -57,6 +57,7 @@ from .const import (
     SOLAR_PREFIX,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
+from pysolarfocus import Systems
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
@@ -281,7 +282,7 @@ BUFFER_SENSOR_TYPES = [
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        biomass_boiler_only=True,
+        supported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="external_top_temperature_x44",
@@ -566,6 +567,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 6)),
+        supported_systems=[Systems.THERMINATOR],
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
@@ -573,6 +575,7 @@ PELLETS_BOILER_SENSOR_TYPES = [
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+        supported_systems=[Systems.THERMINATOR],
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
@@ -580,12 +583,14 @@ PELLETS_BOILER_SENSOR_TYPES = [
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+        supported_systems=[Systems.THERMINATOR],
     ),
     SolarfocusSensorEntityDescription(
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 2)),
+        supported_systems=[Systems.THERMINATOR],
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",

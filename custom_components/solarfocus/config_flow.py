@@ -45,8 +45,9 @@ _LOGGER = logging.getLogger(__name__)
 SOLARFOCUS_SYSTEMS = [
     selector.SelectOptionDict(value="Vampair", label="Heat pump vampair"),
     selector.SelectOptionDict(
-        value="Therminator", label=" Biomass boiler therminator II touch"
+        value="Therminator", label=" Biomass boiler therminator II"
     ),
+    selector.SelectOptionDict(value="EcoTop", label=" Biomass boiler EcoTop"),
 ]
 
 # CONF_API_VERSION
@@ -225,20 +226,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Handle the Component Selection step."""
         if user_input is None:
-            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
                 return self.async_show_form(
                     step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
                 )
-            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+            if self.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
                 return self.async_show_form(
                     step_id="component",
                     data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
                 )
 
-        if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+        if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.data[CONF_PELLETSBOILER] = False
-        elif self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+        elif self.data[CONF_SOLARFOCUS_SYSTEM] in  [Systems.THERMINATOR, Systems.ECOTOP]:
             self.data[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
             self.data[CONF_HEATPUMP] = False
 
@@ -293,10 +294,10 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is None:
             return await self._show_init_form(user_input, errors)
 
-        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.options[CONF_PELLETSBOILER] = False
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in  [Systems.THERMINATOR, Systems.ECOTOP]:
             self.options[CONF_PELLETSBOILER] = user_input[CONF_PELLETSBOILER]
             self.options[CONF_HEATPUMP] = False
 
@@ -347,7 +348,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
 
         data_schema = {}
 
-        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Vampair:
+        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             data_schema = vol.Schema(
                 {
                     vol.Required(
@@ -397,7 +398,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                 }
             )
 
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.Therminator:
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in  [Systems.THERMINATOR, Systems.ECOTOP]:
             data_schema = vol.Schema(
                 {
                     vol.Required(

@@ -81,7 +81,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
 
         if self._entry.options[CONF_PELLETSBOILER]:
             success &= True and await self.hass.async_add_executor_job(
-                self.api.update_pelletsboiler
+                self.api.update_biomassboiler
             )
 
         if self._entry.options[CONF_SOLAR]:

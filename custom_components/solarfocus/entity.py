@@ -2,7 +2,7 @@
 
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from packaging import version
 from homeassistant.config_entries import ConfigEntry
@@ -10,6 +10,7 @@ from homeassistant.const import CONF_API_VERSION
 
 from homeassistant.helpers.entity import Entity, EntityDescription
 
+from pysolarfocus import Systems
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import CONF_SOLARFOCUS_SYSTEM, DOMAIN
 
@@ -25,8 +26,9 @@ class SolarfocusEntityDescription(EntityDescription):
     component_prefix: str = None
     component_idx: str = None
     min_required_version: str = "21.140"
-    heat_pump_only: bool = False
-    biomass_boiler_only: bool = False
+    supported_systems: list = field(
+        default_factory=lambda: [Systems.VAMPAIR, Systems.THERMINATOR, Systems.ECOTOP]
+    )
 
 
 def create_description(
@@ -84,18 +86,12 @@ def filterVersionAndSystem(config_entry: ConfigEntry, entities):
         entities,
     )
 
-    system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+    current_system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
 
-    if system == "Vampair":
-        filtered_entities = filter(
-            lambda entity: entity.entity_description.biomass_boiler_only == False,
-            version_filtered_entities,
-        )
-    elif system == "Therminator":
-        filtered_entities = filter(
-            lambda entity: entity.entity_description.heat_pump_only == False,
-            version_filtered_entities,
-        )
+    filtered_entities = filter(
+        lambda entity: current_system in entity.entity_description.supported_systems,
+        version_filtered_entities,
+    )
 
     return filtered_entities
 
@@ -120,6 +116,7 @@ class SolarfocusEntity(Entity):
     @property
     def device_info(self) -> dict:
         """Return info for device registry."""
+        model: Systems
         device = self._name
         model = self.coordinator.api.system
         api_version = self.coordinator.api.api_version.value
