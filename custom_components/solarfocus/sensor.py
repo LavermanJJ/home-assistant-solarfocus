@@ -2,37 +2,41 @@
 from dataclasses import dataclass
 import logging
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from pysolarfocus import Systems
 
 from homeassistant.components.sensor import (
-    SensorEntity,
     SensorDeviceClass,
+    SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     UnitOfEnergy,
+    UnitOfMass,
     UnitOfPower,
     UnitOfTemperature,
-    UnitOfMass,
 )
+from homeassistant.core import HomeAssistant
 
 from .const import (
+    BIOMASS_BOILER_COMPONENT,
+    BIOMASS_BOILER_COMPONENT_PREFIX,
+    BIOMASS_BOILER_PREFIX,
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
     BOILER_PREFIX,
     BUFFER_COMPONENT,
     BUFFER_COMPONENT_PREFIX,
     BUFFER_PREFIX,
+    CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
-    CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     DATA_COORDINATOR,
@@ -46,9 +50,6 @@ from .const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
-    PELLETS_BOILER_COMPONENT,
-    PELLETS_BOILER_COMPONENT_PREFIX,
-    PELLETS_BOILER_PREFIX,
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     PHOTOVOLTAIC_PREFIX,
@@ -57,7 +58,6 @@ from .const import (
     SOLAR_PREFIX,
     VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
-from pysolarfocus import Systems
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
@@ -131,12 +131,12 @@ async def async_setup_entry(
             entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.options[CONF_PELLETSBOILER]:
-        for description in PELLETS_BOILER_SENSOR_TYPES:
+    if config_entry.options[CONF_BIOMASS_BOILER]:
+        for description in BIOMASS_BOILER_SENSOR_TYPES:
             _description = create_description(
-                PELLETS_BOILER_PREFIX,
-                PELLETS_BOILER_COMPONENT,
-                PELLETS_BOILER_COMPONENT_PREFIX,
+                BIOMASS_BOILER_PREFIX,
+                BIOMASS_BOILER_COMPONENT,
+                BIOMASS_BOILER_COMPONENT_PREFIX,
                 "",
                 description,
             )
@@ -190,11 +190,11 @@ async def async_setup_entry(
 class SolarfocusSensorEntityDescription(
     SolarfocusEntityDescription, SensorEntityDescription
 ):
-    """Description of a Solarfocus sensor entity"""
+    """Description of a Solarfocus sensor entity."""
 
 
 class SolarfocusSensor(SolarfocusEntity, SensorEntity):
-    """Sensor for the Solarfocus"""
+    """Sensor for the Solarfocus."""
 
     _attr_has_entity_name = True
 
@@ -208,6 +208,7 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
 
     @property
     def native_value(self):
+        """Return native value."""
         sensor = self.entity_description.item
         return self._get_native_value(sensor)
 
@@ -524,7 +525,7 @@ PHOTOVOLTAIC_SENSOR_TYPES = [
     ),
 ]
 
-PELLETS_BOILER_SENSOR_TYPES = [
+BIOMASS_BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,

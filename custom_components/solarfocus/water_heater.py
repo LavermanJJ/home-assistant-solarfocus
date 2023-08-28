@@ -1,29 +1,25 @@
-"""Water Heater for Solarfocus integration"""
+"""Water Heater for Solarfocus integration."""
 
 from dataclasses import dataclass
 import logging
 from typing import Any
+
 from homeassistant.components.water_heater import (
     ATTR_OPERATION_MODE,
     WaterHeaterEntity,
-    WaterHeaterEntityFeature,
     WaterHeaterEntityEntityDescription,
+    WaterHeaterEntityFeature,
 )
-
 from homeassistant.config_entries import ConfigEntry
-
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     PRECISION_TENTHS,
     STATE_OFF,
     UnitOfTemperature,
 )
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-)
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     BOILER_COMPONENT,
@@ -94,7 +90,7 @@ async def async_setup_entry(
 class SolarfocusWaterHeaterEntityDescription(
     SolarfocusEntityDescription, WaterHeaterEntityEntityDescription
 ):
-    """Description of a Solarfocus number entity"""
+    """Description of a Solarfocus number entity."""
 
 
 class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
@@ -117,6 +113,7 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
 
     @property
     def operation_list(self) -> list[str]:
+        """Return list of operations."""
         return list(HA_MODE_TO_SOLARFOCUS)
 
     @property
@@ -153,7 +150,7 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
 
     @property
     def target_temperature_step(self) -> float:
-        """Set target temperature"""
+        """Set target temperature."""
         return PRECISION_TENTHS
 
     async def async_set_temperature(self, **kwargs):
@@ -170,10 +167,12 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
             _LOGGER.debug("Set Operation Mode: %s (mapped to: %s)", mode, mapped_mode)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn water heater on."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
         _LOGGER.debug("async_turn_on")
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn water heater off."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
         _LOGGER.debug("async_turn_off")
 

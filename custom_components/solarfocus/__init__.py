@@ -1,6 +1,9 @@
 """The Solarfocus integration."""
 from __future__ import annotations
+
 import logging
+
+from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -13,22 +16,20 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from pysolarfocus import SolarfocusAPI, Systems, ApiVersions
-
-from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import (
-    CONF_FRESH_WATER_MODULE,
-    CONF_PHOTOVOLTAIC,
-    CONF_HEATPUMP,
-    CONF_PELLETSBOILER,
+    CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
+    CONF_HEATPUMP,
+    CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
     DATA_COORDINATOR,
     DOMAIN,
 )
+from .coordinator import SolarfocusDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -155,7 +156,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new_options[CONF_PHOTOVOLTAIC] = new_data[CONF_PHOTOVOLTAIC]
         new_options[CONF_SOLAR] = new_data[CONF_SOLAR]
         new_options[CONF_HEATPUMP] = new_data[CONF_HEATPUMP]
-        new_options[CONF_PELLETSBOILER] = new_data[CONF_PELLETSBOILER]
+        new_options[CONF_BIOMASS_BOILER] = new_data[CONF_BIOMASS_BOILER]
 
         # Remove moved data
         del new_data[CONF_HOST]
@@ -167,16 +168,26 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         del new_data[CONF_PHOTOVOLTAIC]
         del new_data[CONF_SOLAR]
         del new_data[CONF_HEATPUMP]
-        del new_data[CONF_PELLETSBOILER]
+        del new_data[CONF_BIOMASS_BOILER]
 
         config_entry.version = 4
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options
         )
 
+    if version == 4:
+        new_data = {**config_entry.data}
+        new_options = {**config_entry.options}
+
+        # Rename pelletsboiler to biomassboiler
+        new_options[CONF_BIOMASS_BOILER] = new_options["pelletsboiler"]
+        del new_options["pelletsboiler"]
+
+        config_entry.version = 5
+
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(
-        f"Config Entries data: {config_entry.data}, options: {config_entry.options}"
+        "Config Entries data: %s, options: %s", config_entry.data, config_entry.options
     )
 
     return True

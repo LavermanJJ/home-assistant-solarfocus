@@ -15,7 +15,7 @@
           "heating_circuit": "Heizkreise",
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
-          "pelletsboiler": "Kessel",
+          "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module" : "Frischwassermodule"
         }
@@ -50,7 +50,7 @@
           "heating_circuit": "Heizkreise",
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
-          "pelletsboiler": "Kessel",
+          "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module" : "Frischwassermodule"
         }

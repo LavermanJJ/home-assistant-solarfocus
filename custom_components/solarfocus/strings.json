@@ -15,7 +15,7 @@
           "boiler": "Boiler",
           "heatpump": "Heat Pump",
           "photovoltaic": "Photovoltaic",
-          "pelletsboiler": "Biomass boiler",
+          "biomassboiler": "Biomass boiler",
           "solar": "Solar",
           "fresh_water_module" : "Fresh water module"
         }
@@ -43,7 +43,7 @@
           "boiler": "Boiler",
           "heatpump": "Heat Pump",
           "photovoltaic": "Photovoltaic",
-          "pelletsboiler": "Biomass boiler",
+          "biomassboiler": "Biomass boiler",
           "solar" : "Solar",
           "fresh_water_module" : "Fresh water module"
         }

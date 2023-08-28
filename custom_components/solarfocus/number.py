@@ -1,20 +1,15 @@
-"""Numbers for Solarfocus integration"""
+"""Numbers for Solarfocus integration."""
 
 from dataclasses import dataclass
 import logging
 
+from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.number import (
-    NumberEntity,
-    NumberEntityDescription,
-)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -81,7 +76,7 @@ async def async_setup_entry(
 class SolarfocusNumberEntityDescription(
     SolarfocusEntityDescription, NumberEntityDescription
 ):
-    """Description of a Solarfocus number entity"""
+    """Description of a Solarfocus number entity."""
 
 
 class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):

@@ -1,25 +1,26 @@
-"""Entity for Solarfocus integration"""
+"""Entity for Solarfocus integration."""
 
 
 import copy
 from dataclasses import dataclass, field
 import logging
+
 from packaging import version
+from pysolarfocus import Systems
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_VERSION
-
 from homeassistant.helpers.entity import Entity, EntityDescription
 
-from pysolarfocus import Systems
-from .coordinator import SolarfocusDataUpdateCoordinator
 from .const import CONF_SOLARFOCUS_SYSTEM, DOMAIN
+from .coordinator import SolarfocusDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
 class SolarfocusEntityDescription(EntityDescription):
-    """Description of a Solarfocus entity"""
+    """Description of a Solarfocus entity."""
 
     item: str = None
     component: str = None
@@ -38,7 +39,7 @@ def create_description(
     idx: str,
     description: SolarfocusEntityDescription,
 ) -> SolarfocusEntityDescription:
-    """Create Description"""
+    """Create Description."""
     _description = copy.copy(description)
 
     _description.item = description.key
@@ -78,6 +79,7 @@ def create_description(
 
 
 def filterVersionAndSystem(config_entry: ConfigEntry, entities):
+    """Filter entities not compatible to version or system."""
     api_version = version.parse(config_entry.options[CONF_API_VERSION])
 
     version_filtered_entities = filter(
@@ -116,14 +118,13 @@ class SolarfocusEntity(Entity):
     @property
     def device_info(self) -> dict:
         """Return info for device registry."""
-        model: Systems
         device = self._name
         model = self.coordinator.api.system
         api_version = self.coordinator.api.api_version.value
         return {
             "identifiers": {(DOMAIN, device)},
             "name": "Solarfocus",
-            "model": {model},
+            "model": {Systems(model.title()).value},
             "sw_version": {api_version},
             "manufacturer": "Solarfocus",
         }

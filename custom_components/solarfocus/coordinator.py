@@ -1,18 +1,20 @@
-"""Coordinator for Solarfocus integration"""
+"""Coordinator for Solarfocus integration."""
 
 from datetime import timedelta
 import logging
+
+from pysolarfocus import SolarfocusAPI
+
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-
 from .const import (
+    CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
-    CONF_PELLETSBOILER,
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     DOMAIN,
@@ -24,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     """Get the latest data and update the states."""
 
-    def __init__(self, hass, entry, api) -> None:
+    def __init__(self, hass, entry, api: SolarfocusAPI) -> None:
         """Init the Solarfocus data object."""
 
         self.api = api
@@ -79,7 +81,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
                 self.api.update_photovoltaic
             )
 
-        if self._entry.options[CONF_PELLETSBOILER]:
+        if self._entry.options[CONF_BIOMASS_BOILER]:
             success &= True and await self.hass.async_add_executor_job(
                 self.api.update_biomassboiler
             )

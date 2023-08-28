@@ -1,15 +1,12 @@
-"""Buttons for Solarfocus integration"""
+"""Buttons for Solarfocus integration."""
 
 from dataclasses import dataclass
 import logging
+
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
-
-
 from homeassistant.config_entries import ConfigEntry
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -59,7 +56,7 @@ async def async_setup_entry(
 class SolarfocusButtonEntityDescription(
     SolarfocusEntityDescription, ButtonEntityDescription
 ):
-    """Description of a Solarfocus number entity"""
+    """Description of a Solarfocus number entity."""
 
 
 class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
