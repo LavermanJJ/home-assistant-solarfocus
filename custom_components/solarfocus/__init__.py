@@ -123,7 +123,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new[CONF_SOLARFOCUS_SYSTEM] = (
             config_entry.data[CONF_SOLARFOCUS_SYSTEM]
             if CONF_SOLARFOCUS_SYSTEM in config_entry.data
-            else Systems.Vampair
+            else Systems.VAMPAIR
         )
 
         config_entry.version = 2

@@ -92,7 +92,7 @@ async def async_setup_entry(
             entities.append(entity)
 
     if config_entry.options[CONF_BIOMASS_BOILER]:
-        for description in PB_BINARY_SENSOR_TYPES:
+        for description in BIOMASS_BOILER_BINARY_SENSOR_TYPES:
             _description = create_description(
                 BIOMASS_BOILER_PREFIX,
                 BIOMASS_BOILER_COMPONENT,
@@ -179,7 +179,7 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
     ),
 ]
 
-PB_BINARY_SENSOR_TYPES = [
+BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
