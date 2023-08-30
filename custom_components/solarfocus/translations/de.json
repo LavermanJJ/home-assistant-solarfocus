@@ -15,7 +15,7 @@
           "heating_circuit": "Heizkreise",
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
-          "pelletsboiler": "Kessel",
+          "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module" : "Frischwassermodule"
         }
@@ -50,7 +50,7 @@
           "heating_circuit": "Heizkreise",
           "heatpump": "Wärmepumpe",
           "photovoltaic": "Photovoltaik",
-          "pelletsboiler": "Kessel",
+          "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module" : "Frischwassermodule"
         }
@@ -84,7 +84,7 @@
           "2": "Zeitschaltung"
         }
       },
-      "pb_mode" : {
+      "bb_mode" : {
         "state" : {
           "0": "Stückholz",
           "1": "Stückholz Automatik",
@@ -94,13 +94,13 @@
           "5": "Hackgut"
         }
       },
-      "pb_log_wood" : {
+      "bb_log_wood" : {
         "state" : {
           "0": "Stückholz anheizen/ nachlegen nicht notwendig/möglich",
           "1": "Stückholz kann angeheizt/ nachgelegt werden"
         }
       },
-      "pb_state" : {
+      "bb_state" : {
         "state" : {
           "0": "Bereitschaft",
           "1": "Zündphase",
@@ -251,7 +251,7 @@
           "344": "WT-Spülung Brennwertmodul aktiv"
         }
       },
-      "pb_message_number" : {
+      "bb_message_number" : {
         "state" : {
           "1": "Interner Speicher ist ungültig",
           "3": "Behältersensor möglicherweise verstaubt",

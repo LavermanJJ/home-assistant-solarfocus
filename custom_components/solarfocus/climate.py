@@ -1,7 +1,9 @@
-"""Climate for Solarfocus integration"""
+"""Climate for Solarfocus integration."""
 
 from dataclasses import dataclass
 import logging
+
+from homeassistant.components.climate import ClimateEntity, ClimateEntityDescription
 from homeassistant.components.climate.const import (
     PRESET_COMFORT,
     PRESET_ECO,
@@ -9,21 +11,11 @@ from homeassistant.components.climate.const import (
     HVACAction,
     HVACMode,
 )
-
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-)
-
-from homeassistant.components.climate import (
-    ClimateEntity,
-    ClimateEntityDescription,
-)
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_HEATING_CIRCUIT,
@@ -82,7 +74,7 @@ async def async_setup_entry(
 class SolarfocusClimateEntityDescription(
     SolarfocusEntityDescription, ClimateEntityDescription
 ):
-    """Description of a Solarfocus number entity"""
+    """Description of a Solarfocus number entity."""
 
 
 class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
@@ -103,24 +95,27 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
 
     @property
     def max_temp(self) -> float:
+        """Return max temperature."""
         if self._get_native_value("cooling"):
             return 35.0
         return 45.0
 
     @property
     def min_temp(self) -> float:
+        """Return minimum temperature."""
         if self._get_native_value("cooling"):
             return 7.0
         return 22.0
 
     @property
     def target_temperature(self) -> float:
+        """Return target supply temperature."""
         value = self._get_native_value("target_supply_temperature")
         return round(float(value), 2)
 
     @property
     def current_temperature(self) -> float:
-        """return current temperature"""
+        """Return current temperature."""
         # if self._get_native_value("target_room_temperatur"):
         #    return self._get_native_value("room_temperature")
 
@@ -140,6 +135,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
 
     @property
     def hvac_action(self) -> HVACAction:
+        """Return hvac action."""
         state = self._get_native_value("state")
 
         if state in [
@@ -179,11 +175,13 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
 
     @property
     def preset_mode(self) -> str:
+        """Return preset mode."""
         mode = self._get_native_value("mode")
         return SOLARFOCUS_MODE_TO_PRESET.get(mode)
 
     @property
     def preset_modes(self) -> list[str]:
+        """Return available preset modes."""
         presets = []
         presets.append(PRESET_COMFORT)
         presets.append(PRESET_ECO)
@@ -197,6 +195,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
 
     @property
     def temperature_unit(self) -> str:
+        """Return temperature unit."""
         return UnitOfTemperature.CELSIUS
 
     async def async_set_hvac_mode(self, hvac_mode):

@@ -15,7 +15,7 @@
           "boiler": "Boiler",
           "heatpump": "Heat Pump",
           "photovoltaic": "Photovoltaic",
-          "pelletsboiler": "Biomass boiler",
+          "biomassboiler": "Biomass boiler",
           "solar": "Solar",
           "fresh_water_module" : "Fresh water module"
         }
@@ -43,7 +43,7 @@
           "boiler": "Boiler",
           "heatpump": "Heat Pump",
           "photovoltaic": "Photovoltaic",
-          "pelletsboiler": "Biomass boiler",
+          "biomassboiler": "Biomass boiler",
           "solar" : "Solar",
           "fresh_water_module" : "Fresh water module"
         }
@@ -85,7 +85,7 @@
           "2": "Time trigger"
         }
       },
-      "pb_mode" : {
+      "bb_mode" : {
         "state" : {
           "0": "Log wood",
           "1": "Log wood automatic",
@@ -95,13 +95,13 @@
           "5": "Wood chips"
         }
       },
-      "pb_log_wood" : {
+      "bb_log_wood" : {
         "state" : {
           "0": "Begin to heat log wood / putting more wood not required / possible",
           "1": "More Log wood can be put on the fire"
         }
       },
-      "pb_state" : {
+      "bb_state" : {
         "state" : {
           "200": "Standby",
           "201": "Ignition phase",
@@ -193,7 +193,7 @@
           "344": "HE-rinse condensing module active"
         }
       },
-      "pb_message_number" : {
+      "bb_message_number" : {
         "state" : {
           "1": "Internal memory is invalid",
           "3": "Container sensor possibly dusty",

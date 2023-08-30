@@ -1,9 +1,9 @@
-"""Selects for Solarfocus integration"""
+"""Selects for Solarfocus integration."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 import logging
-
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.config_entries import ConfigEntry
@@ -34,7 +34,6 @@ from .entity import (
     create_description,
     filterVersionAndSystem,
 )
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ async def async_setup_entry(
 class SolarfocusSelectEntityDescription(
     SolarfocusEntityDescription, SelectEntityDescription
 ):
-    """Description of a Solarfocus select entity"""
+    """Description of a Solarfocus select entity."""
 
     current_option: str | None = None
     # kept for compatibility reasons. Removing it would make 2022.11 the min
@@ -124,6 +123,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
 
     @property
     def current_option(self) -> str:
+        """Return current option."""
         select = self.entity_description.item
         return str(self._get_native_value(select))
 
