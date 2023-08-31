@@ -184,6 +184,9 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         del new_options["pelletsboiler"]
 
         config_entry.version = 5
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options
+        )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(
