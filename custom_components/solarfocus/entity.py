@@ -119,12 +119,12 @@ class SolarfocusEntity(Entity):
     def device_info(self) -> dict:
         """Return info for device registry."""
         device = self._name
-        model = self.coordinator.api.system
+        model = self.coordinator.api.system.value
         api_version = self.coordinator.api.api_version.value
         return {
             "identifiers": {(DOMAIN, device)},
             "name": "Solarfocus",
-            "model": {Systems(model.title()).value},
+            "model": {model},
             "sw_version": {api_version},
             "manufacturer": "Solarfocus",
         }
