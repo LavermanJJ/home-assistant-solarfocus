@@ -192,11 +192,14 @@ class SolarfocusEntity(Entity):
         else:
             component = getattr(self.coordinator.api, self.entity_description.component)
 
+        native_value = getattr(component, item).scaled_value
+
         _LOGGER.debug(
-            "_get_native_value - idx: %s, component: %s, entity: %s",
+            "_get_native_value - idx: %s, component: %s, entity: %s, value: %s",
             idx,
             self.entity_description.component,
             item,
+            native_value,
         )
 
-        return getattr(component, item).scaled_value
+        return native_value

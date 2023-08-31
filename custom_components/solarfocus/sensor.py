@@ -464,26 +464,31 @@ HEATPUMP_SENSOR_TYPES = [
         key="cop_cooling",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="cop_heating",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="performance_overall",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="performance_overall_heating",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="performance_overall_drinking_water",
         icon="mdi:poll",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
     ),
 ]
 

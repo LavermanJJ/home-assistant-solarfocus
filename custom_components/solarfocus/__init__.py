@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
-        system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]).name,
+        system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
         api_version=ApiVersions(entry.options[CONF_API_VERSION]),
     )
     coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
