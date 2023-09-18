@@ -228,7 +228,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_show_form(
                     step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
                 )
-            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.THERMINATOR:
+            if self.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
                 return self.async_show_form(
                     step_id="component",
                     data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
@@ -237,7 +237,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.data[CONF_BIOMASS_BOILER] = False
-        elif self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.THERMINATOR:
+        elif self.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
             self.data[CONF_BIOMASS_BOILER] = user_input[CONF_BIOMASS_BOILER]
             self.data[CONF_HEATPUMP] = False
 
@@ -295,7 +295,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.options[CONF_BIOMASS_BOILER] = False
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.THERMINATOR:
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
             self.options[CONF_BIOMASS_BOILER] = user_input[CONF_BIOMASS_BOILER]
             self.options[CONF_HEATPUMP] = False
 
@@ -396,7 +396,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                 }
             )
 
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.THERMINATOR:
+        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
             data_schema = vol.Schema(
                 {
                     vol.Required(
