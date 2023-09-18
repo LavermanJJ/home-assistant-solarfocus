@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 import logging
 
+from pysolarfocus import Systems
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -184,5 +186,12 @@ BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
+        supported_systems=[Systems.THERMINATOR],
+    ),
+    SolarfocusBinarySensorEntityDescription(
+        key="door_contact",
+        device_class=BinarySensorDeviceClass.DOOR,
+        on_state="0",
+        supported_systems=[Systems.ECOTOP],
     ),
 ]
