@@ -186,12 +186,12 @@ BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
-        supported_systems=[Systems.THERMINATOR],
+        unsupported_systems=[Systems.ECOTOP, Systems.VAMPAIR],
     ),
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="0",
-        supported_systems=[Systems.ECOTOP],
+        unsupported_systems=[Systems.THERMINATOR, Systems.VAMPAIR],
     ),
 ]

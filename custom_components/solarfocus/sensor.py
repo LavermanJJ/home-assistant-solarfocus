@@ -283,7 +283,7 @@ BUFFER_SENSOR_TYPES = [
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        supported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
+        unsupported_systems=[Systems.VAMPAIR],
     ),
     SolarfocusSensorEntityDescription(
         key="external_top_temperature_x44",
@@ -573,7 +573,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 6)),
-        supported_systems=[Systems.THERMINATOR],
+        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
@@ -581,7 +581,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         icon="mdi:thermometer-low",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        supported_systems=[Systems.THERMINATOR],
+        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
@@ -589,14 +589,14 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        supported_systems=[Systems.THERMINATOR],
+        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="log_wood",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 2)),
-        supported_systems=[Systems.THERMINATOR],
+       unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",

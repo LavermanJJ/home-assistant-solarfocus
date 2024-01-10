@@ -2,7 +2,7 @@
 
 
 import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import logging
 
 from packaging import version
@@ -18,18 +18,16 @@ from .coordinator import SolarfocusDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SolarfocusEntityDescription(EntityDescription):
     """Description of a Solarfocus entity."""
 
-    item: str = None
-    component: str = None
-    component_prefix: str = None
-    component_idx: str = None
+    item: str | None = None
+    component: str | None = None
+    component_prefix: str | None = None
+    component_idx: str | None = None
     min_required_version: str = "21.140"
-    supported_systems: list = field(
-        default_factory=lambda: [Systems.VAMPAIR, Systems.THERMINATOR, Systems.ECOTOP]
-    )
+    unsupported_systems: list[Systems] | None = None
 
 
 def create_description(
@@ -82,7 +80,7 @@ def filterVersionAndSystem(config_entry: ConfigEntry, entities):
     """Filter entities not compatible to version or system."""
     api_version = version.parse(config_entry.options[CONF_API_VERSION])
 
-    version_filtered_entities = filter(
+    filtered_entities = filter(
         lambda entity: version.parse(entity.entity_description.min_required_version)
         <= api_version,
         entities,
@@ -90,10 +88,12 @@ def filterVersionAndSystem(config_entry: ConfigEntry, entities):
 
     current_system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
 
-    filtered_entities = filter(
-        lambda entity: current_system in entity.entity_description.supported_systems,
-        version_filtered_entities,
-    )
+    for entity in filtered_entities:
+        unsupported_systems = entity.entity_description.unsupported_systems
+        if unsupported_systems is None:
+            yield entity
+        elif current_system not in unsupported_systems:
+            yield entity
 
     return filtered_entities
 

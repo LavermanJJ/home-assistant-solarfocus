@@ -1,7 +1,7 @@
 check: check-pylint check-ruff
 
 check-pylint:
-	@poetry run pylint custom_components/*
+	@poetry run pylint custom_components/* --fix
 
 check-ruff:
 	@poetry run ruff check custom_components/*
