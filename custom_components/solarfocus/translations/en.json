@@ -195,6 +195,7 @@
       },
       "bb_message_number" : {
         "state" : {
+          "0": "No Message",
           "1": "Internal memory is invalid",
           "3": "Container sensor possibly dusty",
           "5": "Flue gas temperature too low",
