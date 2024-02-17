@@ -253,6 +253,7 @@
       },
       "bb_message_number" : {
         "state" : {
+          "0": "Keine Meldung",
           "1": "Interner Speicher ist ungültig",
           "3": "Behältersensor möglicherweise verstaubt",
           "5": "Abgastemperatur zu gering",
