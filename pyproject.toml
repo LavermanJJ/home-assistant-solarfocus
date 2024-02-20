@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "solarfocus"
-version = "4.0.0"
+version = "4.0.1"
 description = "Custom component for integrating Solarfocus heating systems into Home Assistant."
 authors = ["Jeroen Laverman <jjlaverman@web.de>"]
 homepage = "https://github.com/LavermanJJ/home-assistant-solarfocus"
@@ -12,7 +12,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 homeassistant = "^2023.8.4"
-pysolarfocus = "^4.0.0.3"
+pysolarfocus = "^4.1.0"
 packaging = "^23.1"
 pylint = "^2.17.5"
 pytest-homeassistant-custom-component = "^0.13.53"

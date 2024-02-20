@@ -160,7 +160,7 @@ class Solarfocus:
         self.api = SolarfocusAPI(
             ip=data[CONF_HOST],
             port=data[CONF_PORT],
-            system=Systems(data[CONF_SOLARFOCUS_SYSTEM]).value,
+            system=Systems(data[CONF_SOLARFOCUS_SYSTEM]),
             api_version=ApiVersions(data[CONF_API_VERSION]),
         )
 
