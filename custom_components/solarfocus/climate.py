@@ -80,8 +80,11 @@ class SolarfocusClimateEntityDescription(
 class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
     """Representation of a Solarfocus number entity."""
 
+    _enable_turn_on_off_backwards_compatibility = False
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
         # | ClimateEntityFeature.TARGET_TEMPERATURE
     )
 
@@ -225,6 +228,14 @@ class SolarfocusClimateEntity(SolarfocusEntity, ClimateEntity):
     #     if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
     #         _LOGGER.info("Set Temperature: %s", temp)
     #         self._set_native_value("target_supply_temperature", temp)
+
+    async def async_turn_on(self) -> None:
+        """Turn on - by setting HVAC mode to HEAT."""
+        self.async_set_hvac_mode(HVACMode.HEAT)
+
+    async def async_turn_off(self) -> None:
+        """Turn on - by setting HVAC mode to OFF."""
+        self.async_set_hvac_mode(HVACMode.OFF)
 
 
 CLIMATE_TYPES = [
