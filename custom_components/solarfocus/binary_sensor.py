@@ -127,13 +127,13 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    if config_entry.options[CONF_FRESH_WATER_MODULE]:
+    for i in range(config_entry.options[CONF_FRESH_WATER_MODULE]):
         for description in FRESH_WATER_MODULE_BINARY_SENSOR_TYPES:
             _description = create_description(
                 FRESH_WATER_MODULE_PREFIX,
                 FRESH_WATER_MODULE_COMPONENT,
                 FRESH_WATER_MODULE_COMPONENT_PREFIX,
-                "",
+                str(i + 1),
                 description,
             )
 
@@ -233,7 +233,6 @@ BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
 PHOTOVOLTAIC_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="overcharge_possible",
-        device_class=BinarySensorDeviceClass.POWER,
         on_state="1",
     ),
     SolarfocusBinarySensorEntityDescription(
