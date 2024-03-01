@@ -24,16 +24,24 @@ from .const import (
     BUFFER_PREFIX,
     CONF_BIOMASS_BOILER,
     CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
+    CONF_PHOTOVOLTAIC,
     DATA_COORDINATOR,
     DOMAIN,
+    FRESH_WATER_MODULE_COMPONENT,
+    FRESH_WATER_MODULE_COMPONENT_PREFIX,
+    FRESH_WATER_MODULE_PREFIX,
     HEAT_PUMP_COMPONENT,
     HEAT_PUMP_COMPONENT_PREFIX,
     HEAT_PUMP_PREFIX,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
+    PHOTOVOLTAIC_COMPONENT,
+    PHOTOVOLTAIC_COMPONENT_PREFIX,
+    PHOTOVOLTAIC_PREFIX,
 )
 from .entity import (
     SolarfocusEntity,
@@ -99,6 +107,32 @@ async def async_setup_entry(
                 BIOMASS_BOILER_PREFIX,
                 BIOMASS_BOILER_COMPONENT,
                 BIOMASS_BOILER_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusBinarySensorEntity(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.options[CONF_PHOTOVOLTAIC]:
+        for description in PHOTOVOLTAIC_BINARY_SENSOR_TYPES:
+            _description = create_description(
+                PHOTOVOLTAIC_PREFIX,
+                PHOTOVOLTAIC_COMPONENT,
+                PHOTOVOLTAIC_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusBinarySensorEntity(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.options[CONF_FRESH_WATER_MODULE]:
+        for description in FRESH_WATER_MODULE_BINARY_SENSOR_TYPES:
+            _description = create_description(
+                FRESH_WATER_MODULE_PREFIX,
+                FRESH_WATER_MODULE_COMPONENT,
+                FRESH_WATER_MODULE_COMPONENT_PREFIX,
                 "",
                 description,
             )
@@ -193,5 +227,26 @@ BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="0",
         unsupported_systems=[Systems.THERMINATOR, Systems.VAMPAIR],
+    ),
+]
+
+PHOTOVOLTAIC_BINARY_SENSOR_TYPES = [
+    SolarfocusBinarySensorEntityDescription(
+        key="overcharge_possible",
+        device_class=BinarySensorDeviceClass.POWER,
+        on_state="1",
+    ),
+    SolarfocusBinarySensorEntityDescription(
+        key="overcharge_active",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        on_state="1",
+    ),
+]
+
+FRESH_WATER_MODULE_BINARY_SENSOR_TYPES = [
+    SolarfocusBinarySensorEntityDescription(
+        key="valve",
+        device_class=BinarySensorDeviceClass.OPENING,
+        on_state="1",
     ),
 ]

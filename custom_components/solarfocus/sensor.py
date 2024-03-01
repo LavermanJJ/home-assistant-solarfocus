@@ -596,7 +596,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 2)),
-       unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
+        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",
@@ -716,5 +716,28 @@ FRESH_WATER_MODULE_SENSOR_TYPES = [
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 5)),
         min_required_version="23.020",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="supply_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="23.040",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="flow_rate",
+        native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
+        icon="mdi:speedometer",
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="23.040",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="23.040",
     ),
 ]
