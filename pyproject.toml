@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "solarfocus"
-version = "4.0.1"
+version = "4.1.0"
 description = "Custom component for integrating Solarfocus heating systems into Home Assistant."
 authors = ["Jeroen Laverman <jjlaverman@web.de>"]
 homepage = "https://github.com/LavermanJJ/home-assistant-solarfocus"
