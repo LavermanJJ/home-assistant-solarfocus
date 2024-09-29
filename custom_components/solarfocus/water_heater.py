@@ -2,10 +2,8 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
 
 from homeassistant.components.water_heater import (
-    ATTR_OPERATION_MODE,
     WaterHeaterEntity,
     WaterHeaterEntityEntityDescription,
     WaterHeaterEntityFeature,
@@ -159,19 +157,20 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
             self._set_native_value("target_temperature", temp)
             _LOGGER.debug("Set Temperature: %s", temp)
 
-    async def async_set_operation_mode(self, **kwargs) -> None:
+    async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target temperature."""
-        if (mode := kwargs.get(ATTR_OPERATION_MODE)) is not None:
-            mapped_mode = HA_MODE_TO_SOLARFOCUS.get(mode)
-            self._set_native_value("holding_mode", mapped_mode)
-            _LOGGER.debug("Set Operation Mode: %s (mapped to: %s)", mode, mapped_mode)
+        mapped_mode = HA_MODE_TO_SOLARFOCUS.get(operation_mode)
+        self._set_native_value("holding_mode", mapped_mode)
+        _LOGGER.debug(
+            "Set Operation Mode: %s (mapped to: %s)", operation_mode, mapped_mode
+        )
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self) -> None:
         """Turn water heater on."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
         _LOGGER.debug("async_turn_on")
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self) -> None:
         """Turn water heater off."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
         _LOGGER.debug("async_turn_off")

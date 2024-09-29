@@ -1,4 +1,5 @@
 """Sensors for the Solarfocus integration."""
+
 from dataclasses import dataclass
 import logging
 
@@ -245,7 +246,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
         key="state",
         icon="mdi:radiator",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 32)) + list(range(200, 229)),
+        options=list(range(32)) + list(range(200, 229)),
     ),
 ]
 
@@ -269,13 +270,13 @@ BUFFER_SENSOR_TYPES = [
         key="state",
         icon="mdi:database",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 8)) + list(range(200, 209)),
+        options=list(range(8)) + list(range(200, 209)),
     ),
     SolarfocusSensorEntityDescription(
         key="mode",
         icon="mdi:format-list-bulleted",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 3)),
+        options=list(range(3)),
     ),
     SolarfocusSensorEntityDescription(
         key="x35_temperature",
