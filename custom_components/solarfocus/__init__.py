@@ -1,4 +1,5 @@
 """The Solarfocus integration."""
+
 from __future__ import annotations
 
 import logging
@@ -32,13 +33,14 @@ from .const import (
 from .coordinator import SolarfocusDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
-    Platform.SENSOR,
-    Platform.SELECT,
-    Platform.NUMBER,
-    Platform.BUTTON,
     Platform.BINARY_SENSOR,
-    Platform.WATER_HEATER,
+    Platform.BUTTON,
     Platform.CLIMATE,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.WATER_HEATER,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,20 +67,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
+    hass.data[DOMAIN][entry.entry_id] = {
+        DATA_COORDINATOR: coordinator,
+        # UPDATE_LISTENER: unsub_options_update_listener,
+    }
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Registers update listener to update config entry when options are updated.
     entry.async_on_unload(entry.add_update_listener(async_update_options))
     # unsub_options_update_listener = entry.add_update_listener(async_update_options)
     # Store a reference to the unsubscribe function to cleanup if an entry is unloaded.
-
-    hass.data[DOMAIN][entry.entry_id] = {
-        DATA_COORDINATOR: coordinator,
-        # UPDATE_LISTENER: unsub_options_update_listener,
-    }
 
     return True
 
@@ -90,6 +89,12 @@ async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+
+    solarfocus_module = hass.data.get(DOMAIN)
+
+    if not solarfocus_module:
+        #  if not loaded directly return
+        return True
 
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -120,10 +125,8 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new[CONF_BUFFER] = 1 if config_entry.data[CONF_BUFFER] else 0
         new[CONF_BOILER] = 1 if config_entry.data[CONF_BOILER] else 0
 
-        new[CONF_SOLARFOCUS_SYSTEM] = (
-            config_entry.data[CONF_SOLARFOCUS_SYSTEM]
-            if CONF_SOLARFOCUS_SYSTEM in config_entry.data
-            else Systems.VAMPAIR
+        new[CONF_SOLARFOCUS_SYSTEM] = config_entry.data.get(
+            CONF_SOLARFOCUS_SYSTEM, Systems.VAMPAIR
         )
 
         config_entry.version = 2
