@@ -134,7 +134,9 @@ HEATPUMP_SELECT_TYPES = [
         icon="mdi:leaf",
         current_option="2",
         solarfocus_options=[
+            "1",
             "2",
+            "3",
             "4",
         ],
     ),

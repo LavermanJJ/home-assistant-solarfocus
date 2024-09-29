@@ -569,7 +569,10 @@
     "select" : {
       "hp_smart_grid": {
         "state": {
+          "0": "Deactivated",
+          "1": "No operation",
           "2": "Normal operation",
+          "3": "Recommended",
           "4": "Request operation"
         }
       },

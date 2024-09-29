@@ -571,7 +571,10 @@
     "select" : {
       "hp_smart_grid": {
         "state": {
+          "0": "Deaktiviert",
+          "1": "Gesperrt",
           "2": "Normalbetrieb",
+          "3": "Einschaltempfehlung",
           "4": "Einschaltung"
         }
       },
