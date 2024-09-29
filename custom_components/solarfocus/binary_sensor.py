@@ -171,8 +171,7 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
         binary_sensor = self.entity_description.item
         value = self._get_native_value(binary_sensor)
         on_state = self.entity_description.on_state
-        state = int(value) == int(on_state)
-        return state
+        return int(value) == int(on_state)
 
 
 HEATING_CIRCUIT_BINARY_SENSOR_TYPES = [
@@ -247,5 +246,6 @@ FRESH_WATER_MODULE_BINARY_SENSOR_TYPES = [
         key="valve",
         device_class=BinarySensorDeviceClass.OPENING,
         on_state="1",
+        min_required_version="23.040",
     ),
 ]
