@@ -7,10 +7,13 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
+
 try:
     from homeassistant.components.water_heater import WaterHeaterEntityDescription
 except ImportError:
-    from homeassistant.components.water_heater import WaterHeaterEntityEntityDescription as WaterHeaterEntityDescription
+    from homeassistant.components.water_heater import (
+        WaterHeaterEntityEntityDescription as WaterHeaterEntityDescription,
+    )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_TEMPERATURE,
