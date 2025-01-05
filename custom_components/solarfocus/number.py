@@ -125,6 +125,26 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         native_max_value=45.0,
         native_step=0.5,
     ),
+    SolarfocusNumberEntityDescription(
+        key="indoor_temperatur_external",
+        icon="mdi:thermostat",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=0.0,
+        native_max_value=45.0,
+        native_step=0.5,
+    ),
+    SolarfocusNumberEntityDescription(
+        key="indoor_humidity_external",
+        icon="mdi:water-percent",
+        device_class=SensorDeviceClass.HUMIDITY,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=0.0,
+        native_max_value=100.0,
+        native_step=1.0,
+    ),
 ]
 
 BOILER_NUMBER_TYPES = [
