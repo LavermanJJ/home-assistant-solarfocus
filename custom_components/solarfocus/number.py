@@ -116,7 +116,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         native_step=0.5,
     ),
     SolarfocusNumberEntityDescription(
-        key="target_room_temperatur",
+        key="target_room_temperature",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
@@ -126,7 +126,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         native_step=0.5,
     ),
     SolarfocusNumberEntityDescription(
-        key="indoor_temperatur_external",
+        key="indoor_temperature_external",
         icon="mdi:thermostat",
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
