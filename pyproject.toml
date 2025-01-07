@@ -1,29 +1,30 @@
-[tool.poetry]
+[project]
 name = "solarfocus"
 version = "5.0.0"
 description = "Custom component for integrating Solarfocus heating systems into Home Assistant."
-authors = ["Jeroen Laverman <jjlaverman@web.de>"]
-homepage = "https://github.com/LavermanJJ/home-assistant-solarfocus"
-repository = "https://github.com/LavermanJJ/home-assistant-solarfocus"
-keywords = ["solarfocus", "api client"]
-license = "Apache-2.0"
+authors = [{ name = "Jeroen Laverman", email = "jjlaverman@web.de" }]
+requires-python = "~=3.12"
 readme = "README.md"
+license = "Apache-2.0"
+keywords = [
+    "solarfocus",
+    "api client",
+]
+dependencies = [
+    "homeassistant>=2025.1.0,<2026",
+    "pysolarfocus>=5.0.4,<6",
+    "packaging~=24.0",
+    "pylint>=3.3.3",
+    "pytest-homeassistant-custom-component>=0.13.201,<0.14",
+    "pytest-socket>=0.7.0,<0.8",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-homeassistant = "^2025.1.0"
-pysolarfocus = "^5.0.4"
-packaging = "^23.1"
-pylint = "^2.17.5"
-pytest-homeassistant-custom-component = "^0.13.53"
-pytest-socket = "^0.6.0"
+[project.urls]
+Homepage = "https://github.com/LavermanJJ/home-assistant-solarfocus"
+Repository = "https://github.com/LavermanJJ/home-assistant-solarfocus"
 
-[tool.poetry.dev-dependencies]
-ruff = "^0.0.286"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = ["ruff>=0.0.286,<0.0.287"]
 
 [tool.pylint.MAIN]
 py-version = "3.11"
@@ -559,6 +560,12 @@ known-first-party = [
 combine-as-imports = true
 split-on-trailing-comma = false
 
-
 [tool.ruff.mccabe]
 max-complexity = 25
+
+[tool.uv]
+prerelease = "allow"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
