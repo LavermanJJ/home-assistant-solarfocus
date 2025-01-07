@@ -661,14 +661,14 @@ SOLAR_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SolarfocusSensorEntityDescription(
-        key="curent_power",
+        key="current_power",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         icon="mdi:lightning-bolt",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SolarfocusSensorEntityDescription(
-        key="curent_yield_heat_meter",
+        key="current_yield_heat_meter",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         icon="mdi:meter-electric",
         device_class=SensorDeviceClass.ENERGY,
