@@ -352,7 +352,14 @@ BOILER_SENSOR_TYPES = [
 ]
 
 HEATPUMP_SENSOR_TYPES = [
-    SolarfocusSensorEntityDescription(
+   SolarfocusSensorEntityDescription(
+        key="outdoor_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon="mdi:thermometer",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+   ),
+   SolarfocusSensorEntityDescription(
         key="supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-chevron-up",
