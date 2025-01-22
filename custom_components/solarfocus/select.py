@@ -167,6 +167,18 @@ HEATING_CIRCUIT_SELECT_TYPES = [
             "3",
         ],
     ),
+    SolarfocusSelectEntityDescription(
+        key="heating_mode",
+        icon="mdi:sun-snowflake-variant",
+        entity_category=EntityCategory.CONFIG,
+        current_option="0",
+        solarfocus_options=[
+            "0",
+            "1",
+            "2",
+        ],
+        min_required_version="22.090",
+    ),
 ]
 
 BOILER_SELECT_TYPES = [
