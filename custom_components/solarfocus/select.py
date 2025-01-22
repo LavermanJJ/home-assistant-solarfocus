@@ -171,13 +171,13 @@ HEATING_CIRCUIT_SELECT_TYPES = [
         key="heating_mode",
         icon="mdi:sun-snowflake-variant",
         entity_category=EntityCategory.CONFIG,
-        entity_registry_enabled_default=False,
         current_option="0",
         solarfocus_options=[
             "0",
             "1",
             "2",
         ],
+        min_required_version="22.090",
     ),
 ]
 
