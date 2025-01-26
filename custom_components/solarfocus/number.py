@@ -140,7 +140,6 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
         icon="mdi:water-percent",
         device_class=SensorDeviceClass.HUMIDITY,
         entity_category=EntityCategory.CONFIG,
-        native_unit_of_measurement=UnitOfTemperature.PERCENTAGE,
         native_min_value=0.0,
         native_max_value=100.0,
         native_step=1.0,
