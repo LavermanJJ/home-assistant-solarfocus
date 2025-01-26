@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 import logging
 
-from homeassistant.components.number import NumberEntity, NumberEntityDescription
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.number import NumberEntity, NumberEntityDescription, NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import UnitOfTemperature, PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -108,7 +107,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="target_supply_temperature",
         icon="mdi:thermostat",
-        device_class=SensorDeviceClass.TEMPERATURE,
+        device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=0.0,
@@ -118,7 +117,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="target_room_temperature",
         icon="mdi:thermostat",
-        device_class=SensorDeviceClass.TEMPERATURE,
+        device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=0.0,
@@ -128,7 +127,7 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="indoor_temperature_external",
         icon="mdi:thermostat",
-        device_class=SensorDeviceClass.TEMPERATURE,
+        device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         native_min_value=0.0,
@@ -138,8 +137,9 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="indoor_humidity_external",
         icon="mdi:water-percent",
-        device_class=SensorDeviceClass.HUMIDITY,
+        device_class=NumberDeviceClass.HUMIDITY,
         entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=PERCENTAGE,
         native_min_value=0.0,
         native_max_value=100.0,
         native_step=1.0,
@@ -150,7 +150,7 @@ BOILER_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="target_temperature",
         icon="mdi:thermostat",
-        device_class=SensorDeviceClass.TEMPERATURE,
+        device_class=NumberDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
