@@ -592,6 +592,13 @@
           "3": "Heizkreis ausgeschaltet (nur Frostwache)"
         }
       },
+      "hc_heating_mode" : {
+        "state" : {
+          "0": "Heizen",
+          "1": "Kühlen",
+          "2": "Heizen + Kühlen"
+        }
+      },
       "bo_holding_mode" : {
         "state" : {
           "0": "Immer Aus",
