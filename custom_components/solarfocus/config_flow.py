@@ -50,6 +50,7 @@ SOLARFOCUS_SYSTEMS = [
 
 # CONF_API_VERSION
 SOLARFOCUS_API_VERSIONS = [
+    selector.SelectOptionDict(value="25.030", label="v25.030"),
     selector.SelectOptionDict(value="23.040", label="v23.040"),
     selector.SelectOptionDict(value="23.020", label="v23.020"),
     selector.SelectOptionDict(value="23.010", label="v23.010"),
