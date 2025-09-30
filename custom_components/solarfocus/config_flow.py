@@ -110,7 +110,7 @@ STEP_COMP_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
         vol.Optional(CONF_BIOMASS_BOILER, default=True): bool,
-        vol.Optional(CONF_SOLAR, default=False): bool,
+        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
@@ -129,7 +129,7 @@ STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
-        vol.Optional(CONF_SOLAR, default=False): bool,
+        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
@@ -145,7 +145,7 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BIOMASS_BOILER, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
-        vol.Optional(CONF_SOLAR, default=False): bool,
+        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
@@ -187,7 +187,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 5
+    VERSION = 6
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -400,7 +400,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                     ): bool,
                     vol.Optional(
                         CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
-                    ): bool,
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
                 }
             )
 
@@ -457,7 +457,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                     ): bool,
                     vol.Optional(
                         CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
-                    ): bool,
+                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
                 }
             )
 

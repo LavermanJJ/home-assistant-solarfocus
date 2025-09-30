@@ -57,6 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
+        solar_count=entry.options.get(CONF_SOLAR, 0)
+        if isinstance(entry.options.get(CONF_SOLAR), int)
+        else (1 if entry.options.get(CONF_SOLAR) else 0),
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
         api_version=ApiVersions(entry.options[CONF_API_VERSION]),
     )
@@ -129,8 +132,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
             CONF_SOLARFOCUS_SYSTEM, Systems.VAMPAIR
         )
 
-        config_entry.version = 2
-        hass.config_entries.async_update_entry(config_entry, data=new)
+        hass.config_entries.async_update_entry(config_entry, data=new, version=2)
 
     if version == 2:
         # Add option to configure solar
@@ -138,8 +140,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         new[CONF_SOLAR] = False
 
-        config_entry.version = 3
-        hass.config_entries.async_update_entry(config_entry, data=new)
+        hass.config_entries.async_update_entry(config_entry, data=new, version=3)
 
     if version == 3:
         new_data = {**config_entry.data}
@@ -173,9 +174,9 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         del new_data[CONF_HEATPUMP]
         del new_data[CONF_BIOMASS_BOILER]
 
-        config_entry.version = 4
+
         hass.config_entries.async_update_entry(
-            config_entry, data=new_data, options=new_options
+            config_entry, data=new_data, options=new_options, version=4
         )
 
     if version == 4:
@@ -186,9 +187,23 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new_options[CONF_BIOMASS_BOILER] = new_options["pelletsboiler"]
         del new_options["pelletsboiler"]
 
-        config_entry.version = 5
+
         hass.config_entries.async_update_entry(
-            config_entry, data=new_data, options=new_options
+            config_entry, data=new_data, options=new_options, version = 5
+        )
+
+    if version == 5:
+        new_data = {**config_entry.data}
+        new_options = {**config_entry.options}
+
+        # Convert solar from boolean to integer for multiple solar instances support
+        # This maintains backwards compatibility while enabling multiple instances
+        # for API versions >= 25.030
+        if isinstance(new_options.get(CONF_SOLAR), bool):
+            new_options[CONF_SOLAR] = 1 if new_options[CONF_SOLAR] else 0
+
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=6
         )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)

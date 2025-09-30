@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import logging
 
+from packaging import version
 from pysolarfocus import Systems
 
 from homeassistant.components.sensor import (
@@ -13,6 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_API_VERSION,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     UnitOfEnergy,
@@ -159,17 +161,45 @@ async def async_setup_entry(
             entities.append(entity)
 
     if config_entry.options[CONF_SOLAR]:
-        for description in SOLAR_SENSOR_TYPES:
-            _description = create_description(
-                SOLAR_PREFIX,
-                SOLAR_COMPONENT,
-                SOLAR_COMPONENT_PREFIX,
-                "",
-                description,
-            )
+        # Handle multiple solar instances for API versions >= 25.030
+        solar_count = config_entry.options[CONF_SOLAR]
+        if isinstance(solar_count, bool):
+            # Backwards compatibility: if it's a boolean, treat True as 1 instance
+            solar_count = 1 if solar_count else 0
+        
+        # For API versions < 25.030, limit to maximum 1 solar instance
+        try:
+            api_version = version.parse(config_entry.options.get(CONF_API_VERSION, "21.140"))
+            supports_multiple = api_version >= version.parse("25.030")
+        except Exception:
+            # Fallback if version parsing fails
+            supports_multiple = config_entry.options.get(CONF_API_VERSION, "21.140") >= "25.030"
+        
+        if not supports_multiple and solar_count > 1:
+            solar_count = 1
+        
+        for i in range(solar_count):
+            for description in SOLAR_SENSOR_TYPES:
+                # Always use index since solar is now always a list in pysolarfocus
+                # But for single instance, don't show the number in the entity name
+                idx = str(i + 1)
+                _description = create_description(
+                    SOLAR_PREFIX,
+                    SOLAR_COMPONENT,
+                    SOLAR_COMPONENT_PREFIX,
+                    idx,
+                    description,
+                )
+                
+                # For single solar instance, remove the number from the name for backward compatibility
+                if solar_count == 1:
+                    # Remove the number from the entity name but keep the index for API access
+                    _description.name = _description.name.replace(" 1 ", " ")
+                    # Also update the key to not include the "1" for single instance
+                    _description.key = _description.key.replace("so1_", "so_")
 
-            entity = SolarfocusSensor(coordinator, _description)
-            entities.append(entity)
+                entity = SolarfocusSensor(coordinator, _description)
+                entities.append(entity)
 
     for i in range(config_entry.options[CONF_FRESH_WATER_MODULE]):
         for description in FRESH_WATER_MODULE_SENSOR_TYPES:
