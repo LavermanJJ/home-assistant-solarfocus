@@ -23,9 +23,6 @@ CONF_BIOMASS_BOILER = "biomassboiler"
 CONF_SOLAR = "solar"
 CONF_FRESH_WATER_MODULE = "fresh_water_module"
 
-"""Custom Measurement Units"""
-VOLUME_FLOW_RATE_LITER_PER_HOUR: Final = "l/h"
-
 """Entity naming"""
 HEATING_CIRCUIT_PREFIX = "Heating circuit"
 HEATING_CIRCUIT_COMPONENT = "heating_circuits"
