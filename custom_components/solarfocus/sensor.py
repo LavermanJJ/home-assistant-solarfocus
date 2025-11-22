@@ -21,6 +21,8 @@ from homeassistant.const import (
     UnitOfMass,
     UnitOfPower,
     UnitOfTemperature,
+    UnitOfVolume,
+    UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
 
@@ -59,7 +61,6 @@ from .const import (
     SOLAR_COMPONENT,
     SOLAR_COMPONENT_PREFIX,
     SOLAR_PREFIX,
-    VOLUME_FLOW_RATE_LITER_PER_HOUR,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
 from .entity import (
@@ -166,18 +167,22 @@ async def async_setup_entry(
         if isinstance(solar_count, bool):
             # Backwards compatibility: if it's a boolean, treat True as 1 instance
             solar_count = 1 if solar_count else 0
-        
+
         # For API versions < 25.030, limit to maximum 1 solar instance
         try:
-            api_version = version.parse(config_entry.options.get(CONF_API_VERSION, "21.140"))
+            api_version = version.parse(
+                config_entry.options.get(CONF_API_VERSION, "21.140")
+            )
             supports_multiple = api_version >= version.parse("25.030")
         except Exception:
             # Fallback if version parsing fails
-            supports_multiple = config_entry.options.get(CONF_API_VERSION, "21.140") >= "25.030"
-        
+            supports_multiple = (
+                config_entry.options.get(CONF_API_VERSION, "21.140") >= "25.030"
+            )
+
         if not supports_multiple and solar_count > 1:
             solar_count = 1
-        
+
         for i in range(solar_count):
             for description in SOLAR_SENSOR_TYPES:
                 # Always use index since solar is now always a list in pysolarfocus
@@ -190,7 +195,7 @@ async def async_setup_entry(
                     idx,
                     description,
                 )
-                
+
                 # For single solar instance, remove the number from the name for backward compatibility
                 if solar_count == 1:
                     # Remove the number from the entity name but keep the index for API access
@@ -382,14 +387,14 @@ BOILER_SENSOR_TYPES = [
 ]
 
 HEATPUMP_SENSOR_TYPES = [
-   SolarfocusSensorEntityDescription(
+    SolarfocusSensorEntityDescription(
         key="outdoor_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-   ),
-   SolarfocusSensorEntityDescription(
+    ),
+    SolarfocusSensorEntityDescription(
         key="supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon="mdi:thermometer-chevron-up",
@@ -405,7 +410,7 @@ HEATPUMP_SENSOR_TYPES = [
     ),
     SolarfocusSensorEntityDescription(
         key="flow_rate",
-        native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
+        native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_HOUR,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -693,7 +698,7 @@ SOLAR_SENSOR_TYPES = [
     ),
     SolarfocusSensorEntityDescription(
         key="flow_heat_meter",
-        native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
+        native_unit_of_measurement=UnitOfVolume.LITER,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -765,7 +770,7 @@ FRESH_WATER_MODULE_SENSOR_TYPES = [
     ),
     SolarfocusSensorEntityDescription(
         key="flow_rate",
-        native_unit_of_measurement=VOLUME_FLOW_RATE_LITER_PER_HOUR,
+        native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
         min_required_version="23.040",
