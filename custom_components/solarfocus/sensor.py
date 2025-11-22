@@ -698,7 +698,7 @@ SOLAR_SENSOR_TYPES = [
     ),
     SolarfocusSensorEntityDescription(
         key="flow_heat_meter",
-        native_unit_of_measurement=UnitOfVolume.LITER,
+        native_unit_of_measurement=UnitOfVolume.LITERS,
         icon="mdi:speedometer",
         state_class=SensorStateClass.MEASUREMENT,
     ),
