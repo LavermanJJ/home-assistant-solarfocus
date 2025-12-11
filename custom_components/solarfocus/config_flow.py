@@ -274,17 +274,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
-        return SolarfocusOptionsFlowHandler(config_entry)
+        return SolarfocusOptionsFlowHandler()
 
 
 class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
     """Solarfocus config flow options handler."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self) -> None:
         """Initialize Solarfocus options flow."""
 
-        self._config_entry = config_entry
-        self.options = dict(config_entry.options)
         self._errors = {}
 
     async def async_step_init(
@@ -293,6 +291,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         """Manage the options."""
 
         errors = {}
+        self.options = dict(self.config_entry.options)
 
         if user_input is None:
             return await self._show_init_form(user_input, errors)
