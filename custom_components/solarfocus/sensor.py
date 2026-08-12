@@ -169,16 +169,10 @@ async def async_setup_entry(
             solar_count = 1 if solar_count else 0
 
         # For API versions < 25.030, limit to maximum 1 solar instance
-        try:
-            api_version = version.parse(
-                config_entry.options.get(CONF_API_VERSION, "21.140")
-            )
-            supports_multiple = api_version >= version.parse("25.030")
-        except Exception:
-            # Fallback if version parsing fails
-            supports_multiple = (
-                config_entry.options.get(CONF_API_VERSION, "21.140") >= "25.030"
-            )
+        api_version = version.parse(
+            config_entry.options.get(CONF_API_VERSION, "21.140")
+        )
+        supports_multiple = api_version >= version.parse("25.030")
 
         if not supports_multiple and solar_count > 1:
             solar_count = 1

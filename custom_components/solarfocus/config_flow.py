@@ -285,6 +285,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize Solarfocus options flow."""
 
         self._errors = {}
+        self.options: dict[str, Any] = {}
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

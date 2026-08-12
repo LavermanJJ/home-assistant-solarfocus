@@ -1,7 +1,5 @@
 """Constants for the Solarfocus integration."""
 
-from typing import Final
-
 DOMAIN = "solarfocus"
 UPDATE_LISTENER = "update-listener"
 DATA_COORDINATOR = "data-coordinator"

@@ -33,7 +33,6 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         if not self.api.connect():
             _LOGGER.error("Failed to connect to modbus")
 
-        self.name = entry.title
         self._entry = entry
         self.hass = hass
 
