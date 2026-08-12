@@ -96,6 +96,14 @@ a circuit is switched to cooling and otherwise leaves the responsibility with yo
 automations. The heating circuit exposes `room_temperature` and `humidity` sensors you can
 build that on.
 
+> **Warning**
+> Feeding the external room humidity back to the heating system does **not** give you dew
+> point protection. Per the specification, register 32607 "is only used for display in the
+> visualization, the value is ignored for the dew point calculation". Active dew point
+> monitoring means Home Assistant computing the dew point itself and driving the cooling
+> flow setpoint (register 32600) accordingly, which is what the climate entity writes when
+> you set its target temperature.
+
 Note that the "outdoor shutdown temperature heating" parameter on the control panel stays
 active for heating. If the outdoor temperature is above it, the circuit will not start
 heating regardless of what is written over Modbus; set the parameter to 45°C to disable it.
@@ -121,6 +129,20 @@ Use an automation to forward the values of your own meters, e.g. on every state 
 > The eco<sup>manager-touch</sup> rejects these values unless it is configured to accept them. In the _Photovoltaic_ mask
 > of the display, set the source to `Modbus` and enter the IP address of your Home Assistant instance. Without this, all
 > writes to these registers are ignored. It may take a moment until the transmitted values are shown on the display.
+
+### External room sensors
+
+A heating circuit can be fed with a room temperature and a room humidity measured elsewhere in
+Home Assistant, so that a circuit without a Solarfocus room sensor can still be controlled:
+
+| Entity | Register | Range | Description |
+|---|---|---|---|
+| `number.solarfocus_heating_circuit_1_indoor_temperature_external` | 32606 | 0 - 45 °C | Room temperature from an external controller |
+| `number.solarfocus_heating_circuit_1_indoor_humidity_external` | 32607 | 0 - 100 % | Room humidity from an external controller |
+
+Writing `0` is not a measurement of zero - the heating system then ignores the register and falls
+back to its own sensor. Note that the humidity is only used for the display in the visualization
+of the eco<sup>manager-touch</sup>, see the warning about the dew point under [Climate](#climate).
 
 ## Supported Solarfocus Software and Hardware
 
