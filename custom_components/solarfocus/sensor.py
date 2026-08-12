@@ -613,7 +613,6 @@ BIOMASS_BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="boiler_operating_mode",
         icon="mdi:format-list-bulleted",
-        state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENUM,
         options=list(range(0, 6)),
         unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
