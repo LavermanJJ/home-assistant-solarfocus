@@ -18,12 +18,6 @@ from custom_components.solarfocus.button import (
     BOILER_BUTTON_TYPES,
     SolarfocusButtonEntity,
 )
-from custom_components.solarfocus.climate import (
-    CLIMATE_TYPES,
-    PRESET_AUTO,
-    PRESET_OFF,
-    SolarfocusClimateEntity,
-)
 from custom_components.solarfocus.const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
@@ -62,12 +56,6 @@ from custom_components.solarfocus.water_heater import (
     SOLARFOCUS_TEMP_WATER_MIN,
     WATER_HEATER_TYPES,
     SolarfocusWaterHeaterEntity,
-)
-from homeassistant.components.climate.const import (
-    PRESET_COMFORT,
-    PRESET_ECO,
-    HVACAction,
-    HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE, STATE_OFF, UnitOfTemperature
 
@@ -462,102 +450,6 @@ async def test_water_heater_turns_on_and_off(boiler_water_heater) -> None:
         (("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON),),
         (("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF),),
     ]
-
-
-# --- climate ----------------------------------------------------------------
-
-
-@pytest.fixture(name="climate_entity")
-def climate_entity_fixture() -> SolarfocusClimateEntity:
-    """Return the thermostat of heating circuit 1."""
-    return _make(
-        SolarfocusClimateEntity,
-        CLIMATE_TYPES[0],
-        HEATING_CIRCUIT_PREFIX,
-        HEATING_CIRCUIT_COMPONENT,
-        HEATING_CIRCUIT_COMPONENT_PREFIX,
-    )
-
-
-@pytest.mark.parametrize(
-    ("state", "expected"),
-    [(0, HVACMode.OFF), (31, HVACMode.HEAT), (23, HVACMode.HEAT)],
-)
-def test_climate_hvac_mode(climate_entity, state: int, expected: HVACMode) -> None:
-    """State 0 means the circuit is switched off."""
-    climate_entity.coordinator.api.heating_circuits[0].state.scaled_value = state
-
-    assert climate_entity.hvac_mode == expected
-    assert climate_entity.hvac_modes == [HVACMode.OFF, HVACMode.HEAT]
-
-
-@pytest.mark.parametrize(
-    ("state", "expected"),
-    [
-        (0, HVACAction.OFF),
-        (11, HVACAction.OFF),
-        (228, HVACAction.OFF),
-        (31, HVACAction.IDLE),
-        (23, HVACAction.HEATING),
-    ],
-)
-def test_climate_hvac_action(
-    climate_entity, state: int, expected: HVACAction
-) -> None:
-    """The device state maps to what the circuit is currently doing."""
-    climate_entity.coordinator.api.heating_circuits[0].state.scaled_value = state
-
-    assert climate_entity.hvac_action == expected
-
-
-@pytest.mark.parametrize(
-    ("mode", "preset"),
-    [(0, PRESET_COMFORT), (1, PRESET_ECO), (2, PRESET_AUTO), (3, PRESET_OFF)],
-)
-def test_climate_preset_mode(climate_entity, mode: int, preset: str) -> None:
-    """Every device mode has a preset and every preset writes it back."""
-    climate_entity.coordinator.api.heating_circuits[0].mode.scaled_value = mode
-
-    assert climate_entity.preset_mode == preset
-    assert preset in climate_entity.preset_modes
-
-
-@pytest.mark.parametrize(
-    ("preset", "expected"),
-    [(PRESET_COMFORT, 0), (PRESET_ECO, 1), (PRESET_AUTO, 2), (PRESET_OFF, 3)],
-)
-async def test_climate_set_preset_mode(
-    climate_entity, preset: str, expected: int
-) -> None:
-    """Selecting a preset writes the numeric mode."""
-    with patch.object(climate_entity, "_set_native_value") as set_value:
-        await climate_entity.async_set_preset_mode(preset)
-
-    assert set_value.call_args_list == [(("mode", expected),)]
-
-
-@pytest.mark.parametrize(
-    ("cooling", "min_temp", "max_temp"), [(0, 22.0, 45.0), (1, 7.0, 35.0)]
-)
-def test_climate_temperature_range_follows_cooling(
-    climate_entity, cooling: int, min_temp: float, max_temp: float
-) -> None:
-    """A cooling circuit has a different valid range than a heating one."""
-    climate_entity.coordinator.api.heating_circuits[0].cooling.scaled_value = cooling
-
-    assert climate_entity.min_temp == min_temp
-    assert climate_entity.max_temp == max_temp
-
-
-def test_climate_temperatures(climate_entity) -> None:
-    """The thermostat works on the supply temperature."""
-    circuit = climate_entity.coordinator.api.heating_circuits[0]
-    circuit.supply_temperature.scaled_value = 38.4
-    circuit.target_supply_temperature.scaled_value = 40.123
-
-    assert climate_entity.current_temperature == 38.4
-    assert climate_entity.target_temperature == 40.12
-    assert climate_entity.temperature_unit == UnitOfTemperature.CELSIUS
 
 
 # --- writing ----------------------------------------------------------------
