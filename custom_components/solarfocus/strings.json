@@ -120,7 +120,7 @@
           "18": "Safety chain is open, lag",
           "19": "Residual oxygen content too high or too low, lag",
           "20": "Flue gas temperature drop, lag",
-          "21": "Flue gas temperature is still greater than {RGT_Start}, standby",
+          "21": "Flue gas temperature is still greater than RGT Start, standby",
           "22": "Flue gas sensor is defective, standby",
           "23": "Feed temperature too high, standby",
           "24": "Lambda sensor is defective, lag",
@@ -176,7 +176,7 @@
           "218": "Safety chain is open, lag",
           "219": "Residual oxygen content too high or too low, lag",
           "220": "Flue gas temperature drop, lag",
-          "221": "Flue gas temperature is still greater than {RGT_Start}, standby",
+          "221": "Flue gas temperature is still greater than RGT Start, standby",
           "222": "Flue gas sensor is defective, standby",
           "223": "Feed temperature too high, standby",
           "224": "Lambda sensor is defective, lag",
@@ -540,7 +540,7 @@
           "14":"Frost protection mode",
           "15":"Heat dissipation",
           "16":"Tank cooling",
-          "17":"Pump test run is active ",
+          "17":"Pump test run is active",
           "18":"Solar output test",
           "201":"Collector sensor short circuit",
           "203":"Tank sensor short circuit!",
@@ -560,8 +560,8 @@
           "217":"Fuse defective!",
           "218":"Both fuses defective!",
           "219":"Solar circuit in operation",
-          "220":"Solar circuit is switched off ",
-          "221":"Pump test run is active ",
+          "220":"Solar circuit is switched off",
+          "221":"Pump test run is active",
           "222":"Solar output test"
         }
       }

@@ -1,0 +1,112 @@
+"""Validate the translation files.
+
+hassfest validates `strings.json` and `translations/en.json` against the rules for
+integrations in Home Assistant core. One of those rules does not fit this
+integration: translation keys have to match `[a-z0-9-_]+`, which no negative
+number can, while `bo_circulation` and `bo_single_charge` report -1 for "Locked".
+Home Assistant resolves that key at runtime and shows the translated state, so the
+value is kept and the hassfest plugin is skipped in the workflow.
+
+These tests take over the part of that plugin that does matter, under rules that
+fit a custom component: numeric state keys are allowed, sloppy values are not.
+"""
+
+import json
+import pathlib
+
+import pytest
+
+from custom_components.solarfocus import sensor
+
+COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
+
+FILENAMES = ["strings.json", "translations/en.json", "translations/de.json"]
+
+
+def _load(filename: str) -> dict:
+    with (COMPONENT_DIR / filename).open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _strings(value, path=()):
+    """Yield every (path, string) of a nested translation structure."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield from _strings(item, (*path, key))
+    elif isinstance(value, str):
+        yield ".".join(path), value
+
+
+def _entity_states(data: dict):
+    """Yield every (path, state, text) of the entity state translations."""
+    for domain, entities in data.get("entity", {}).items():
+        for entity, sections in entities.items():
+            for state, text in sections.get("state", {}).items():
+                yield f"entity.{domain}.{entity}", state, text
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_translations_are_valid_json(filename: str) -> None:
+    """A broken file makes every entity of the integration untranslated."""
+    assert _load(filename)
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_no_value_has_surrounding_whitespace(filename: str) -> None:
+    """Leading or trailing spaces show up in the state of the entity."""
+    sloppy = [
+        (path, text)
+        for path, text in _strings(_load(filename))
+        if text != text.strip()
+    ]
+
+    assert not sloppy, f"{filename}: {sloppy}"
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_states_have_no_placeholders(filename: str) -> None:
+    """Home Assistant does not substitute placeholders in a state.
+
+    A `{name}` in a state is rendered literally, so the user reads the name of a
+    Solarfocus parameter in curly braces instead of a value.
+    """
+    placeholders = [
+        (path, state, text)
+        for path, state, text in _entity_states(_load(filename))
+        if "{" in text or "}" in text
+    ]
+
+    assert not placeholders, f"{filename}: {placeholders}"
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_sensor_state_keys_are_numbers(filename: str) -> None:
+    """The sensor states of this integration are the raw values of the device.
+
+    Negative values are part of that (-1 is "Locked"), which is why hassfest's
+    translation key rule cannot be followed, see the module docstring. Other
+    domains use the state names of Home Assistant itself and are not numeric.
+    """
+    not_numeric = [
+        (path, state)
+        for path, state, _ in _entity_states(_load(filename))
+        if path.startswith("entity.sensor.") and not state.lstrip("-").isdigit()
+    ]
+
+    assert not not_numeric, f"{filename}: {not_numeric}"
+
+
+def test_english_translations_match_the_strings_file() -> None:
+    """`translations/en.json` is the English copy of `strings.json`."""
+    strings = dict(_strings(_load("strings.json").get("entity", {})))
+    english = dict(_strings(_load("translations/en.json").get("entity", {})))
+
+    assert english == strings
+
+
+def test_the_locked_state_is_still_translated() -> None:
+    """The state hassfest rejects has to keep working, that is the whole point."""
+    for filename in FILENAMES:
+        sensors = _load(filename)["entity"]["sensor"]
+        for key in ("bo_circulation", "bo_single_charge"):
+            assert sensors[key]["state"]["-1"]

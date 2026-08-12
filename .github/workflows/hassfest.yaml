@@ -10,5 +10,20 @@ jobs:
   validate:
     runs-on: "ubuntu-latest"
     steps:
-    - uses: "actions/checkout@v2"
-    - uses: "home-assistant/actions/hassfest@master"
+    - uses: "actions/checkout@v7"
+    # The hassfest action takes no arguments, so the image is run directly to be
+    # able to skip a plugin.
+    #
+    # "translations" applies the rules for integrations in Home Assistant core,
+    # one of which this integration cannot follow: translation keys have to match
+    # [a-z0-9-_]+, which no negative number can, while bo_circulation and
+    # bo_single_charge report -1 for "Locked". Home Assistant resolves that key at
+    # runtime and shows the translated state, so the value is kept.
+    #
+    # tests/test_translations.py takes over the part of the plugin that applies:
+    # no stray whitespace, no placeholders in states, en.json in sync with
+    # strings.json.
+    - name: Run hassfest
+      run: |
+        docker run --rm -v "${{ github.workspace }}://github/workspace" \
+          ghcr.io/home-assistant/hassfest --skip-plugins translations
