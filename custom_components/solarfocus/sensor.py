@@ -319,7 +319,11 @@ BUFFER_SENSOR_TYPES = [
         icon="mdi:thermometer-high",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        unsupported_systems=[Systems.VAMPAIR],
+        unsupported_systems=[
+            Systems.VAMPAIR,
+            Systems.PELLETELEGANCE,
+            Systems.OCTOPLUS,
+        ],
     ),
     SolarfocusSensorEntityDescription(
         key="external_top_temperature_x44",
@@ -329,6 +333,7 @@ BUFFER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         min_required_version="22.090",
         entity_registry_enabled_default=False,
+        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="external_middle_temperature_x36",
@@ -338,6 +343,7 @@ BUFFER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         min_required_version="22.090",
         entity_registry_enabled_default=False,
+        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="external_bottom_temperature_x35",
@@ -347,6 +353,7 @@ BUFFER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         min_required_version="22.090",
         entity_registry_enabled_default=False,
+        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
 ]
 
