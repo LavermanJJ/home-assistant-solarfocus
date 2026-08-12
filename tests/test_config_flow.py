@@ -1,2 +1,408 @@
-"""Test the Solarfocus config flow."""
+"""Test the Solarfocus config flow.
 
+Covers the `config-flow-test-coverage` item of Home Assistant's integration
+quality scale (issue #125): every step, every error path and the options flow.
+"""
+
+from unittest.mock import patch
+
+from pysolarfocus import ApiVersions, Systems
+import pytest
+
+from custom_components.solarfocus.config_flow import (
+    CannotConnect,
+    InvalidAuth,
+    InvalidScanInterval,
+    validate_input,
+)
+from custom_components.solarfocus.const import (
+    CONF_BIOMASS_BOILER,
+    CONF_BOILER,
+    CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
+    CONF_HEATING_CIRCUIT,
+    CONF_HEATPUMP,
+    CONF_PHOTOVOLTAIC,
+    CONF_SOLAR,
+    CONF_SOLARFOCUS_SYSTEM,
+    DEFAULT_NAME,
+    DOMAIN,
+)
+from homeassistant.const import (
+    CONF_API_VERSION,
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+
+from .conftest import build_config_entry
+
+USER_INPUT = {
+    CONF_NAME: DEFAULT_NAME,
+    CONF_HOST: "solarfocus.local",
+    CONF_PORT: 502,
+    CONF_SCAN_INTERVAL: 10,
+    CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR,
+    CONF_API_VERSION: ApiVersions.V_23_020.value,
+}
+
+VAMPAIR_COMPONENTS = {
+    CONF_HEATING_CIRCUIT: 2,
+    CONF_BUFFER: 1,
+    CONF_BOILER: 1,
+    CONF_FRESH_WATER_MODULE: 0,
+    CONF_HEATPUMP: True,
+    CONF_PHOTOVOLTAIC: False,
+    CONF_SOLAR: 0,
+}
+
+THERMINATOR_COMPONENTS = {
+    CONF_HEATING_CIRCUIT: 1,
+    CONF_BUFFER: 1,
+    CONF_BOILER: 1,
+    CONF_FRESH_WATER_MODULE: 1,
+    CONF_BIOMASS_BOILER: True,
+    CONF_PHOTOVOLTAIC: True,
+    CONF_SOLAR: 2,
+}
+
+
+async def _start_user_step(hass: HomeAssistant, user_input: dict) -> dict:
+    """Run the user step and return its result."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    return await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input
+    )
+
+
+async def test_form_shown_without_input(
+    hass: HomeAssistant, enable_custom_integrations
+) -> None:
+    """The flow starts by asking for the connection details."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    assert result["errors"] is None
+
+
+async def test_full_flow_vampair(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A vampair system is stored with the heat pump enabled."""
+    result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "component"
+
+    with patch(
+        "custom_components.solarfocus.async_setup_entry", return_value=True
+    ) as setup_entry:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], VAMPAIR_COMPONENTS
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == DEFAULT_NAME
+    assert result["data"] == {
+        CONF_NAME: DEFAULT_NAME,
+        CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR,
+    }
+    assert result["options"] == {
+        CONF_HOST: "solarfocus.local",
+        CONF_PORT: 502,
+        CONF_SCAN_INTERVAL: 10,
+        CONF_API_VERSION: ApiVersions.V_23_020.value,
+        CONF_HEATING_CIRCUIT: 2,
+        CONF_BUFFER: 1,
+        CONF_BOILER: 1,
+        CONF_FRESH_WATER_MODULE: 0,
+        CONF_PHOTOVOLTAIC: False,
+        CONF_SOLAR: 0,
+        CONF_HEATPUMP: True,
+        # A heat pump system never has a biomass boiler
+        CONF_BIOMASS_BOILER: False,
+    }
+    assert len(setup_entry.mock_calls) == 1
+
+
+@pytest.mark.parametrize("system", [Systems.THERMINATOR, Systems.ECOTOP])
+async def test_full_flow_biomass_systems(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, system: Systems
+) -> None:
+    """Biomass systems are stored with the heat pump disabled."""
+    result = await _start_user_step(hass, {**USER_INPUT, CONF_SOLARFOCUS_SYSTEM: system})
+
+    assert result["step_id"] == "component"
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], THERMINATOR_COMPONENTS
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_SOLARFOCUS_SYSTEM] == system
+    assert result["options"][CONF_BIOMASS_BOILER] is True
+    assert result["options"][CONF_HEATPUMP] is False
+    assert result["options"][CONF_SOLAR] == 2
+    assert result["options"][CONF_FRESH_WATER_MODULE] == 1
+
+
+async def test_form_cannot_connect(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """A device that does not answer keeps the user on the first step."""
+    api.connect.return_value = False
+
+    result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_form_recovers_after_connection_error(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The user can retry once the device is reachable."""
+    api.connect.return_value = False
+    result = await _start_user_step(hass, USER_INPUT)
+    assert result["errors"] == {"base": "cannot_connect"}
+
+    api.connect.return_value = True
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], USER_INPUT
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "component"
+
+
+async def test_form_invalid_auth(
+    hass: HomeAssistant, enable_custom_integrations
+) -> None:
+    """An authentication problem is reported on the form."""
+    with patch(
+        "custom_components.solarfocus.config_flow.validate_input",
+        side_effect=InvalidAuth,
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["errors"] == {"base": "invalid_auth"}
+
+
+async def test_form_unknown_error(
+    hass: HomeAssistant, enable_custom_integrations
+) -> None:
+    """Any other exception is reported as an unknown error."""
+    with patch(
+        "custom_components.solarfocus.config_flow.validate_input",
+        side_effect=RuntimeError("boom"),
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["errors"] == {"base": "unknown"}
+
+
+async def test_form_scan_interval_below_minimum(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A scan interval below 5 seconds is rejected as an unknown error."""
+    result = await _start_user_step(hass, {**USER_INPUT, CONF_SCAN_INTERVAL: 1})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+
+
+async def test_validate_input_raises_cannot_connect(
+    hass: HomeAssistant, mock_api, api
+) -> None:
+    """Validate_input surfaces a failed connection."""
+    api.connect.return_value = False
+
+    with pytest.raises(CannotConnect):
+        await validate_input(hass, USER_INPUT)
+
+
+async def test_validate_input_raises_invalid_scan_interval(
+    hass: HomeAssistant, mock_api
+) -> None:
+    """Validate_input enforces the minimum scan interval."""
+    with pytest.raises(InvalidScanInterval):
+        await validate_input(hass, {**USER_INPUT, CONF_SCAN_INTERVAL: 4})
+
+
+async def test_validate_input_returns_title(hass: HomeAssistant, mock_api) -> None:
+    """Validate_input returns the entry title on success."""
+    assert await validate_input(hass, USER_INPUT) == {"title": DEFAULT_NAME}
+
+
+@pytest.mark.parametrize(
+    "system", [Systems.VAMPAIR, Systems.THERMINATOR, Systems.ECOTOP]
+)
+async def test_options_flow_form(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, system: Systems
+) -> None:
+    """Each system gets an options form prefilled from the stored options."""
+    entry = build_config_entry(system, heating_circuit=1, buffer=1, boiler=1)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    assert result["data_schema"] is not None
+
+
+async def test_options_flow_updates_options(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Submitting the options form stores the new values."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                CONF_HOST: "10.0.0.5",
+                CONF_PORT: 503,
+                CONF_SCAN_INTERVAL: 30,
+                CONF_API_VERSION: ApiVersions.V_25_030.value,
+                CONF_HEATING_CIRCUIT: 3,
+                CONF_BUFFER: 2,
+                CONF_BOILER: 1,
+                CONF_FRESH_WATER_MODULE: 1,
+                CONF_HEATPUMP: True,
+                CONF_PHOTOVOLTAIC: True,
+                CONF_SOLAR: 1,
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_HOST] == "10.0.0.5"
+    assert result["data"][CONF_PORT] == 503
+    assert result["data"][CONF_SCAN_INTERVAL] == 30
+    assert result["data"][CONF_API_VERSION] == ApiVersions.V_25_030.value
+    assert result["data"][CONF_HEATING_CIRCUIT] == 3
+    assert result["data"][CONF_HEATPUMP] is True
+    assert result["data"][CONF_BIOMASS_BOILER] is False
+
+
+async def test_options_flow_biomass_system_disables_heatpump(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A therminator keeps the biomass boiler flag and never enables the heat pump."""
+    entry = build_config_entry(Systems.THERMINATOR, heating_circuit=1, biomassboiler=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                CONF_HOST: "solarfocus.local",
+                CONF_PORT: 502,
+                CONF_SCAN_INTERVAL: 10,
+                CONF_API_VERSION: ApiVersions.V_23_020.value,
+                CONF_HEATING_CIRCUIT: 1,
+                CONF_BUFFER: 1,
+                CONF_BOILER: 1,
+                CONF_FRESH_WATER_MODULE: 0,
+                CONF_BIOMASS_BOILER: True,
+                CONF_PHOTOVOLTAIC: False,
+                CONF_SOLAR: 0,
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_BIOMASS_BOILER] is True
+    assert result["data"][CONF_HEATPUMP] is False
+
+
+async def test_options_flow_cannot_connect(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """A device that stops answering keeps the user on the options form."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    api.connect.return_value = False
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "unreachable",
+            CONF_PORT: 502,
+            CONF_SCAN_INTERVAL: 10,
+            CONF_API_VERSION: ApiVersions.V_23_020.value,
+            CONF_HEATING_CIRCUIT: 1,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "expected"),
+    [(InvalidAuth, "invalid_auth"), (RuntimeError("boom"), "unknown")],
+)
+async def test_options_flow_errors(
+    hass: HomeAssistant,
+    enable_custom_integrations,
+    mock_api,
+    side_effect: Exception,
+    expected: str,
+) -> None:
+    """Auth and unexpected failures are reported on the options form."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    with patch(
+        "custom_components.solarfocus.config_flow.validate_input",
+        side_effect=side_effect,
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                CONF_HOST: "solarfocus.local",
+                CONF_PORT: 502,
+                CONF_SCAN_INTERVAL: 10,
+                CONF_API_VERSION: ApiVersions.V_23_020.value,
+                CONF_HEATING_CIRCUIT: 1,
+                CONF_BUFFER: 0,
+                CONF_BOILER: 0,
+                CONF_FRESH_WATER_MODULE: 0,
+                CONF_HEATPUMP: True,
+                CONF_PHOTOVOLTAIC: False,
+                CONF_SOLAR: 0,
+            },
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": expected}
