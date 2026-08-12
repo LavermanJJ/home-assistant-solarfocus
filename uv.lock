@@ -1867,15 +1867,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/08/64/a99f27d3b4347486c
 
 [[package]]
 name = "pysolarfocus"
-version = "5.2.0"
+version = "5.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "pymodbus" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/6f/dbff18c08d41f08a2d085d74d804303abbd01a38ef1771be3b0e1c5494c0/pysolarfocus-5.2.0.tar.gz", hash = "sha256:96d7cf213b87dff760d1b24c91a8280d8eeff21379d618c79d3f04f892025af8", size = 740793, upload-time = "2026-08-12T11:53:24.265Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/1c/30833866b1cefd3f9f1ec6e049cf1669ee63ee833d44eeaa2bd898da46f1/pysolarfocus-5.2.1.tar.gz", hash = "sha256:ccbff9d31afc2081366ddd5d1be39b9236ecaedf506313195f73766200edd8d6", size = 741227, upload-time = "2026-08-12T17:23:26.328Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/60/db05b444467b21c665eca6d4eb6c52dd194a8d74118b93c5146215551231/pysolarfocus-5.2.0-py3-none-any.whl", hash = "sha256:dac17e5bc8d57cd4d251a17c459da1cbb8e30a37b4cad328a34cee083ffc0b99", size = 31471, upload-time = "2026-08-12T11:53:22.873Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/19/6d28ad8aa11f17a08be815c141034330c6e0c07d8f83ffd26f6675ceca3e/pysolarfocus-5.2.1-py3-none-any.whl", hash = "sha256:e63d8ebdbda826f64349dcd5a702ad3dc20f1972df503b0aee056ebd908e9b82", size = 31512, upload-time = "2026-08-12T17:23:25.193Z" },
 ]
 
 [[package]]
@@ -2315,7 +2315,7 @@ requires-dist = [
     { name = "packaging", specifier = "~=24.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
     { name = "pylint", specifier = ">=3.3.3" },
-    { name = "pysolarfocus", specifier = ">=5.2.0,<6" },
+    { name = "pysolarfocus", specifier = ">=5.2.1,<6" },
     { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.355,<0.14" },
     { name = "pytest-socket", specifier = ">=0.8.0,<0.9" },
 ]
