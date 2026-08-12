@@ -383,7 +383,8 @@ BOILER_SENSOR_TYPES = [
         key="single_charge",
         icon="mdi:pump",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 2)),
+        # -1 ("Locked") is a valid reading, same as for circulation below
+        options=list(range(-1, 2)),
     ),
     SolarfocusSensorEntityDescription(
         key="circulation",
@@ -598,7 +599,10 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         key="message_number",
         icon="mdi:message-text-outline",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 88)),
+        # The 200-range mirrors the 0-range as "acknowledged", and 2010 is a
+        # standalone code. All three blocks are translated, so all three have to
+        # be listed or core rejects the state -- see issue #165.
+        options=list(range(0, 88)) + list(range(200, 288)) + [2010],
     ),
     SolarfocusSensorEntityDescription(
         key="cleaning",
