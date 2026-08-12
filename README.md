@@ -57,9 +57,48 @@ There is currently support for the following device types within Home Assistant:
 
 
 ### Climate
-In a first version, the climate entity only supports heating. As some heat pump installations also support cooling, this may be added at a later point in time. However, as it is possible to use a heat pump system for cooling, which is not intent for that by the way it was built, damage to the building or system from condensate is possible. 
 
-Additionally, it is only possible to set the state (_preset_) but not setting the supply nor room temperature. This can be done using the `number` entities. A later version may add control as well. For now, we leave that to the programmed heating curve from Solarfocus. 
+The climate entity supports heating, cooling and switching the heating circuit off, and it
+sets the flow temperature (_target temperature_) as well as the state (_preset_).
+
+Section 6.2 of the Solarfocus Modbus specification requires all registers of a heating
+circuit to be written together whenever the mode changes, otherwise the controller can end
+up in an undefined state. Selecting a mode therefore writes:
+
+| Mode | 32600 flow setpoint | 32602 cooling | 32603 operating mode | 32608 circuit mode |
+|---|---|---|---|---|
+| Heat | setpoint | 0 | preset | 2 (heating + cooling) |
+| Cool | setpoint | 1 | preset | 2 (heating + cooling) |
+| Off | 0 | 0 | 3 (off) | 2 (heating + cooling) |
+
+The specification writes 0 (continuous operation) into 32603 for heating and cooling. The
+integration keeps the preset you configured instead and only switches a circuit that is off
+back on, so a comfort, eco or auto schedule is not discarded when you switch modes.
+
+Because switching off writes a flow setpoint of 0, the integration remembers the last
+setpoint per mode and restores it when the circuit is switched on again. It survives a
+Home Assistant restart.
+
+#### Cooling
+
+> **Warning**
+> Writing register 32602 **disables the dew point monitoring of the Solarfocus controller**.
+> From then on the flow temperature has to be kept above the dew point of every room by
+> Home Assistant. If it is not, condensate forms and can damage the building. A heat pump
+> system that was not built for cooling can also be damaged. Check with Solarfocus or your
+> installer whether cooling is supported by your installation before you use it.
+
+Cooling is only offered from api version 22.090 on, as register 32608 does not exist below
+it and the circuit cannot be switched to "heating + cooling" without it.
+
+The integration does not calculate the dew point for you - it logs a warning the first time
+a circuit is switched to cooling and otherwise leaves the responsibility with your
+automations. The heating circuit exposes `room_temperature` and `humidity` sensors you can
+build that on.
+
+Note that the "outdoor shutdown temperature heating" parameter on the control panel stays
+active for heating. If the outdoor temperature is above it, the circuit will not start
+heating regardless of what is written over Modbus; set the parameter to 45°C to disable it.
 
 ![example](img/example.png)
 
