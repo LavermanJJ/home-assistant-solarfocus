@@ -10,6 +10,7 @@ from pysolarfocus import Systems
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_VERSION
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
 from .const import CONF_SOLARFOCUS_SYSTEM, DOMAIN
@@ -116,18 +117,16 @@ class SolarfocusEntity(Entity):
         self.entity_description = description
 
     @property
-    def device_info(self) -> dict:
+    def device_info(self) -> DeviceInfo:
         """Return info for device registry."""
         device = self._name
-        model = self.coordinator.api.system.value
-        api_version = self.coordinator.api.api_version.value
-        return {
-            "identifiers": {(DOMAIN, device)},
-            "name": "Solarfocus",
-            "model": {model},
-            "sw_version": {api_version},
-            "manufacturer": "Solarfocus",
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, device)},
+            name="Solarfocus",
+            model=self.coordinator.api.system.value,
+            sw_version=self.coordinator.api.api_version.value,
+            manufacturer="Solarfocus",
+        )
 
     @property
     def available(self):

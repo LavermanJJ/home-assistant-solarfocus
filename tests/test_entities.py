@@ -117,8 +117,31 @@ def test_device_info_describes_the_heating_system() -> None:
 
     assert device_info["identifiers"] == {(DOMAIN, "Solarfocus")}
     assert device_info["manufacturer"] == "Solarfocus"
-    assert device_info["model"] == {Systems.VAMPAIR.value}
-    assert device_info["sw_version"] == {ApiVersions.V_23_020.value}
+    assert device_info["model"] == Systems.VAMPAIR.value
+    assert device_info["sw_version"] == ApiVersions.V_23_020.value
+
+
+def test_device_info_values_are_strings() -> None:
+    """The device registry rejects anything else from 2026.12 on.
+
+    `model` and `sw_version` used to be built as set literals, `{model}`, which
+    Home Assistant reported as "passes a non-string value of type set as model to
+    the device registry".
+    """
+    entity = _make(
+        SolarfocusSensor,
+        BOILER_SENSOR_TYPES[0],
+        BOILER_PREFIX,
+        BOILER_COMPONENT,
+        BOILER_COMPONENT_PREFIX,
+    )
+
+    device_info = entity.device_info
+
+    for field in ("name", "model", "sw_version", "manufacturer"):
+        assert isinstance(device_info[field], str), (
+            f"{field} is {type(device_info[field]).__name__}, not str"
+        )
 
 
 def test_entity_is_unavailable_after_a_failed_update() -> None:
