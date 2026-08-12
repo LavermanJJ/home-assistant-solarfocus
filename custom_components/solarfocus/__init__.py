@@ -115,11 +115,11 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
-    version = config_entry.version
+    _LOGGER.info("Migrating from version %s", config_entry.version)
 
-    _LOGGER.info("Migrating from version %s", version)
-
-    if version == 1:
+    # Every step re-reads config_entry.version so that an entry coming from an old
+    # version is migrated through all following steps in one go.
+    if config_entry.version == 1:
         # Config allows multiple heatings, buffers, and boilers
         # and differentiates system (vampair, therminator)
         new = {**config_entry.data}
@@ -134,7 +134,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
 
-    if version == 2:
+    if config_entry.version == 2:
         # Add option to configure solar
         new = {**config_entry.data}
 
@@ -142,7 +142,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         hass.config_entries.async_update_entry(config_entry, data=new, version=3)
 
-    if version == 3:
+    if config_entry.version == 3:
         new_data = {**config_entry.data}
         new_options = {**config_entry.options}
 
@@ -160,7 +160,13 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         new_options[CONF_PHOTOVOLTAIC] = new_data[CONF_PHOTOVOLTAIC]
         new_options[CONF_SOLAR] = new_data[CONF_SOLAR]
         new_options[CONF_HEATPUMP] = new_data[CONF_HEATPUMP]
-        new_options[CONF_BIOMASS_BOILER] = new_data[CONF_BIOMASS_BOILER]
+
+        # The biomass boiler is still called "pelletsboiler" at this version, the
+        # rename happens in the next migration step.
+        biomass_boiler_key = (
+            "pelletsboiler" if "pelletsboiler" in new_data else CONF_BIOMASS_BOILER
+        )
+        new_options["pelletsboiler"] = new_data[biomass_boiler_key]
 
         # Remove moved data
         del new_data[CONF_HOST]
@@ -172,27 +178,28 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         del new_data[CONF_PHOTOVOLTAIC]
         del new_data[CONF_SOLAR]
         del new_data[CONF_HEATPUMP]
-        del new_data[CONF_BIOMASS_BOILER]
+        del new_data[biomass_boiler_key]
 
 
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=4
         )
 
-    if version == 4:
+    if config_entry.version == 4:
         new_data = {**config_entry.data}
         new_options = {**config_entry.options}
 
         # Rename pelletsboiler to biomassboiler
-        new_options[CONF_BIOMASS_BOILER] = new_options["pelletsboiler"]
-        del new_options["pelletsboiler"]
+        new_options[CONF_BIOMASS_BOILER] = new_options.pop(
+            "pelletsboiler", new_options.get(CONF_BIOMASS_BOILER, False)
+        )
 
 
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version = 5
         )
 
-    if version == 5:
+    if config_entry.version == 5:
         new_data = {**config_entry.data}
         new_options = {**config_entry.options}
 
