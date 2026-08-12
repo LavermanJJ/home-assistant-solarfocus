@@ -63,6 +63,26 @@ Additionally, it is only possible to set the state (_preset_) but not setting th
 
 ![example](img/example.png)
 
+### Photovoltaic
+
+Next to the photovoltaic sensors read from the heating system, the integration provides `number` entities to feed the
+heating system with values measured elsewhere in Home Assistant. This allows the eco<sup>manager-touch</sup> to optimize
+the heating times and the consumption of self-produced electricity:
+
+| Entity | Register | Description |
+|---|---|---|
+| `number.solarfocus_photovoltaic_smart_meter` | 33407 | Measured power at the house feed-in |
+| `number.solarfocus_photovoltaic_photovoltaic` | 33408 | Generated power of the PV system |
+| `number.solarfocus_photovoltaic_grid_im_export` | 33409 | Grid consumption (positive) / feed-in (negative) |
+| `number.solarfocus_photovoltaic_hems_target_electrical_power` | 33415 | Target electrical power of the heat generator during PV overcharge (requires version `26.020`) |
+
+Use an automation to forward the values of your own meters, e.g. on every state change of the corresponding sensor.
+
+> **Important**
+> The eco<sup>manager-touch</sup> rejects these values unless it is configured to accept them. In the _Photovoltaic_ mask
+> of the display, set the source to `Modbus` and enter the IP address of your Home Assistant instance. Without this, all
+> writes to these registers are ignored. It may take a moment until the transmitted values are shown on the display.
+
 ## Supported Solarfocus Software and Hardware
 
 ### Software
@@ -70,7 +90,7 @@ Additionally, it is only possible to set the state (_preset_) but not setting th
 > **Important**
 > This integration has been tested with Solarfocus eco<sup>manager-touch</sup> version `25.030`.
 
-Supported versions: `21.140` - `25.030`. Features added in later versions are not yet supported.
+Supported versions: `21.140` - `26.020`. Features added in later versions are not yet supported.
 
 The eco<sup>manager-touch</sup> Modbus TCP specification can be found [here](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010).
 

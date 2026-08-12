@@ -175,7 +175,19 @@ class SolarfocusEntity(Entity):
         )
         entity = getattr(component, item)
         entity.set_unscaled_value(value)
-        entity.commit()
+
+        raw_value = entity.value
+        if isinstance(raw_value, (int, float)) and raw_value < 0:
+            # Modbus transmits registers as unsigned words, negative values have
+            # to be written as two's complement (16 bit per register). The signed
+            # value is restored afterwards, reading the register turns it back
+            # into a signed one.
+            entity.value = raw_value + (1 << (16 * entity.count))
+            entity.commit()
+            entity.value = raw_value
+        else:
+            entity.commit()
+
         component.update()
 
         self.async_write_ha_state()

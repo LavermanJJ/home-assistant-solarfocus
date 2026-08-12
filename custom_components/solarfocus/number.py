@@ -7,9 +7,10 @@ from homeassistant.components.number import (
     NumberDeviceClass,
     NumberEntity,
     NumberEntityDescription,
+    NumberMode,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfPower, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -21,11 +22,15 @@ from .const import (
     BOILER_PREFIX,
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
+    CONF_PHOTOVOLTAIC,
     DATA_COORDINATOR,
     DOMAIN,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
+    PHOTOVOLTAIC_COMPONENT,
+    PHOTOVOLTAIC_COMPONENT_PREFIX,
+    PHOTOVOLTAIC_PREFIX,
 )
 from .entity import (
     SolarfocusEntity,
@@ -66,6 +71,19 @@ async def async_setup_entry(
                 BOILER_COMPONENT,
                 BOILER_COMPONENT_PREFIX,
                 str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusNumberEntity(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.options[CONF_PHOTOVOLTAIC]:
+        for description in PHOTOVOLTAIC_NUMBER_TYPES:
+            _description = create_description(
+                PHOTOVOLTAIC_PREFIX,
+                PHOTOVOLTAIC_COMPONENT,
+                PHOTOVOLTAIC_COMPONENT_PREFIX,
+                "",
                 description,
             )
 
@@ -161,5 +179,53 @@ BOILER_NUMBER_TYPES = [
         native_min_value=20.0,
         native_max_value=80.0,
         native_step=1,
+    ),
+]
+
+PHOTOVOLTAIC_NUMBER_TYPES = [
+    SolarfocusNumberEntityDescription(
+        key="smart_meter",
+        icon="mdi:meter-electric-outline",
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_min_value=-32768,
+        native_max_value=32767,
+        native_step=1,
+        mode=NumberMode.BOX,
+    ),
+    SolarfocusNumberEntityDescription(
+        key="photovoltaic",
+        icon="mdi:solar-power",
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_min_value=0,
+        native_max_value=32767,
+        native_step=1,
+        mode=NumberMode.BOX,
+    ),
+    SolarfocusNumberEntityDescription(
+        key="grid_im_export",
+        icon="mdi:transmission-tower",
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_min_value=-32768,
+        native_max_value=32767,
+        native_step=1,
+        mode=NumberMode.BOX,
+    ),
+    SolarfocusNumberEntityDescription(
+        key="hems_target_electrical_power",
+        icon="mdi:home-lightning-bolt",
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_min_value=0,
+        native_max_value=32767,
+        native_step=1,
+        mode=NumberMode.BOX,
+        min_required_version="26.020",
     ),
 ]
