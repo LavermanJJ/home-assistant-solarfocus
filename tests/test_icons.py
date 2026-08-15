@@ -6,12 +6,16 @@ an icon itself, because the icon of the entity is part of its state and wins ove
 the translation, and a key that no entity uses, because renaming an entity leaves
 the old key behind and the entity falls back to the icon of its device class.
 
-Neither shows up in a test of the platforms, only in the frontend, which is what
-these tests are for.
+An icon for a state that the entity never reports is just as invisible, and the
+rules hassfest applies to the file only fail in CI, so they are checked here too.
+
+None of it shows up in a test of the platforms, only in the frontend, which is
+what these tests are for.
 """
 
 import json
 import pathlib
+import re
 
 from pysolarfocus import ApiVersions, Systems
 import pytest
@@ -51,12 +55,41 @@ def _icons() -> dict:
         return json.load(fh)
 
 
+def _sections(data: dict):
+    """Yield every ((domain, key, attribute), section) of an entity structure.
+
+    A section is what holds a `default` and a `state`. Entities have one and so do
+    their attributes, which is where the preset modes of the thermostat live.
+    """
+    for domain, entities in data.get("entity", {}).items():
+        for key, section in entities.items():
+            yield (domain, key, None), section
+            for name, attribute in section.get("state_attributes", {}).items():
+                yield (domain, key, name), attribute
+
+
+def _icon_sections():
+    """Yield every ((domain, key, attribute), section) of the icon translations."""
+    yield from _sections(_icons())
+
+
 def _translated_icons():
     """Yield every (domain, translation key, icon) of the icon translations."""
-    for domain, entities in _icons().get("entity", {}).items():
-        for key, sections in entities.items():
-            for icon in sections.values():
-                yield domain, key, icon
+    for (domain, key, _), section in _icon_sections():
+        if "default" in section:
+            yield domain, key, section["default"]
+        for icon in section.get("state", {}).values():
+            yield domain, key, icon
+
+
+def _translated_states() -> dict[tuple[str, str, str | None], set[str]]:
+    """Return the states `strings.json` translates, per entity and attribute."""
+    with (COMPONENT_DIR / "strings.json").open(encoding="utf-8") as fh:
+        strings = json.load(fh)
+
+    return {
+        path: set(section.get("state", {})) for path, section in _sections(strings)
+    }
 
 
 async def _entities(hass: HomeAssistant, module) -> list:
@@ -106,6 +139,52 @@ async def test_home_assistant_serves_the_icons(
     icons = await async_get_icons(hass, "entity", integrations=[DOMAIN])
 
     assert icons[DOMAIN] == _icons()["entity"]
+
+
+def test_state_icons_belong_to_a_state_of_the_entity() -> None:
+    """An icon for a state that is never reported is never shown.
+
+    The states of a sensor and of a select are the ones `strings.json` translates,
+    the states of a switch and of a binary sensor are `on` and `off`.
+    """
+    translated = _translated_states()
+
+    unknown = [
+        (*path, state)
+        for path, section in _icon_sections()
+        for state in section.get("state", {})
+        if state not in translated.get(path, {"on", "off"})
+    ]
+
+    assert not unknown
+
+
+def test_no_state_icon_repeats_the_default() -> None:
+    """A state that shows the default icon does not need an icon of its own."""
+    repeated = [
+        (*path, state)
+        for path, section in _icon_sections()
+        for state, icon in section.get("state", {}).items()
+        if icon == section.get("default")
+    ]
+
+    assert not repeated
+
+
+def test_keys_are_valid_translation_keys() -> None:
+    """The rule for translation keys applies to the states as well.
+
+    Which is why "Locked" has no icon of its own: `bo_circulation` and
+    `bo_single_charge` report it as -1, and a key cannot start with a hyphen.
+    """
+    invalid = [
+        (*path, name)
+        for path, section in _icon_sections()
+        for name in (path[1], *section.get("state", {}))
+        if not re.fullmatch(r"(?![_-])[a-z0-9-_]+(?<![_-])", name)
+    ]
+
+    assert not invalid
 
 
 def test_icons_use_the_material_design_prefix() -> None:
