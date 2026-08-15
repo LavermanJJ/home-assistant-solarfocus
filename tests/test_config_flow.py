@@ -223,6 +223,58 @@ async def test_form_scan_interval_below_minimum(
     assert result["errors"] == {"base": "unknown"}
 
 
+async def test_entry_is_identified_by_its_address(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The address the controller is reached at identifies the entry."""
+    result = await _start_user_step(hass, USER_INPUT)
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        await hass.config_entries.flow.async_configure(
+            result["flow_id"], VAMPAIR_COMPONENTS
+        )
+        await hass.async_block_till_done()
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert entry.unique_id == "solarfocus.local:502"
+
+
+async def test_the_same_system_cannot_be_added_twice(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A second entry for the same address would poll one system twice."""
+    build_config_entry().add_to_hass(hass)
+
+    result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+
+
+async def test_a_second_system_can_be_added(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A different address is a different heating system."""
+    build_config_entry().add_to_hass(hass)
+
+    result = await _start_user_step(hass, {**USER_INPUT, CONF_HOST: "10.0.0.9"})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "component"
+
+
+async def test_a_different_port_is_a_different_system(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Two controllers can sit behind one address on different ports."""
+    build_config_entry().add_to_hass(hass)
+
+    result = await _start_user_step(hass, {**USER_INPUT, CONF_PORT: 503})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "component"
+
+
 async def test_validate_input_raises_cannot_connect(
     hass: HomeAssistant, mock_api, api
 ) -> None:
@@ -299,6 +351,74 @@ async def test_options_flow_updates_options(
     assert result["data"][CONF_HEATING_CIRCUIT] == 3
     assert result["data"][CONF_HEATPUMP] is True
     assert result["data"][CONF_BIOMASS_BOILER] is False
+
+
+async def test_options_flow_follows_the_address(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Moving an entry to another address moves its unique id along.
+
+    A stale unique id would let the same system be added a second time under
+    its new address.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                CONF_HOST: "10.0.0.5",
+                CONF_PORT: 503,
+                CONF_SCAN_INTERVAL: 30,
+                CONF_API_VERSION: ApiVersions.V_25_030.value,
+                CONF_HEATING_CIRCUIT: 1,
+                CONF_BUFFER: 0,
+                CONF_BOILER: 0,
+                CONF_FRESH_WATER_MODULE: 0,
+                CONF_HEATPUMP: True,
+                CONF_PHOTOVOLTAIC: False,
+                CONF_SOLAR: 0,
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert entry.unique_id == "10.0.0.5:503"
+
+
+async def test_options_flow_rejects_the_address_of_another_entry(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Two entries must not end up pointing at the same system."""
+    other = build_config_entry()
+    other.add_to_hass(hass)
+    entry = build_config_entry(Systems.VAMPAIR, host="10.0.0.5", heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: other.options[CONF_HOST],
+            CONF_PORT: other.options[CONF_PORT],
+            CONF_SCAN_INTERVAL: 10,
+            CONF_API_VERSION: ApiVersions.V_23_020.value,
+            CONF_HEATING_CIRCUIT: 0,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    assert result["errors"] == {"base": "already_configured"}
+    assert entry.unique_id == "10.0.0.5:502"
 
 
 async def test_options_flow_biomass_system_disables_heatpump(

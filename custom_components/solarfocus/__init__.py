@@ -27,6 +27,8 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
+    DOMAIN,
+    build_unique_id,
     solar_count,
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
@@ -200,6 +202,33 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=6
+        )
+
+    if config_entry.version == 6:
+        # Entries created before the config flow assigned a unique id have none,
+        # so the duplicate check would not see them. Backfill it from the address
+        # the entry is already talking to.
+        unique_id = build_unique_id(
+            config_entry.options[CONF_HOST], config_entry.options[CONF_PORT]
+        )
+        already_taken = any(
+            entry.unique_id == unique_id and entry.entry_id != config_entry.entry_id
+            for entry in hass.config_entries.async_entries(DOMAIN)
+        )
+        if already_taken:
+            # Two entries for the same controller only existed because nothing
+            # prevented it. Leave this one without a unique id rather than
+            # creating a collision; it keeps working as before.
+            _LOGGER.warning(
+                "Config entry %s points at the same Solarfocus system as another"
+                " entry, it is left without a unique id",
+                config_entry.title,
+            )
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            unique_id=None if already_taken else unique_id,
+            version=7,
         )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)

@@ -18,6 +18,7 @@ from custom_components.solarfocus.const import (
     CONF_SOLARFOCUS_SYSTEM,
     DEFAULT_NAME,
     DOMAIN,
+    build_unique_id,
 )
 from homeassistant.const import (
     CONF_API_VERSION,
@@ -28,7 +29,7 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 6
+CURRENT_VERSION = 7
 
 
 def build_options(**overrides) -> dict:
@@ -55,12 +56,14 @@ def build_config_entry(
     system: Systems = Systems.VAMPAIR, **option_overrides
 ) -> MockConfigEntry:
     """Return a config entry in the layout the current version stores."""
+    options = build_options(**option_overrides)
     return MockConfigEntry(
         domain=DOMAIN,
         title=DEFAULT_NAME,
         version=CURRENT_VERSION,
+        unique_id=build_unique_id(options[CONF_HOST], options[CONF_PORT]),
         data={CONF_NAME: DEFAULT_NAME, CONF_SOLARFOCUS_SYSTEM: system},
-        options=build_options(**option_overrides),
+        options=options,
     )
 
 

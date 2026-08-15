@@ -36,6 +36,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    build_unique_id,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -188,7 +189,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 6
+    VERSION = 7
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -204,6 +205,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         errors = {}
+
+        await self.async_set_unique_id(
+            build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
+        )
+        self._abort_if_unique_id_configured()
 
         try:
             await validate_input(self.hass, user_input)
@@ -298,6 +304,18 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is None:
             return await self._show_init_form(user_input, errors)
 
+        # The address is the unique id, so moving this entry onto the address of
+        # another one would give two entries for the same controller.
+        unique_id = build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
+        if any(
+            entry.unique_id == unique_id
+            and entry.entry_id != self.config_entry.entry_id
+            for entry in self.hass.config_entries.async_entries(DOMAIN)
+        ):
+            return await self._show_init_form(
+                user_input, {"base": "already_configured"}
+            )
+
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.options[CONF_BIOMASS_BOILER] = False
@@ -330,6 +348,9 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, unique_id=unique_id
+            )
             return self.async_create_entry(
                 title="",
                 data={
