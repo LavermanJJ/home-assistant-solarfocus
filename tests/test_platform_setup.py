@@ -69,8 +69,9 @@ async def test_no_components_creates_no_entities(
 def test_platform_declares_parallel_updates(platform) -> None:
     """Home Assistant only limits parallelism if the platform declares it.
 
-    Read-only platforms are unlimited, platforms that write to the heating
-    system serialize their calls onto the single Modbus connection.
+    Read-only platforms are unlimited, platforms that write hold their service
+    calls to one at a time so two writes cannot interleave on the registers of
+    the same component.
     """
     read_only = platform in (binary_sensor, sensor)
 

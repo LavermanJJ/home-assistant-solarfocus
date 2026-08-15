@@ -50,8 +50,8 @@ from .entity import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# The coordinator polls the heating system, the entities themselves do not
-# talk to it, so their updates do not have to be serialized.
+# Read-only platform: the coordinator polls the heating system, the entities
+# themselves never call into it, so there is nothing to limit.
 PARALLEL_UPDATES = 0
 
 
