@@ -17,7 +17,6 @@ from custom_components.solarfocus.const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
-    DATA_COORDINATOR,
     DEFAULT_NAME,
     DOMAIN,
 )
@@ -44,13 +43,12 @@ async def test_setup_and_unload_entry(
     await hass.async_block_till_done()
 
     assert config_entry.state is ConfigEntryState.LOADED
-    assert DATA_COORDINATOR in hass.data[DOMAIN][config_entry.entry_id]
+    assert config_entry.runtime_data is not None
 
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
 
     assert config_entry.state is ConfigEntryState.NOT_LOADED
-    assert config_entry.entry_id not in hass.data[DOMAIN]
 
 
 async def test_setup_passes_component_counts_to_the_library(
@@ -190,7 +188,7 @@ async def test_reload_entry(
     await async_reload_entry(hass, config_entry)
     await hass.async_block_till_done()
 
-    assert DATA_COORDINATOR in hass.data[DOMAIN][config_entry.entry_id]
+    assert config_entry.runtime_data is not None
 
 
 async def test_migration_from_version_1(hass: HomeAssistant) -> None:

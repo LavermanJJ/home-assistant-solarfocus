@@ -8,8 +8,6 @@ from packaging import version
 from homeassistant.const import CONF_API_VERSION
 
 DOMAIN = "solarfocus"
-UPDATE_LISTENER = "update-listener"
-DATA_COORDINATOR = "data-coordinator"
 
 """Default values for configuration"""
 DEFAULT_HOST = "solarfocus"

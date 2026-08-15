@@ -22,8 +22,6 @@ from custom_components.solarfocus import (
 from custom_components.solarfocus.const import (
     BOILER_COMPONENT_PREFIX,
     BUFFER_COMPONENT_PREFIX,
-    DATA_COORDINATOR,
-    DOMAIN,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     SOLAR_COMPONENT_PREFIX,
 )
@@ -46,9 +44,7 @@ PLATFORMS = [
 async def _setup(hass: HomeAssistant, platform, entry) -> list:
     """Run a platform's async_setup_entry and return the created entities."""
     entry.add_to_hass(hass)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-        DATA_COORDINATOR: build_coordinator(entry)
-    }
+    entry.runtime_data = build_coordinator(entry)
 
     added = []
     await platform.async_setup_entry(hass, entry, lambda entities: added.extend(entities))
@@ -300,7 +296,7 @@ async def test_entities_read_the_coordinator(hass: HomeAssistant) -> None:
     entry = build_config_entry(boiler=1)
     entry.add_to_hass(hass)
     coordinator = build_coordinator(entry)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {DATA_COORDINATOR: coordinator}
+    entry.runtime_data = coordinator
 
     added: list = []
     await water_heater.async_setup_entry(hass, entry, added.extend)

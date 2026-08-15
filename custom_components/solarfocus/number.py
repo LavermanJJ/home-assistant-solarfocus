@@ -9,7 +9,6 @@ from homeassistant.components.number import (
     NumberEntityDescription,
     NumberMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfPower, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
@@ -23,8 +22,6 @@ from .const import (
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_PHOTOVOLTAIC,
-    DATA_COORDINATOR,
-    DOMAIN,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
@@ -32,6 +29,7 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     PHOTOVOLTAIC_PREFIX,
 )
+from .coordinator import SolarfocusConfigEntry
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -44,11 +42,11 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: SolarfocusConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
+    coordinator = config_entry.runtime_data
     entities = []
 
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):

@@ -8,7 +8,6 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityDescription,
     WaterHeaterEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     PRECISION_TENTHS,
@@ -19,14 +18,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import (
-    BOILER_COMPONENT,
-    BOILER_COMPONENT_PREFIX,
-    BOILER_PREFIX,
-    CONF_BOILER,
-    DATA_COORDINATOR,
-    DOMAIN,
-)
+from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, BOILER_PREFIX, CONF_BOILER
+from .coordinator import SolarfocusConfigEntry
 from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,11 +54,11 @@ SOLARFOCUS_TEMP_WATER_MAX = 80
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: SolarfocusConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
+    coordinator = config_entry.runtime_data
     entities = []
 
     for i in range(config_entry.options[CONF_BOILER]):
