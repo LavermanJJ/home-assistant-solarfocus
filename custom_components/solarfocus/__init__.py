@@ -29,6 +29,7 @@ from .const import (
     CONF_SOLARFOCUS_SYSTEM,
     DATA_COORDINATOR,
     DOMAIN,
+    solar_count,
 )
 from .coordinator import SolarfocusDataUpdateCoordinator
 
@@ -57,9 +58,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
-        solar_count=entry.options.get(CONF_SOLAR, 0)
-        if isinstance(entry.options.get(CONF_SOLAR), int)
-        else (1 if entry.options.get(CONF_SOLAR) else 0),
+        fresh_water_module_count=entry.options[CONF_FRESH_WATER_MODULE],
+        solar_count=solar_count(entry.options),
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
         api_version=ApiVersions(entry.options[CONF_API_VERSION]),
     )

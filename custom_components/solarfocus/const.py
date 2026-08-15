@@ -1,5 +1,12 @@
 """Constants for the Solarfocus integration."""
 
+from collections.abc import Mapping
+from typing import Any
+
+from packaging import version
+
+from homeassistant.const import CONF_API_VERSION
+
 DOMAIN = "solarfocus"
 UPDATE_LISTENER = "update-listener"
 DATA_COORDINATOR = "data-coordinator"
@@ -9,6 +16,7 @@ DEFAULT_HOST = "solarfocus"
 DEFAULT_PORT = 502
 DEFAULT_NAME = "Solarfocus"
 DEFAULT_SCAN_INTERVAL = 10
+DEFAULT_API_VERSION = "21.140"
 
 """Configuration and options"""
 CONF_SOLARFOCUS_SYSTEM = "system"
@@ -53,3 +61,25 @@ SOLAR_COMPONENT_PREFIX = "so"
 FRESH_WATER_MODULE_PREFIX = "Fresh water module"
 FRESH_WATER_MODULE_COMPONENT = "fresh_water_modules"
 FRESH_WATER_MODULE_COMPONENT_PREFIX = "fm"
+
+"""Version from which several solar circuits exist"""
+MULTI_SOLAR_MIN_VERSION = "25.030"
+
+
+def solar_count(options: Mapping[str, Any]) -> int:
+    """Return how many solar circuits to build for these options.
+
+    Solar was a boolean before it became a count, and several circuits only
+    exist from api version 25.030 on - pysolarfocus rejects a higher count
+    below that and the whole entry fails to load. The options let the count be
+    raised regardless of the selected version, so it is capped here.
+    """
+    raw = options.get(CONF_SOLAR, 0)
+    count = (1 if raw else 0) if isinstance(raw, bool) else int(raw or 0)
+
+    if version.parse(
+        options.get(CONF_API_VERSION, DEFAULT_API_VERSION)
+    ) < version.parse(MULTI_SOLAR_MIN_VERSION):
+        return min(count, 1)
+
+    return count
