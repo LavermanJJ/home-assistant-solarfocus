@@ -211,7 +211,7 @@ The first step of the setup asks for:
 
 | Parameter | Default | Description |
 |---|---|---|
-| Name | `Solarfocus` | Name of the entry. It becomes part of the entity ids, so changing it later renames the entities. |
+| Name | `Solarfocus` | Name of the entry, and the name every entity of it is identified by. Pick a distinct one per system and do not change it afterwards, see [Known Limitations](#known-limitations). |
 | Host | `solarfocus` | Hostname or IP address of the eco<sup>manager-touch</sup>. |
 | Port | `502` | Modbus TCP port of the controller. |
 | Polling interval (s) | `10` | Seconds between two reads of the heating system. Values below 5 are rejected. |
@@ -237,7 +237,7 @@ immediately.
 | Buffer | 0 - 4 | Number of buffer cylinders (_Puffer_). |
 | Boiler | 0 - 4 | Number of boilers (_Boiler_). |
 | Fresh water module | 0 - 4 | Number of fresh water modules (_Frischwassermodule_), from version `23.020`. |
-| Solar | 0 - 4 | Number of solar circuits. More than one requires version `25.030`; below that the count is capped at 1. |
+| Solar | 0 - 4 | Number of solar circuits. More than one requires version `25.030`; below that only the first one is built, whatever the count says. |
 | Heat Pump | on / off | vampair systems only. |
 | Biomass boiler | on / off | Therminator and EcoTop systems only. |
 | Photovoltaic | on / off | Photovoltaic sensors and the `number` entities used to feed values back, see [Photovoltaic](#photovoltaic). |
@@ -306,7 +306,10 @@ _polling interval_ seconds (10 by default). Every entity of the entry is updated
 read, so raising the number of components does not raise the number of round trips per
 interval. The connection is opened once and re-established automatically if it drops.
 
-If a read fails, the entities of the entry become unavailable until the next successful poll.
+If the heating system cannot be read at all, the entities of the entry become unavailable until
+the next successful poll, and the failure is logged once rather than once per interval. If a
+single component cannot be read while the others can, only that one keeps its last value and
+the rest carry on; the log names it.
 
 Writes go the other way and take effect immediately: setting a target temperature, pressing a
 button or changing a select writes the register, re-reads the component it belongs to and
@@ -343,6 +346,10 @@ These are properties of the integration or the Modbus interface, not bugs:
   controller can read and write the same registers.
 - **The system type cannot be changed.** Switching between vampair, Therminator and EcoTop means
   deleting the entry and setting it up again.
+- **The name of an entry is part of the identity of its entities.** Renaming the config entry
+  after setup gives the entities new unique ids: the old ones are orphaned and a duplicate set
+  appears with a `_2` suffix. Rename the entities or the device instead, both of which are safe.
+  For the same reason two entries cannot share a name, and the setup rejects one that is taken.
 - **Register coverage follows the specification of the selected version.** Features the
   eco<sup>manager-touch</sup> only offers on its display, and registers added after `26.020`,
   are not available.
@@ -364,10 +371,17 @@ eco<sup>manager-touch</sup>. The controller accepts only a small number of conne
 time, so close other Modbus clients pointing at it.
 
 **All entities are unavailable.**
-The last poll failed. The log says why, once per outage rather than once per interval. Common
-causes are the controller being restarted, a DHCP address change (fix it in the options, see
-[Configuration Options](#configuration-options)) or another Modbus client holding the
-connection.
+The heating system could not be read at all on the last poll. The log says why, once per outage
+rather than once per interval. Common causes are the controller being restarted, a DHCP address
+change (fix it in the options, see [Configuration Options](#configuration-options)) or another
+Modbus client holding the connection.
+
+**One component is stuck on old values while the rest updates.**
+That component could not be read. The log names it, with a warning when it starts failing and
+another when it recovers. If it fails on every poll, the registers of that component are
+probably not answered by your software version - lower the API version under
+[Configuration Options](#configuration-options) or set the component to 0 if your installation
+does not have it.
 
 **Entities I expect are missing.**
 Either the component is set to 0 in the options, or the entity needs a newer API version than
