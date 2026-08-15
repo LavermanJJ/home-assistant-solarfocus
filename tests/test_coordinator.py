@@ -155,10 +155,8 @@ async def test_unreachable_device_fails_the_update(hass: HomeAssistant) -> None:
     assert not api.update_heating.called
 
 
-async def test_failing_component_update_fails_the_refresh(
-    hass: HomeAssistant,
-) -> None:
-    """A component that cannot be read makes the whole refresh fail.
+async def test_all_reads_failing_fails_the_refresh(hass: HomeAssistant) -> None:
+    """Nothing could be read, so the system is gone.
 
     The library reports a failed read by returning False. Swallowing that left
     every entity of the entry available and showing its last value, with nothing
@@ -166,10 +164,55 @@ async def test_failing_component_update_fails_the_refresh(
     """
     api = build_api()
     api.update_heating.return_value = False
+    api.update_buffer.return_value = False
     coordinator = _coordinator(hass, api, heating_circuit=1, buffer=1)
 
     with pytest.raises(UpdateFailed, match=CONF_HEATING_CIRCUIT):
         await coordinator._async_update_data()
+
+
+async def test_one_failing_component_keeps_the_others_working(
+    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A single component that cannot be read must not take the entry down.
+
+    A register range a particular firmware does not answer fails on every poll.
+    Failing the refresh for it would make every entity of the entry unavailable
+    for good, including the ones that can be written - and Home Assistant drops
+    unavailable entities from service calls, so the user could not control the
+    parts that do work.
+    """
+    api = build_api()
+    api.update_heating.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, buffer=1)
+
+    await coordinator.async_refresh()
+
+    assert coordinator.last_update_success
+    assert api.update_buffer.called
+    assert "Could not read heating_circuit" in caplog.text
+
+
+async def test_a_partial_failure_is_logged_once_and_the_recovery_too(
+    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Once per outage, not once per poll."""
+    api = build_api()
+    api.update_heating.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, buffer=1)
+
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+
+    assert caplog.text.count("Could not read heating_circuit") == 1
+
+    caplog.clear()
+    api.update_heating.return_value = True
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+
+    assert caplog.text.count("works again") == 1
 
 
 async def test_entities_become_unavailable_and_recover(hass: HomeAssistant) -> None:

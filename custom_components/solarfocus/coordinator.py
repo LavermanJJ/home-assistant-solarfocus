@@ -44,6 +44,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         self.api = api
         self._entry = entry
         self.hass = hass
+        self._failed_components: set[str] = set()
 
         super().__init__(
             hass,
@@ -65,18 +66,46 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         ):
             raise UpdateFailed(f"Cannot connect to {self._address}")
 
+        configured = 0
         failed = []
         for option, update in COMPONENT_UPDATES:
             if not self._entry.options[option]:
                 continue
+            configured += 1
             if not await self.hass.async_add_executor_job(getattr(self.api, update)):
                 failed.append(option)
 
-        if failed:
-            # Reporting a partial read as a success would leave the entities of the
-            # component that failed on their last value without anything saying so.
+        if failed and len(failed) == configured:
+            # Nothing could be read: the system is gone rather than one of its
+            # components being unhappy. Reporting that as a success would leave
+            # every entity available and showing its last value.
             raise UpdateFailed(
                 f"Failed to read {', '.join(failed)} from {self._address}"
             )
 
+        self._report_partial_failure(failed)
+
         _LOGGER.debug("Data updated successfully")
+
+    def _report_partial_failure(self, failed: list[str]) -> None:
+        """Log components that could not be read while others could.
+
+        Taking the whole entry down for this would be worse than it sounds: a
+        register range that a particular firmware does not answer fails on every
+        poll, and the components that do work - including the ones that can be
+        written - would go with it. So the rest keeps updating and the failure
+        is logged instead, once, until the set of failing components changes.
+        """
+        if set(failed) == self._failed_components:
+            return
+
+        self._failed_components = set(failed)
+        if failed:
+            _LOGGER.warning(
+                "Could not read %s from %s, its entities keep their last value."
+                " The other components were read successfully",
+                ", ".join(failed),
+                self._address,
+            )
+        else:
+            _LOGGER.info("Reading all components of %s works again", self._address)
