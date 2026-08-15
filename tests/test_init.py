@@ -59,9 +59,11 @@ async def test_setup_passes_component_counts_to_the_library(
     """The configured component counts are handed to pysolarfocus."""
     entry = build_config_entry(
         Systems.THERMINATOR,
+        api_version=ApiVersions.V_25_030.value,
         heating_circuit=3,
         buffer=2,
         boiler=1,
+        fresh_water_module=2,
         solar=2,
         biomassboiler=True,
     )
@@ -74,9 +76,12 @@ async def test_setup_passes_component_counts_to_the_library(
     assert kwargs["heating_circuit_count"] == 3
     assert kwargs["buffer_count"] == 2
     assert kwargs["boiler_count"] == 1
+    # Was never passed, so the library built its default of one module and
+    # every entity of a second one raised IndexError on read.
+    assert kwargs["fresh_water_module_count"] == 2
     assert kwargs["solar_count"] == 2
     assert kwargs["system"] is Systems.THERMINATOR
-    assert kwargs["api_version"] is ApiVersions.V_23_020
+    assert kwargs["api_version"] is ApiVersions.V_25_030
 
 
 @pytest.mark.parametrize(
@@ -90,13 +95,42 @@ async def test_setup_accepts_legacy_boolean_solar_option(
     expected_count: int,
 ) -> None:
     """Entries written before solar became a count still set up."""
-    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, solar=stored_solar)
+    entry = build_config_entry(
+        Systems.VAMPAIR,
+        api_version=ApiVersions.V_25_030.value,
+        heating_circuit=1,
+        solar=stored_solar,
+    )
     entry.add_to_hass(hass)
 
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
     assert mock_api.call_args.kwargs["solar_count"] == expected_count
+
+
+@pytest.mark.parametrize("stored_solar", [2, 4])
+async def test_setup_caps_solar_below_the_version_that_supports_several(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, stored_solar: int
+) -> None:
+    """The options allow a count the selected api version cannot have.
+
+    pysolarfocus rejects more than one solar circuit below 25.030 by raising
+    InvalidConfigurationError, which failed the whole entry rather than just
+    the extra circuits.
+    """
+    entry = build_config_entry(
+        Systems.VAMPAIR,
+        api_version=ApiVersions.V_23_020.value,
+        heating_circuit=1,
+        solar=stored_solar,
+    )
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert mock_api.call_args.kwargs["solar_count"] == 1
 
 
 async def test_setup_retries_when_the_device_is_unreachable(
