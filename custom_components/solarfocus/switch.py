@@ -102,6 +102,6 @@ class SolarfocusSwitchEntity(SolarfocusEntity, SwitchEntity):
 
 HEATPUMP_SWITCH_TYPES = [
     SolarfocusSwitchEntityDescription(
-        key="evu_lock", icon="mdi:lock", device_class=SwitchDeviceClass.SWITCH
+        key="evu_lock", device_class=SwitchDeviceClass.SWITCH
     ),
 ]

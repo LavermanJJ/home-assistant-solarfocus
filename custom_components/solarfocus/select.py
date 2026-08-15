@@ -135,7 +135,6 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
 HEATPUMP_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="smart_grid",
-        icon="mdi:leaf",
         current_option="2",
         solarfocus_options=[
             "0",
@@ -150,7 +149,6 @@ HEATPUMP_SELECT_TYPES = [
 HEATING_CIRCUIT_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="cooling",
-        icon="mdi:snowflake",
         entity_registry_enabled_default=False,
         current_option="0",
         solarfocus_options=[
@@ -160,7 +158,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     ),
     SolarfocusSelectEntityDescription(
         key="mode",
-        icon="mdi:radiator",
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         current_option="3",
@@ -173,7 +170,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
     ),
     SolarfocusSelectEntityDescription(
         key="heating_mode",
-        icon="mdi:sun-snowflake-variant",
         entity_category=EntityCategory.CONFIG,
         current_option="0",
         solarfocus_options=[
@@ -188,7 +184,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
 BOILER_SELECT_TYPES = [
     SolarfocusSelectEntityDescription(
         key="holding_mode",
-        icon="mdi:water-boiler",
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         current_option="0",

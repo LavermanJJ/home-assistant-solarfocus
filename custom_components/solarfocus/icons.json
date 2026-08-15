@@ -1,0 +1,238 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "hp_defrost_active": {
+        "default": "mdi:snowflake-melt"
+      }
+    },
+    "button": {
+      "bo_circulation": {
+        "default": "mdi:reload"
+      },
+      "bo_single_charge": {
+        "default": "mdi:water-boiler"
+      }
+    },
+    "number": {
+      "bo_target_temperature": {
+        "default": "mdi:thermostat"
+      },
+      "hc_indoor_temperature_external": {
+        "default": "mdi:thermostat"
+      },
+      "hc_target_room_temperature": {
+        "default": "mdi:thermostat"
+      },
+      "hc_target_supply_temperature": {
+        "default": "mdi:thermostat"
+      },
+      "pv_grid_im_export": {
+        "default": "mdi:transmission-tower"
+      },
+      "pv_hems_target_electrical_power": {
+        "default": "mdi:home-lightning-bolt"
+      },
+      "pv_photovoltaic": {
+        "default": "mdi:solar-power"
+      },
+      "pv_smart_meter": {
+        "default": "mdi:meter-electric-outline"
+      }
+    },
+    "select": {
+      "bo_holding_mode": {
+        "default": "mdi:water-boiler"
+      },
+      "hc_cooling": {
+        "default": "mdi:snowflake"
+      },
+      "hc_heating_mode": {
+        "default": "mdi:sun-snowflake-variant"
+      },
+      "hc_mode": {
+        "default": "mdi:radiator"
+      },
+      "hp_smart_grid": {
+        "default": "mdi:leaf"
+      }
+    },
+    "sensor": {
+      "bb_ash_container": {
+        "default": "mdi:trash-can-outline"
+      },
+      "bb_boiler_operating_mode": {
+        "default": "mdi:format-list-bulleted"
+      },
+      "bb_cleaning": {
+        "default": "mdi:broom"
+      },
+      "bb_heat_energy_total": {
+        "default": "mdi:meter-gas"
+      },
+      "bb_log_wood": {
+        "default": "mdi:format-list-bulleted"
+      },
+      "bb_message_number": {
+        "default": "mdi:message-text-outline"
+      },
+      "bb_octoplus_buffer_temperature_bottom": {
+        "default": "mdi:thermometer-low"
+      },
+      "bb_pellet_usage_last_fill": {
+        "default": "mdi:gradient-vertical"
+      },
+      "bb_pellet_usage_total": {
+        "default": "mdi:alpha-t-box"
+      },
+      "bb_status": {
+        "default": "mdi:fire-circle"
+      },
+      "bo_circulation": {
+        "default": "mdi:reload"
+      },
+      "bo_mode": {
+        "default": "mdi:format-list-bulleted"
+      },
+      "bo_single_charge": {
+        "default": "mdi:pump"
+      },
+      "bo_state": {
+        "default": "mdi:water-boiler"
+      },
+      "bo_temperature": {
+        "default": "mdi:thermometer-high"
+      },
+      "bu_bottom_temperature": {
+        "default": "mdi:thermometer-low"
+      },
+      "bu_external_bottom_temperature_x35": {
+        "default": "mdi:thermometer-low"
+      },
+      "bu_external_top_temperature_x44": {
+        "default": "mdi:thermometer-high"
+      },
+      "bu_mode": {
+        "default": "mdi:format-list-bulleted"
+      },
+      "bu_state": {
+        "default": "mdi:database"
+      },
+      "bu_x35_temperature": {
+        "default": "mdi:thermometer-high"
+      },
+      "fm_flow_rate": {
+        "default": "mdi:speedometer"
+      },
+      "fm_state": {
+        "default": "mdi:faucet"
+      },
+      "hc_mixer_valve": {
+        "default": "mdi:valve"
+      },
+      "hc_room_temperature": {
+        "default": "mdi:home-thermometer-outline"
+      },
+      "hc_state": {
+        "default": "mdi:radiator"
+      },
+      "hp_compressor_speed": {
+        "default": "mdi:gauge"
+      },
+      "hp_cop_cooling": {
+        "default": "mdi:poll"
+      },
+      "hp_cop_heating": {
+        "default": "mdi:poll"
+      },
+      "hp_electrical_energy_cooling": {
+        "default": "mdi:meter-electric"
+      },
+      "hp_electrical_energy_drinking_water": {
+        "default": "mdi:meter-electric"
+      },
+      "hp_electrical_energy_heating": {
+        "default": "mdi:meter-electric"
+      },
+      "hp_electrical_energy_total": {
+        "default": "mdi:meter-electric"
+      },
+      "hp_electrical_power": {
+        "default": "mdi:lightning-bolt"
+      },
+      "hp_flow_rate": {
+        "default": "mdi:speedometer"
+      },
+      "hp_performance_overall": {
+        "default": "mdi:poll"
+      },
+      "hp_performance_overall_drinking_water": {
+        "default": "mdi:poll"
+      },
+      "hp_performance_overall_heating": {
+        "default": "mdi:poll"
+      },
+      "hp_return_temperature": {
+        "default": "mdi:thermometer-chevron-down"
+      },
+      "hp_supply_temperature": {
+        "default": "mdi:thermometer-chevron-up"
+      },
+      "hp_thermal_energy_cooling": {
+        "default": "mdi:meter-gas"
+      },
+      "hp_thermal_energy_drinking_water": {
+        "default": "mdi:meter-gas"
+      },
+      "hp_thermal_energy_heating": {
+        "default": "mdi:meter-gas"
+      },
+      "hp_thermal_energy_total": {
+        "default": "mdi:meter-gas"
+      },
+      "hp_thermal_power_cooling": {
+        "default": "mdi:snowflake"
+      },
+      "hp_thermal_power_heating": {
+        "default": "mdi:fire"
+      },
+      "hp_vampair_state": {
+        "default": "mdi:heat-pump"
+      },
+      "pv_grid_export": {
+        "default": "mdi:home-export-outline"
+      },
+      "pv_grid_import": {
+        "default": "mdi:home-import-outline"
+      },
+      "pv_heatpump_consumption": {
+        "default": "mdi:heat-pump-outline"
+      },
+      "pv_house_consumption": {
+        "default": "mdi:home-lightning-bolt-outline"
+      },
+      "pv_power": {
+        "default": "mdi:solar-power"
+      },
+      "so_current_power": {
+        "default": "mdi:lightning-bolt"
+      },
+      "so_current_yield_heat_meter": {
+        "default": "mdi:meter-electric"
+      },
+      "so_flow_heat_meter": {
+        "default": "mdi:speedometer"
+      },
+      "so_state": {
+        "default": "mdi:solar-power-variant"
+      },
+      "so_today_yield": {
+        "default": "mdi:meter-electric"
+      }
+    },
+    "switch": {
+      "hp_evu_lock": {
+        "default": "mdi:lock"
+      }
+    }
+  }
+}
