@@ -257,10 +257,29 @@ async def test_a_second_system_can_be_added(
     """A different address is a different heating system."""
     build_config_entry().add_to_hass(hass)
 
-    result = await _start_user_step(hass, {**USER_INPUT, CONF_HOST: "10.0.0.9"})
+    result = await _start_user_step(
+        hass, {**USER_INPUT, CONF_HOST: "10.0.0.9", CONF_NAME: "Solarfocus cabin"}
+    )
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "component"
+
+
+async def test_a_second_system_needs_its_own_name(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Entities are identified by the title of their entry.
+
+    A second entry under the same name gives every entity the unique id an
+    entity of the first one already has, and Home Assistant drops them all.
+    """
+    build_config_entry().add_to_hass(hass)
+
+    result = await _start_user_step(hass, {**USER_INPUT, CONF_HOST: "10.0.0.9"})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    assert result["errors"] == {CONF_NAME: "name_exists"}
 
 
 async def test_a_different_port_is_a_different_system(
@@ -269,7 +288,9 @@ async def test_a_different_port_is_a_different_system(
     """Two controllers can sit behind one address on different ports."""
     build_config_entry().add_to_hass(hass)
 
-    result = await _start_user_step(hass, {**USER_INPUT, CONF_PORT: 503})
+    result = await _start_user_step(
+        hass, {**USER_INPUT, CONF_PORT: 503, CONF_NAME: "Solarfocus cabin"}
+    )
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "component"
@@ -359,33 +380,74 @@ async def test_options_flow_follows_the_address(
     """Moving an entry to another address moves its unique id along.
 
     A stale unique id would let the same system be added a second time under
-    its new address.
+    its new address. The move happens on the reload that saving the options
+    triggers, not in the flow itself, so this runs the real setup.
     """
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
     entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "10.0.0.5",
+            CONF_PORT: 503,
+            CONF_SCAN_INTERVAL: 30,
+            CONF_API_VERSION: ApiVersions.V_25_030.value,
+            CONF_HEATING_CIRCUIT: 1,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+    await hass.async_block_till_done()
 
-    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
-        await hass.config_entries.options.async_configure(
-            result["flow_id"],
-            {
-                CONF_HOST: "10.0.0.5",
-                CONF_PORT: 503,
-                CONF_SCAN_INTERVAL: 30,
-                CONF_API_VERSION: ApiVersions.V_25_030.value,
-                CONF_HEATING_CIRCUIT: 1,
-                CONF_BUFFER: 0,
-                CONF_BOILER: 0,
-                CONF_FRESH_WATER_MODULE: 0,
-                CONF_HEATPUMP: True,
-                CONF_PHOTOVOLTAIC: False,
-                CONF_SOLAR: 0,
-            },
-        )
-        await hass.async_block_till_done()
-
+    assert entry.options[CONF_HOST] == "10.0.0.5"
     assert entry.unique_id == "10.0.0.5:503"
+
+
+async def test_saving_options_does_not_reload_against_the_old_address(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The entry is reloaded once, with the options the user just saved.
+
+    Updating the unique id inside the flow fired the update listener before the
+    new options were stored, so the entry was reloaded twice and the first of
+    those reloads connected to the address the user had just left.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    mock_api.reset_mock()
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "10.0.0.5",
+            CONF_PORT: 503,
+            CONF_SCAN_INTERVAL: 30,
+            CONF_API_VERSION: ApiVersions.V_25_030.value,
+            CONF_HEATING_CIRCUIT: 1,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+    await hass.async_block_till_done()
+
+    setups = [call for call in mock_api.call_args_list if "heating_circuit_count" in call.kwargs]
+    assert len(setups) == 1
+    assert setups[0].kwargs["ip"] == "10.0.0.5"
 
 
 async def test_options_flow_rejects_the_address_of_another_entry(
@@ -419,6 +481,46 @@ async def test_options_flow_rejects_the_address_of_another_entry(
     assert result["step_id"] == "init"
     assert result["errors"] == {"base": "already_configured"}
     assert entry.unique_id == "10.0.0.5:502"
+
+
+async def test_a_legacy_duplicate_can_still_edit_its_options(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The migration leaves one of two entries for a system without a unique id.
+
+    That entry shares its address with the other one by definition, so the
+    duplicate check must not fire for it - it would refuse every save and lock
+    the entry out of its own options form.
+    """
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    duplicate = build_config_entry(Systems.VAMPAIR, heatpump=True)
+    duplicate.add_to_hass(hass)
+    hass.config_entries.async_update_entry(duplicate, unique_id=None)
+
+    result = await hass.config_entries.options.async_init(duplicate.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: first.options[CONF_HOST],
+            CONF_PORT: first.options[CONF_PORT],
+            CONF_SCAN_INTERVAL: 30,
+            CONF_API_VERSION: ApiVersions.V_23_020.value,
+            CONF_HEATING_CIRCUIT: 0,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert duplicate.options[CONF_SCAN_INTERVAL] == 30
+    # It stays without one; the address belongs to the other entry.
+    assert duplicate.unique_id is None
 
 
 async def test_options_flow_biomass_system_disables_heatpump(

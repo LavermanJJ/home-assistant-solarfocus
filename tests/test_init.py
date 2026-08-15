@@ -427,6 +427,59 @@ def _version_6_entry(**option_overrides) -> MockConfigEntry:
     )
 
 
+async def test_setup_moves_the_unique_id_to_the_configured_address(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The address can change in the options, the unique id follows on reload."""
+    entry = build_config_entry(heating_circuit=1)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, unique_id="stale.local:502")
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.unique_id == "solarfocus.local:502"
+
+
+async def test_setup_leaves_a_unique_id_less_entry_alone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A duplicate the migration left without a unique id keeps it that way."""
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    duplicate = build_config_entry(heating_circuit=1)
+    duplicate.add_to_hass(hass)
+    hass.config_entries.async_update_entry(duplicate, unique_id=None, title="Second")
+
+    assert await hass.config_entries.async_setup(duplicate.entry_id)
+    await hass.async_block_till_done()
+
+    assert duplicate.unique_id is None
+    assert first.unique_id == "solarfocus.local:502"
+
+
+async def test_setup_does_not_move_a_unique_id_onto_another_entry(
+    hass: HomeAssistant,
+    enable_custom_integrations,
+    mock_api,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The options flow refuses this, a hand-edited entry can still get here."""
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    other = build_config_entry(heating_circuit=1)
+    other.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        other, unique_id="10.0.0.7:502", title="Second"
+    )
+
+    assert await hass.config_entries.async_setup(other.entry_id)
+    await hass.async_block_till_done()
+
+    assert other.unique_id == "10.0.0.7:502"
+    assert "another entry already has it" in caplog.text
+
+
 async def test_migration_backfills_the_unique_id(hass: HomeAssistant) -> None:
     """Entries from before version 7 have no unique id.
 

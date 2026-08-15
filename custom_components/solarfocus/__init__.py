@@ -14,7 +14,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     Platform,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import (
@@ -49,6 +49,8 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
     """Set up Solarfocus from a config entry."""
+    _async_sync_unique_id(hass, entry)
+
     api = SolarfocusAPI(
         ip=entry.options[CONF_HOST],
         port=entry.options[CONF_PORT],
@@ -80,6 +82,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
     return True
+
+
+@callback
+def _async_sync_unique_id(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> None:
+    """Keep the unique id on the address the entry is actually talking to.
+
+    The address can be changed in the options. Doing this here rather than in
+    the options flow keeps the update out of the flow, where it would fire the
+    update listener and reload the entry against the options it is about to
+    replace. Saving options reloads the entry, so this runs right after.
+    """
+    if entry.unique_id is None:
+        # A duplicate the migration deliberately left without one.
+        return
+
+    unique_id = build_unique_id(entry.options[CONF_HOST], entry.options[CONF_PORT])
+    if entry.unique_id == unique_id:
+        return
+
+    if any(
+        other.unique_id == unique_id and other.entry_id != entry.entry_id
+        for other in hass.config_entries.async_entries(DOMAIN)
+    ):
+        # The options flow refuses this, so it takes a hand-edited entry to get
+        # here. Leave the old unique id rather than colliding.
+        _LOGGER.warning(
+            "Not moving the unique id of %s to %s, another entry already has it",
+            entry.title,
+            unique_id,
+        )
+        return
+
+    hass.config_entries.async_update_entry(entry, unique_id=unique_id)
 
 
 async def async_update_options(
