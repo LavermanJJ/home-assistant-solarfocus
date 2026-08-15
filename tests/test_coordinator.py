@@ -18,6 +18,7 @@ from custom_components.solarfocus.const import (
 )
 from custom_components.solarfocus.coordinator import SolarfocusDataUpdateCoordinator
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .conftest import build_api, build_config_entry
 
@@ -130,30 +131,89 @@ async def test_does_not_reconnect_while_connected(hass: HomeAssistant) -> None:
     assert not api.connect.called
 
 
-async def test_initial_connection_failure_is_logged(
-    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+async def test_constructing_the_coordinator_does_not_talk_to_the_device(
+    hass: HomeAssistant,
 ) -> None:
-    """Constructing the coordinator against an unreachable device does not raise."""
+    """Connecting is blocking I/O and belongs in the refresh, not in __init__."""
     api = build_api()
-    api.connect.return_value = False
 
     _coordinator(hass, api, heating_circuit=1)
 
-    assert "Failed to connect to modbus" in caplog.text
+    assert not api.connect.called
 
 
-async def test_failing_component_update_is_logged(
-    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
-) -> None:
-    """A component that fails to update is reported."""
+async def test_unreachable_device_fails_the_update(hass: HomeAssistant) -> None:
+    """A refresh that cannot connect must not look like a successful one."""
     api = build_api()
-    api.update_heating.return_value = False
+    api.connect.return_value = False
+    api.is_connected = False
     coordinator = _coordinator(hass, api, heating_circuit=1)
 
-    with caplog.at_level(logging.DEBUG):
+    with pytest.raises(UpdateFailed, match="solarfocus.local:502"):
         await coordinator._async_update_data()
 
-    assert "Data updated failed" in caplog.text
+    assert not api.update_heating.called
+
+
+async def test_failing_component_update_fails_the_refresh(
+    hass: HomeAssistant,
+) -> None:
+    """A component that cannot be read makes the whole refresh fail.
+
+    The library reports a failed read by returning False. Swallowing that left
+    every entity of the entry available and showing its last value, with nothing
+    telling the user that the values had stopped being updated.
+    """
+    api = build_api()
+    api.update_heating.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, buffer=1)
+
+    with pytest.raises(UpdateFailed, match=CONF_HEATING_CIRCUIT):
+        await coordinator._async_update_data()
+
+
+async def test_entities_become_unavailable_and_recover(hass: HomeAssistant) -> None:
+    """`last_update_success` is what the entities report as availability."""
+    api = build_api()
+    coordinator = _coordinator(hass, api, heating_circuit=1)
+
+    await coordinator.async_refresh()
+    assert coordinator.last_update_success
+
+    api.update_heating.return_value = False
+    await coordinator.async_refresh()
+    assert not coordinator.last_update_success
+
+    api.update_heating.return_value = True
+    await coordinator.async_refresh()
+    assert coordinator.last_update_success
+
+
+async def test_a_failure_is_logged_once_and_the_recovery_too(
+    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+) -> None:
+    """An unreachable system must not fill the log on every poll.
+
+    Raising `UpdateFailed` hands that to the coordinator, which logs the first
+    failure and the recovery and keeps quiet in between.
+    """
+    api = build_api()
+    coordinator = _coordinator(hass, api, heating_circuit=1)
+    await coordinator.async_refresh()
+
+    caplog.clear()
+    api.update_heating.return_value = False
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+
+    assert caplog.text.count(f"Error fetching {DOMAIN} data") == 1
+
+    caplog.clear()
+    api.update_heating.return_value = True
+    await coordinator.async_refresh()
+
+    assert caplog.text.count(f"Fetching {DOMAIN} data recovered") == 1
 
 
 async def test_successful_update_is_logged(
