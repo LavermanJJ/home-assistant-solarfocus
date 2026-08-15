@@ -50,6 +50,10 @@ from .entity import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Read-only platform: the coordinator polls the heating system, the entities
+# themselves never call into it, so there is nothing to limit.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

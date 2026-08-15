@@ -19,6 +19,12 @@ from .entity import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Every write is a read-modify-commit sequence on a component, so two of them
+# running at once can interleave on the same registers. This limits Home
+# Assistant to one in-flight service call per platform; it does not cover the
+# reads the coordinator does, which is why writes re-read their component.
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
