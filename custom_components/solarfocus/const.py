@@ -81,3 +81,12 @@ def solar_count(options: Mapping[str, Any]) -> int:
         return min(count, 1)
 
     return count
+
+
+def build_unique_id(host: str, port: int) -> str:
+    """Return the unique id identifying one eco manager-touch.
+
+    Modbus TCP offers nothing to identify the controller itself, so the address
+    it is reached at is the only thing telling two installations apart.
+    """
+    return f"{host}:{port}"

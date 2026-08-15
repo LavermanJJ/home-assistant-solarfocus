@@ -20,6 +20,9 @@
           "fresh_water_module" : "Frischwassermodule"
         }
       }
+    },
+    "error": {
+      "already_configured": "Diese Adresse wird bereits von einem anderen Solarfocus-Eintrag verwendet"
     }
   },
   "config": {
@@ -27,6 +30,7 @@
       "already_configured": "Device is already configured"
     },
     "error": {
+      "name_exists": "Dieser Name wird bereits von einem anderen Solarfocus-Eintrag verwendet",
       "cannot_connect": "Verbindung Fehlgeschlagen",
       "unknown": "Unexpected error"
     },

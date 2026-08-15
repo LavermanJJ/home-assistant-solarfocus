@@ -20,6 +20,9 @@
           "fresh_water_module" : "Fresh water module"
         }
       }
+    },
+    "error": {
+      "already_configured": "This address is already used by another Solarfocus entry"
     }
   },
   "config": {
@@ -50,6 +53,7 @@
       }
     },
     "error": {
+      "name_exists": "Another Solarfocus entry already uses this name",
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"

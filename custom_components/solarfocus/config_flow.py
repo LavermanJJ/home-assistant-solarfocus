@@ -36,6 +36,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    build_unique_id,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -188,7 +189,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 6
+    VERSION = 7
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -204,6 +205,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         errors = {}
+
+        await self.async_set_unique_id(
+            build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
+        )
+        self._abort_if_unique_id_configured()
+
+        if any(
+            entry.title == user_input[CONF_NAME]
+            for entry in self._async_current_entries()
+        ):
+            # Entities are identified by the title of their entry, so a second
+            # entry under the same name would produce the same unique ids and
+            # Home Assistant would drop all of its entities.
+            return self.async_show_form(
+                step_id="user",
+                data_schema=STEP_USER_DATA_SCHEMA,
+                errors={CONF_NAME: "name_exists"},
+            )
 
         try:
             await validate_input(self.hass, user_input)
@@ -298,6 +317,18 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is None:
             return await self._show_init_form(user_input, errors)
 
+        # The address is the unique id, so moving this entry onto the address of
+        # another one would give two entries for the same controller. An entry
+        # that has no unique id is a duplicate the migration found and left
+        # alone; it already shares an address, and refusing to save its options
+        # would only lock it out of its own form.
+        if self.config_entry.unique_id is not None and self._address_is_taken(
+            build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
+        ):
+            return await self._show_init_form(
+                user_input, {"base": "already_configured"}
+            )
+
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.options[CONF_BIOMASS_BOILER] = False
@@ -330,6 +361,10 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
+            # The unique id is not updated here: that fires the update listener
+            # and reloads the entry against the options it still has, which
+            # means a connect to the address the user just left. Saving the
+            # options reloads anyway, and `async_setup_entry` syncs it then.
             return self.async_create_entry(
                 title="",
                 data={
@@ -349,6 +384,14 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         return await self._show_init_form(user_input, errors)
+
+    def _address_is_taken(self, unique_id: str) -> bool:
+        """Return whether another entry already covers this address."""
+        return any(
+            entry.unique_id == unique_id
+            and entry.entry_id != self.config_entry.entry_id
+            for entry in self.hass.config_entries.async_entries(DOMAIN)
+        )
 
     async def _show_init_form(self, user_input, errors):
         """Show the options form to edit info."""

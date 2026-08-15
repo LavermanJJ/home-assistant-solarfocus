@@ -30,7 +30,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from .conftest import build_config_entry
+from .conftest import CURRENT_VERSION, build_config_entry, build_options
 
 
 async def test_setup_and_unload_entry(
@@ -214,7 +214,7 @@ async def test_migration_from_version_1(hass: HomeAssistant) -> None:
 
     assert await async_migrate_entry(hass, entry) is True
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     # Booleans became counts
     assert entry.options[CONF_HEATING_CIRCUIT] == 1
     assert entry.options[CONF_BUFFER] == 1
@@ -261,7 +261,7 @@ async def test_migration_from_version_3_moves_options(hass: HomeAssistant) -> No
 
     assert await async_migrate_entry(hass, entry) is True
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     assert entry.data == {
         CONF_NAME: DEFAULT_NAME,
         CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR,
@@ -302,7 +302,7 @@ async def test_migration_from_version_5_converts_solar_to_a_count(
 
     assert await async_migrate_entry(hass, entry) is True
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     assert entry.options[CONF_SOLAR] == 1
 
 
@@ -363,7 +363,7 @@ async def test_migration_from_version_4_renames_the_pellets_boiler(
 
     assert await async_migrate_entry(hass, entry) is True
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     assert "pelletsboiler" not in entry.options
     assert entry.options[CONF_BIOMASS_BOILER] is True
 
@@ -411,8 +411,108 @@ async def test_migrated_entries_can_be_set_up(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     assert entry.state is ConfigEntryState.LOADED
+
+
+def _version_6_entry(**option_overrides) -> MockConfigEntry:
+    """Return an entry in the layout of version 6, which had no unique id."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title=DEFAULT_NAME,
+        version=6,
+        unique_id=None,
+        data={CONF_NAME: DEFAULT_NAME, CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR},
+        options=build_options(**option_overrides),
+    )
+
+
+async def test_setup_moves_the_unique_id_to_the_configured_address(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The address can change in the options, the unique id follows on reload."""
+    entry = build_config_entry(heating_circuit=1)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, unique_id="stale.local:502")
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.unique_id == "solarfocus.local:502"
+
+
+async def test_setup_leaves_a_unique_id_less_entry_alone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """A duplicate the migration left without a unique id keeps it that way."""
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    duplicate = build_config_entry(heating_circuit=1)
+    duplicate.add_to_hass(hass)
+    hass.config_entries.async_update_entry(duplicate, unique_id=None, title="Second")
+
+    assert await hass.config_entries.async_setup(duplicate.entry_id)
+    await hass.async_block_till_done()
+
+    assert duplicate.unique_id is None
+    assert first.unique_id == "solarfocus.local:502"
+
+
+async def test_setup_does_not_move_a_unique_id_onto_another_entry(
+    hass: HomeAssistant,
+    enable_custom_integrations,
+    mock_api,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The options flow refuses this, a hand-edited entry can still get here."""
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    other = build_config_entry(heating_circuit=1)
+    other.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        other, unique_id="10.0.0.7:502", title="Second"
+    )
+
+    assert await hass.config_entries.async_setup(other.entry_id)
+    await hass.async_block_till_done()
+
+    assert other.unique_id == "10.0.0.7:502"
+    assert "another entry already has it" in caplog.text
+
+
+async def test_migration_backfills_the_unique_id(hass: HomeAssistant) -> None:
+    """Entries from before version 7 have no unique id.
+
+    Without one the duplicate check of the config flow cannot see them, so an
+    existing installation could still be added a second time.
+    """
+    entry = _version_6_entry(host="10.0.0.2", port=503)
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.unique_id == "10.0.0.2:503"
+
+
+async def test_migration_leaves_a_duplicate_entry_without_a_unique_id(
+    hass: HomeAssistant,
+) -> None:
+    """Nothing stopped two entries for one system, so both can exist.
+
+    Giving the second one the same unique id would be a collision, so it keeps
+    working without one instead.
+    """
+    first = build_config_entry()
+    first.add_to_hass(hass)
+    duplicate = _version_6_entry()
+    duplicate.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, duplicate) is True
+
+    assert duplicate.version == CURRENT_VERSION
+    assert duplicate.unique_id is None
+    assert first.unique_id == "solarfocus.local:502"
 
 
 async def test_migration_of_a_current_entry_changes_nothing(
@@ -425,6 +525,6 @@ async def test_migration_of_a_current_entry_changes_nothing(
 
     assert await async_migrate_entry(hass, entry) is True
 
-    assert entry.version == 6
+    assert entry.version == CURRENT_VERSION
     assert entry.data == data
     assert entry.options == options
