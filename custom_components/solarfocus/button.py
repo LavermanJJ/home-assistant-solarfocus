@@ -4,19 +4,12 @@ from dataclasses import dataclass
 import logging
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import (
-    BOILER_COMPONENT,
-    BOILER_COMPONENT_PREFIX,
-    BOILER_PREFIX,
-    CONF_BOILER,
-    DATA_COORDINATOR,
-    DOMAIN,
-)
+from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, BOILER_PREFIX, CONF_BOILER
+from .coordinator import SolarfocusConfigEntry
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -29,11 +22,11 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: SolarfocusConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
+    coordinator = config_entry.runtime_data
     entities = []
 
     for i in range(config_entry.options[CONF_BOILER]):

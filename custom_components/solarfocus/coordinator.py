@@ -5,6 +5,7 @@ import logging
 
 from pysolarfocus import SolarfocusAPI
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -109,3 +110,8 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             )
         else:
             _LOGGER.info("Reading all components of %s works again", self._address)
+
+
+# The coordinator of an entry lives on the entry itself, this spells that out
+# for the platforms reading it back.
+SolarfocusConfigEntry = ConfigEntry[SolarfocusDataUpdateCoordinator]

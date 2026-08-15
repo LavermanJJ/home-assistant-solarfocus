@@ -27,11 +27,9 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
-    DATA_COORDINATOR,
-    DOMAIN,
     solar_count,
 )
-from .coordinator import SolarfocusDataUpdateCoordinator
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -47,11 +45,8 @@ PLATFORMS: list[Platform] = [
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
     """Set up Solarfocus from a config entry."""
-    if hass.data.get(DOMAIN) is None:
-        hass.data.setdefault(DOMAIN, {})
-
     api = SolarfocusAPI(
         ip=entry.options[CONF_HOST],
         port=entry.options[CONF_PORT],
@@ -75,44 +70,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
         ) from coordinator.last_exception
 
-    hass.data[DOMAIN][entry.entry_id] = {
-        DATA_COORDINATOR: coordinator,
-        # UPDATE_LISTENER: unsub_options_update_listener,
-    }
+    entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Registers update listener to update config entry when options are updated.
     entry.async_on_unload(entry.add_update_listener(async_update_options))
-    # unsub_options_update_listener = entry.add_update_listener(async_update_options)
-    # Store a reference to the unsubscribe function to cleanup if an entry is unloaded.
 
     return True
 
 
-async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_update_options(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
     """Update options from user interface."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
+async def async_unload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
+    """Unload a config entry.
 
-    solarfocus_module = hass.data.get(DOMAIN)
-
-    if not solarfocus_module:
-        #  if not loaded directly return
-        return True
-
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    _LOGGER.info("Async_unload_entry is getting called! unload_ok: %s", unload_ok)
-
-    return unload_ok
+    The coordinator lives on the entry, so unloading the platforms is all there
+    is to clean up.
+    """
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_reload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)

@@ -8,19 +8,17 @@ from homeassistant.components.switch import (
     SwitchEntity,
     SwitchEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_HEATPUMP,
-    DATA_COORDINATOR,
-    DOMAIN,
     HEAT_PUMP_COMPONENT,
     HEAT_PUMP_COMPONENT_PREFIX,
     HEAT_PUMP_PREFIX,
 )
+from .coordinator import SolarfocusConfigEntry
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -36,11 +34,11 @@ OFF = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: SolarfocusConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Solarfocus config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
+    coordinator = config_entry.runtime_data
     entities = []
 
     if config_entry.options[CONF_HEATPUMP]:

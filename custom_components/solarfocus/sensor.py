@@ -11,7 +11,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
@@ -42,8 +41,6 @@ from .const import (
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
-    DATA_COORDINATOR,
-    DOMAIN,
     FRESH_WATER_MODULE_COMPONENT,
     FRESH_WATER_MODULE_COMPONENT_PREFIX,
     FRESH_WATER_MODULE_PREFIX,
@@ -61,7 +58,7 @@ from .const import (
     SOLAR_PREFIX,
     solar_count,
 )
-from .coordinator import SolarfocusDataUpdateCoordinator
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -73,10 +70,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, config_entry: SolarfocusConfigEntry, async_add_entities
 ):
     """Initialize sensor platform from config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][DATA_COORDINATOR]
+    coordinator = config_entry.runtime_data
     entities = []
 
     _LOGGER.debug("Sensor async_setup_entry: %s", config_entry.data)
