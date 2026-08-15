@@ -66,6 +66,18 @@ async def test_no_components_creates_no_entities(
 
 
 @pytest.mark.parametrize("platform", PLATFORMS, ids=lambda p: p.__name__.split(".")[-1])
+def test_platform_declares_parallel_updates(platform) -> None:
+    """Home Assistant only limits parallelism if the platform declares it.
+
+    Read-only platforms are unlimited, platforms that write to the heating
+    system serialize their calls onto the single Modbus connection.
+    """
+    read_only = platform in (binary_sensor, sensor)
+
+    assert platform.PARALLEL_UPDATES == (0 if read_only else 1)
+
+
+@pytest.mark.parametrize("platform", PLATFORMS, ids=lambda p: p.__name__.split(".")[-1])
 async def test_entity_keys_are_unique(hass: HomeAssistant, platform) -> None:
     """Duplicate keys would collide on the same unique id."""
     entry = build_config_entry(

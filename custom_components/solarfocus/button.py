@@ -19,6 +19,10 @@ from .entity import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Writes go to a single Modbus TCP connection, so they are serialized to keep
+# the eco manager-touch from dropping concurrent requests.
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

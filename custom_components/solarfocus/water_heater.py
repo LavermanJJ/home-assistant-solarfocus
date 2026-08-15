@@ -24,6 +24,10 @@ from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_descri
 
 _LOGGER = logging.getLogger(__name__)
 
+# Writes go to a single Modbus TCP connection, so they are serialized to keep
+# the eco manager-touch from dropping concurrent requests.
+PARALLEL_UPDATES = 1
+
 
 PRESET_AUTO = "auto"
 

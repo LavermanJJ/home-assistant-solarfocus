@@ -68,6 +68,10 @@ from .entity import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# The coordinator polls the heating system, the entities themselves do not
+# talk to it, so their updates do not have to be serialized.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: SolarfocusConfigEntry, async_add_entities
