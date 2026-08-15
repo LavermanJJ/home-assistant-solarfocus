@@ -88,7 +88,7 @@
           "2": "Zeitschaltung"
         }
       },
-      "bb_mode" : {
+      "bb_boiler_operating_mode" : {
         "state" : {
           "0": "Stückholz",
           "1": "Stückholz Automatik",

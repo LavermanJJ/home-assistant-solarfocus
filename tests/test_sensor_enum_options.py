@@ -89,6 +89,24 @@ def test_translated_states_are_valid_options(
     )
 
 
+@pytest.mark.parametrize(
+    "filename", ["strings.json", "translations/en.json", "translations/de.json"]
+)
+@pytest.mark.parametrize(("translation_key", "options"), CASES)
+def test_every_enum_sensor_has_translated_states(
+    filename: str, translation_key: str, options: list[int]
+) -> None:
+    """An enum sensor is a list of names, and without them it is a list of numbers.
+
+    The test above skips an entity that has no states at all, which is how
+    `bb_boiler_operating_mode` went untranslated: `strings.json` held its states
+    under `bb_mode`, a key of no entity.
+    """
+    entity = _translations(filename).get(translation_key)
+
+    assert entity and "state" in entity
+
+
 def test_cases_cover_the_known_enum_sensors() -> None:
     """Guard the parametrization against silently matching nothing."""
     keys = {case.values[0] for case in CASES}
