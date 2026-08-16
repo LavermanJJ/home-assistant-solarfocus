@@ -2,7 +2,10 @@
   "entity": {
     "binary_sensor": {
       "hp_defrost_active": {
-        "default": "mdi:snowflake-melt"
+        "default": "mdi:snowflake",
+        "state": {
+          "on": "mdi:snowflake-melt"
+        }
       }
     },
     "button": {
@@ -41,19 +44,44 @@
     },
     "select": {
       "bo_holding_mode": {
-        "default": "mdi:water-boiler"
+        "default": "mdi:water-boiler",
+        "state": {
+          "0": "mdi:water-boiler-off",
+          "2": "mdi:calendar-week",
+          "3": "mdi:calendar-range",
+          "4": "mdi:calendar-today"
+        }
       },
       "hc_cooling": {
-        "default": "mdi:snowflake"
+        "default": "mdi:sun-snowflake-variant",
+        "state": {
+          "0": "mdi:radiator",
+          "1": "mdi:snowflake"
+        }
       },
       "hc_heating_mode": {
-        "default": "mdi:sun-snowflake-variant"
+        "default": "mdi:sun-snowflake-variant",
+        "state": {
+          "0": "mdi:radiator",
+          "1": "mdi:snowflake"
+        }
       },
       "hc_mode": {
-        "default": "mdi:radiator"
+        "default": "mdi:radiator",
+        "state": {
+          "1": "mdi:radiator-disabled",
+          "2": "mdi:calendar-clock",
+          "3": "mdi:radiator-off"
+        }
       },
       "hp_smart_grid": {
-        "default": "mdi:leaf"
+        "default": "mdi:leaf",
+        "state": {
+          "0": "mdi:leaf-off",
+          "1": "mdi:lock",
+          "3": "mdi:leaf-circle-outline",
+          "4": "mdi:flash"
+        }
       }
     },
     "sensor": {
@@ -70,10 +98,16 @@
         "default": "mdi:meter-gas"
       },
       "bb_log_wood": {
-        "default": "mdi:format-list-bulleted"
+        "default": "mdi:fire",
+        "state": {
+          "1": "mdi:tray-arrow-down"
+        }
       },
       "bb_message_number": {
-        "default": "mdi:message-text-outline"
+        "default": "mdi:message-alert-outline",
+        "state": {
+          "0": "mdi:message-outline"
+        }
       },
       "bb_octoplus_buffer_temperature_bottom": {
         "default": "mdi:thermometer-low"
@@ -85,19 +119,104 @@
         "default": "mdi:alpha-t-box"
       },
       "bb_status": {
-        "default": "mdi:fire-circle"
+        "default": "mdi:fire-circle",
+        "state": {
+          "0": "mdi:power-standby",
+          "1": "mdi:fireplace",
+          "2": "mdi:fire",
+          "6": "mdi:fire-off",
+          "8": "mdi:broom",
+          "10": "mdi:power-plug-off",
+          "17": "mdi:alert-circle-outline",
+          "34": "mdi:tray-arrow-down",
+          "37": "mdi:tray-arrow-down",
+          "39": "mdi:broom",
+          "40": "mdi:alert",
+          "41": "mdi:door-open",
+          "46": "mdi:broom",
+          "47": "mdi:door-open",
+          "49": "mdi:fire",
+          "51": "mdi:fire-off",
+          "54": "mdi:power-plug-off",
+          "55": "mdi:power-plug-off",
+          "200": "mdi:power-standby",
+          "201": "mdi:fireplace",
+          "202": "mdi:fire",
+          "206": "mdi:fire-off",
+          "208": "mdi:broom",
+          "210": "mdi:power-plug-off",
+          "217": "mdi:alert-circle-outline",
+          "234": "mdi:tray-arrow-down",
+          "237": "mdi:tray-arrow-down",
+          "239": "mdi:broom",
+          "240": "mdi:alert",
+          "241": "mdi:door-open",
+          "246": "mdi:broom",
+          "301": "mdi:fire-off",
+          "305": "mdi:pine-tree-fire",
+          "306": "mdi:pine-tree-fire",
+          "307": "mdi:pine-tree-fire",
+          "308": "mdi:fire-off",
+          "309": "mdi:door-open",
+          "311": "mdi:fire",
+          "317": "mdi:alert",
+          "318": "mdi:door-open"
+        }
       },
       "bo_circulation": {
-        "default": "mdi:reload"
+        "default": "mdi:lock",
+        "state": {
+          "0": "mdi:sync-off",
+          "1": "mdi:sync"
+        }
       },
       "bo_mode": {
-        "default": "mdi:format-list-bulleted"
+        "default": "mdi:water-boiler",
+        "state": {
+          "0": "mdi:water-boiler-off",
+          "2": "mdi:calendar-week",
+          "3": "mdi:calendar-range",
+          "4": "mdi:calendar-today"
+        }
       },
       "bo_single_charge": {
-        "default": "mdi:pump"
+        "default": "mdi:lock",
+        "state": {
+          "0": "mdi:pump-off",
+          "1": "mdi:pump"
+        }
       },
       "bo_state": {
-        "default": "mdi:water-boiler"
+        "default": "mdi:water-boiler",
+        "state": {
+          "0": "mdi:water-boiler-off",
+          "1": "mdi:power-standby",
+          "10": "mdi:alert-circle-outline",
+          "11": "mdi:alert-circle-outline",
+          "12": "mdi:airplane",
+          "13": "mdi:snowflake-melt",
+          "2": "mdi:fire",
+          "3": "mdi:snowflake-alert",
+          "4": "mdi:broom",
+          "5": "mdi:bacteria-outline",
+          "6": "mdi:water-thermometer",
+          "7": "mdi:water-boiler-alert",
+          "8": "mdi:lock-reset",
+          "9": "mdi:water-plus",
+          "200": "mdi:water-boiler-off",
+          "201": "mdi:power-standby",
+          "202": "mdi:fire",
+          "203": "mdi:snowflake-alert",
+          "204": "mdi:broom",
+          "205": "mdi:bacteria-outline",
+          "206": "mdi:water-thermometer",
+          "207": "mdi:fire-alert",
+          "208": "mdi:pump",
+          "209": "mdi:water-plus",
+          "210": "mdi:alert-circle-outline",
+          "211": "mdi:alert-circle-outline",
+          "212": "mdi:airplane"
+        }
       },
       "bo_temperature": {
         "default": "mdi:thermometer-high"
@@ -112,10 +231,33 @@
         "default": "mdi:thermometer-high"
       },
       "bu_mode": {
-        "default": "mdi:format-list-bulleted"
+        "default": "mdi:database",
+        "state": {
+          "0": "mdi:database-off",
+          "2": "mdi:calendar-clock"
+        }
       },
       "bu_state": {
-        "default": "mdi:database"
+        "default": "mdi:database",
+        "state": {
+          "0": "mdi:database-off",
+          "1": "mdi:power-standby",
+          "2": "mdi:database-arrow-up",
+          "3": "mdi:snowflake-alert",
+          "4": "mdi:broom",
+          "5": "mdi:fire-alert",
+          "6": "mdi:pump",
+          "7": "mdi:water-thermometer",
+          "200": "mdi:database-off",
+          "201": "mdi:power-standby",
+          "202": "mdi:database-arrow-up",
+          "203": "mdi:snowflake-alert",
+          "204": "mdi:broom",
+          "205": "mdi:fire-alert",
+          "206": "mdi:pump",
+          "207": "mdi:pump",
+          "208": "mdi:database-alert"
+        }
       },
       "bu_x35_temperature": {
         "default": "mdi:thermometer-high"
@@ -124,7 +266,14 @@
         "default": "mdi:speedometer"
       },
       "fm_state": {
-        "default": "mdi:faucet"
+        "default": "mdi:faucet",
+        "state": {
+          "0": "mdi:alert-circle-outline",
+          "1": "mdi:pump-off",
+          "2": "mdi:pump",
+          "3": "mdi:hand-back-right",
+          "4": "mdi:hand-back-right-off"
+        }
       },
       "hc_mixer_valve": {
         "default": "mdi:valve"
@@ -133,7 +282,64 @@
         "default": "mdi:home-thermometer-outline"
       },
       "hc_state": {
-        "default": "mdi:radiator"
+        "default": "mdi:radiator",
+        "state": {
+          "0": "mdi:radiator-off",
+          "1": "mdi:radiator-disabled",
+          "10": "mdi:thermometer-check",
+          "11": "mdi:water-thermometer",
+          "13": "mdi:radiator-disabled",
+          "14": "mdi:alert-circle-outline",
+          "15": "mdi:thermometer-low",
+          "16": "mdi:alert-circle-outline",
+          "17": "mdi:snowflake-alert",
+          "18": "mdi:pump",
+          "19": "mdi:party-popper",
+          "20": "mdi:alert-circle-outline",
+          "21": "mdi:pump",
+          "22": "mdi:snowflake-melt",
+          "23": "mdi:snowflake",
+          "24": "mdi:snowflake",
+          "26": "mdi:pool",
+          "27": "mdi:sun-thermometer-outline",
+          "28": "mdi:thermometer-check",
+          "29": "mdi:thermometer-low",
+          "3": "mdi:airplane",
+          "30": "mdi:sun-thermometer-outline",
+          "31": "mdi:timer-sand",
+          "4": "mdi:layers-outline",
+          "5": "mdi:snowflake-alert",
+          "6": "mdi:broom",
+          "7": "mdi:radiator-off",
+          "8": "mdi:fire-alert",
+          "9": "mdi:sun-thermometer-outline",
+          "200": "mdi:radiator-off",
+          "202": "mdi:water-thermometer",
+          "203": "mdi:radiator-disabled",
+          "204": "mdi:alert-circle-outline",
+          "205": "mdi:thermometer-low",
+          "206": "mdi:radiator-disabled",
+          "208": "mdi:airplane",
+          "209": "mdi:layers-outline",
+          "210": "mdi:snowflake-alert",
+          "211": "mdi:broom",
+          "212": "mdi:radiator-off",
+          "213": "mdi:fire-alert",
+          "214": "mdi:sun-thermometer-outline",
+          "215": "mdi:thermometer-check",
+          "217": "mdi:snowflake-alert",
+          "218": "mdi:alert-circle-outline",
+          "219": "mdi:pump",
+          "220": "mdi:thermometer-low",
+          "221": "mdi:snowflake-alert",
+          "222": "mdi:sun-thermometer-outline",
+          "223": "mdi:radiator-disabled",
+          "224": "mdi:thermometer-check",
+          "225": "mdi:valve",
+          "226": "mdi:party-popper",
+          "227": "mdi:thermometer-check",
+          "228": "mdi:sun-thermometer-outline"
+        }
       },
       "hp_compressor_speed": {
         "default": "mdi:gauge"
@@ -196,7 +402,22 @@
         "default": "mdi:fire"
       },
       "hp_vampair_state": {
-        "default": "mdi:heat-pump"
+        "default": "mdi:heat-pump",
+        "state": {
+          "0": "mdi:power-standby",
+          "1": "mdi:fire",
+          "2": "mdi:water-thermometer",
+          "3": "mdi:snowflake",
+          "4": "mdi:hand-back-right",
+          "5": "mdi:lock",
+          "6": "mdi:clock-remove-outline",
+          "7": "mdi:sun-thermometer-outline",
+          "8": "mdi:heating-coil",
+          "9": "mdi:water-boiler",
+          "10": "mdi:snowflake-alert",
+          "11": "mdi:tune",
+          "12": "mdi:power-off"
+        }
       },
       "pv_grid_export": {
         "default": "mdi:home-export-outline"
@@ -223,7 +444,47 @@
         "default": "mdi:speedometer"
       },
       "so_state": {
-        "default": "mdi:solar-power-variant"
+        "default": "mdi:solar-power-variant",
+        "state": {
+          "1": "mdi:alert-circle-outline",
+          "2": "mdi:solar-power-variant-outline",
+          "3": "mdi:alert-circle-outline",
+          "4": "mdi:alert-circle-outline",
+          "5": "mdi:alert-circle-outline",
+          "6": "mdi:thermometer-alert",
+          "7": "mdi:timer-sand",
+          "8": "mdi:pump",
+          "9": "mdi:thermometer-low",
+          "10": "mdi:thermometer-check",
+          "11": "mdi:timer-sand",
+          "12": "mdi:lock",
+          "13": "mdi:pump",
+          "14": "mdi:snowflake-alert",
+          "15": "mdi:fire-alert",
+          "16": "mdi:snowflake",
+          "17": "mdi:pump",
+          "18": "mdi:test-tube",
+          "201": "mdi:alert-circle-outline",
+          "203": "mdi:alert-circle-outline",
+          "204": "mdi:alert-circle-outline",
+          "205": "mdi:alert-circle-outline",
+          "206": "mdi:thermometer-alert",
+          "207": "mdi:timer-sand",
+          "208": "mdi:pump",
+          "209": "mdi:thermometer-low",
+          "210": "mdi:thermometer-check",
+          "211": "mdi:timer-sand",
+          "212": "mdi:lock",
+          "213": "mdi:pump",
+          "214": "mdi:snowflake-alert",
+          "215": "mdi:fire-alert",
+          "216": "mdi:snowflake",
+          "217": "mdi:fuse-alert",
+          "218": "mdi:fuse-alert",
+          "220": "mdi:solar-power-variant-outline",
+          "221": "mdi:pump",
+          "222": "mdi:test-tube"
+        }
       },
       "so_today_yield": {
         "default": "mdi:meter-electric"
@@ -231,7 +492,24 @@
     },
     "switch": {
       "hp_evu_lock": {
-        "default": "mdi:lock"
+        "default": "mdi:lock",
+        "state": {
+          "off": "mdi:lock-open-variant"
+        }
+      }
+    },
+    "climate": {
+      "hc_thermostat": {
+        "state_attributes": {
+          "preset_mode": {
+            "default": "mdi:radiator",
+            "state": {
+              "eco": "mdi:radiator-disabled",
+              "auto": "mdi:calendar-clock",
+              "off": "mdi:radiator-off"
+            }
+          }
+        }
       }
     }
   }
