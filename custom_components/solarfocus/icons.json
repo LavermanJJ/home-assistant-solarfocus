@@ -79,7 +79,7 @@
         "state": {
           "0": "mdi:leaf-off",
           "1": "mdi:lock",
-          "3": "mdi:thumb-up-outline",
+          "3": "mdi:leaf-circle-outline",
           "4": "mdi:flash"
         }
       }
@@ -100,7 +100,7 @@
       "bb_log_wood": {
         "default": "mdi:fire",
         "state": {
-          "1": "mdi:pine-tree"
+          "1": "mdi:tray-arrow-down"
         }
       },
       "bb_message_number": {
@@ -195,17 +195,17 @@
           "11": "mdi:alert-circle-outline",
           "12": "mdi:airplane",
           "13": "mdi:snowflake-melt",
-          "2": "mdi:water-boiler-auto",
+          "2": "mdi:fire",
           "3": "mdi:snowflake-alert",
           "4": "mdi:broom",
           "5": "mdi:bacteria-outline",
           "6": "mdi:water-thermometer",
           "7": "mdi:water-boiler-alert",
-          "8": "mdi:pump",
+          "8": "mdi:lock-reset",
           "9": "mdi:water-plus",
           "200": "mdi:water-boiler-off",
           "201": "mdi:power-standby",
-          "202": "mdi:water-boiler-auto",
+          "202": "mdi:fire",
           "203": "mdi:snowflake-alert",
           "204": "mdi:broom",
           "205": "mdi:bacteria-outline",
@@ -256,7 +256,7 @@
           "205": "mdi:fire-alert",
           "206": "mdi:pump",
           "207": "mdi:pump",
-          "208": "mdi:database-arrow-down"
+          "208": "mdi:fire-alert"
         }
       },
       "bu_x35_temperature": {
