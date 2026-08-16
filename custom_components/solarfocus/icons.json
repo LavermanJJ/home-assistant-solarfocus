@@ -86,7 +86,11 @@
     },
     "sensor": {
       "bb_ash_container": {
-        "default": "mdi:trash-can-outline"
+        "default": "mdi:trash-can-outline",
+        "range": {
+          "0": "mdi:trash-can-outline",
+          "50": "mdi:trash-can"
+        }
       },
       "bb_boiler_operating_mode": {
         "default": "mdi:format-list-bulleted"
@@ -263,7 +267,13 @@
         "default": "mdi:thermometer-high"
       },
       "fm_flow_rate": {
-        "default": "mdi:speedometer"
+        "default": "mdi:speedometer",
+        "range": {
+          "0": "mdi:water-off",
+          "1": "mdi:speedometer-slow",
+          "5": "mdi:speedometer-medium",
+          "10": "mdi:speedometer"
+        }
       },
       "fm_state": {
         "default": "mdi:faucet",
@@ -276,7 +286,12 @@
         }
       },
       "hc_mixer_valve": {
-        "default": "mdi:valve"
+        "default": "mdi:valve",
+        "range": {
+          "0": "mdi:valve-closed",
+          "1": "mdi:valve",
+          "100": "mdi:valve-open"
+        }
       },
       "hc_room_temperature": {
         "default": "mdi:home-thermometer-outline"
@@ -342,7 +357,13 @@
         }
       },
       "hp_compressor_speed": {
-        "default": "mdi:gauge"
+        "default": "mdi:gauge",
+        "range": {
+          "0": "mdi:gauge-empty",
+          "1": "mdi:gauge-low",
+          "1500": "mdi:gauge",
+          "3000": "mdi:gauge-full"
+        }
       },
       "hp_cop_cooling": {
         "default": "mdi:poll"
@@ -366,7 +387,13 @@
         "default": "mdi:lightning-bolt"
       },
       "hp_flow_rate": {
-        "default": "mdi:speedometer"
+        "default": "mdi:speedometer",
+        "range": {
+          "0": "mdi:water-off",
+          "1": "mdi:speedometer-slow",
+          "900": "mdi:speedometer-medium",
+          "1800": "mdi:speedometer"
+        }
       },
       "hp_performance_overall": {
         "default": "mdi:poll"
