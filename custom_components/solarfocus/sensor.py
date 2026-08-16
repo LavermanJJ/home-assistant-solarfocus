@@ -244,8 +244,12 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
 
         if self.device_class is SensorDeviceClass.ENUM and value is not None:
             # The state of an enum sensor has to be one of its options, and those
-            # are the strings of the values the heating system reports.
-            return str(value)
+            # are the strings of the values the heating system reports. Going
+            # through int() first keeps a register that holds a bool or a float
+            # off the failing path: str(True) is "True" and str(3.0) is "3.0",
+            # neither of which is an option, and core rejects the whole entity
+            # for it.
+            return str(int(value))
 
         return value
 

@@ -147,6 +147,29 @@ async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
     assert state.state in state.attributes["options"]
 
 
+async def test_an_enum_sensor_survives_a_register_holding_a_bool(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """A bool left in a register must not cost the entity its state.
+
+    `single_charge` is a button as well as a sensor, and a press writes to the
+    register the sensor reads. If the re-read right after the write fails, which
+    the coordinator tolerates on purpose, whatever was written stays in the
+    component until the next poll: str(True) is "True", not an option.
+    """
+    api.boilers[0].single_charge.scaled_value = True
+    entry = build_config_entry(boiler=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.solarfocus_boiler_1_single_charge")
+
+    assert state.state == "1"
+    assert state.state in state.attributes["options"]
+
+
 def test_cases_cover_the_known_enum_sensors() -> None:
     """Guard the parametrization against silently matching nothing."""
     keys = {case.values[0] for case in CASES}

@@ -25,6 +25,11 @@ _LOGGER = logging.getLogger(__name__)
 # reads the coordinator does, which is why writes re-read their component.
 PARALLEL_UPDATES = 1
 
+# The value that triggers the action. The register is a number, and it is read
+# back as one by the sensor of the same name, so write it as one: a bool would
+# survive in the component until the next successful read.
+PRESSED = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -74,7 +79,7 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Update the current value."""
         button = self.entity_description.item
-        return self._set_native_value(button, True)
+        return self._set_native_value(button, PRESSED)
 
 
 BOILER_BUTTON_TYPES = [
