@@ -104,6 +104,30 @@ def test_english_translations_match_the_strings_file() -> None:
     assert english == strings
 
 
+def _comparable(text: str) -> str:
+    """Return a state text without the differences that are only spelling."""
+    return text.lower().replace("–", "-").replace(" ", "")
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_the_two_boiler_release_modes_agree(filename: str) -> None:
+    """The boiler reports and takes the release mode as the same enumeration.
+
+    Register 502 ("Boiler Freigabeart - Ist", the `bo_mode` sensor) and register
+    32002 ("Boiler - Freigabeart", the `bo_holding_mode` select) are documented
+    with one list of values: 0 is "Immer Aus", 1 is "Immer Ein". The English
+    select had the two the wrong way round, so picking "Always on" wrote a 0 and
+    switched the boiler off.
+    """
+    entity = _load(filename)["entity"]
+    reported = entity["sensor"]["bo_mode"]["state"]
+    settable = entity["select"]["bo_holding_mode"]["state"]
+
+    assert {state: _comparable(text) for state, text in settable.items()} == {
+        state: _comparable(text) for state, text in reported.items()
+    }
+
+
 def test_the_locked_state_is_still_translated() -> None:
     """The state hassfest rejects has to keep working, that is the whole point."""
     for filename in FILENAMES:
