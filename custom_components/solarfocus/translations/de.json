@@ -76,9 +76,9 @@
         "state" : {
           "0": "Immer Aus",
           "1": "Immer Ein",
-          "2": "Montag \u2013 Sontag",
-          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
-          "4": "Tageweise"
+          "2": "Montag \u2013 Sonntag",
+          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sonntag)",
+          "4": "Tagweise"
         }
       },
       "bu_mode" : {
@@ -607,9 +607,9 @@
         "state" : {
           "0": "Immer Aus",
           "1": "Immer Ein",
-          "2": "Montag \u2013 Sontag",
-          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sontag)",
-          "4": "Tageweise"
+          "2": "Montag \u2013 Sonntag",
+          "3": "Blockweise (Montag \u2013 Freitag, Samstag \u2013 Sonntag)",
+          "4": "Tagweise"
         }
       }
     },
