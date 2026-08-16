@@ -28,6 +28,7 @@ from custom_components.solarfocus.const import (
     DEFAULT_NAME,
     DOMAIN,
 )
+from homeassistant.config_entries import SOURCE_RECONFIGURE
 from homeassistant.const import (
     CONF_API_VERSION,
     CONF_HOST,
@@ -628,3 +629,190 @@ async def test_options_flow_errors(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": expected}
+
+
+# --- reconfigure -------------------------------------------------------------
+
+RECONFIGURE_INPUT = {
+    CONF_HOST: "10.0.0.5",
+    CONF_PORT: 503,
+    CONF_SCAN_INTERVAL: 30,
+    CONF_API_VERSION: ApiVersions.V_25_030.value,
+}
+
+
+async def _start_reconfigure(hass: HomeAssistant, entry) -> dict:
+    """Open the reconfigure form of an entry."""
+    return await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": SOURCE_RECONFIGURE, "entry_id": entry.entry_id},
+    )
+
+
+async def test_reconfigure_form_starts_from_the_current_connection(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The form is for correcting an address, so it starts at the current one."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+
+    defaults = {
+        key.schema: key.default() for key in result["data_schema"].schema if key.default
+    }
+
+    assert defaults[CONF_HOST] == "solarfocus.local"
+    assert defaults[CONF_PORT] == 502
+
+
+async def test_reconfigure_moves_the_entry_and_its_unique_id(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The address is the unique id, so changing one changes the other."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], RECONFIGURE_INPUT
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+
+    assert entry.options[CONF_HOST] == "10.0.0.5"
+    assert entry.options[CONF_PORT] == 503
+    assert entry.options[CONF_SCAN_INTERVAL] == 30
+    assert entry.options[CONF_API_VERSION] == ApiVersions.V_25_030.value
+    assert entry.unique_id == "10.0.0.5:503"
+
+
+async def test_reconfigure_leaves_the_components_alone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The component layout belongs to the other form.
+
+    Asking for it again here is how a user correcting an address ends up
+    removing entities they still have.
+    """
+    entry = build_config_entry(
+        Systems.VAMPAIR, heating_circuit=3, buffer=2, boiler=1, heatpump=True
+    )
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"], RECONFIGURE_INPUT
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_HEATING_CIRCUIT] == 3
+    assert entry.options[CONF_BUFFER] == 2
+    assert entry.options[CONF_HEATPUMP] is True
+
+
+async def test_reconfigure_refuses_the_address_of_another_entry(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Two entries on one controller is what the unique id is there to stop."""
+    other = build_config_entry(Systems.VAMPAIR, host="10.0.0.5", port=503)
+    other.add_to_hass(hass)
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], RECONFIGURE_INPUT
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "already_configured"}
+    assert entry.options[CONF_HOST] == "solarfocus.local"
+
+
+async def test_reconfigure_reports_a_system_it_cannot_reach(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """An address that answers nothing is the mistake this form is for."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    api.connect.return_value = False
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], RECONFIGURE_INPUT
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
+    assert entry.options[CONF_HOST] == "solarfocus.local"
+
+
+async def test_reconfigure_rejects_a_polling_interval_below_five(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The same floor the user step enforces, reported on the field itself."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {**RECONFIGURE_INPUT, CONF_SCAN_INTERVAL: 1}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_SCAN_INTERVAL: "invalid_scan_interval"}
+
+
+async def test_reconfigure_keeps_a_duplicate_entry_without_a_unique_id(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The migration left it without one on purpose, see #185.
+
+    Two entries for one controller predate the unique id. Giving this one an id
+    here is exactly the collision the migration avoided, and it would take the
+    entities of the entry that owns the address with it.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, unique_id=None)
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], RECONFIGURE_INPUT
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert entry.options[CONF_HOST] == "10.0.0.5"
+    assert entry.unique_id is None
+
+
+async def test_reconfigure_reports_an_unexpected_failure(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Anything the library raises is the user's problem to see, not a traceback."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+
+    with patch(
+        "custom_components.solarfocus.config_flow.validate_input",
+        side_effect=ValueError("something the library did not expect"),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], RECONFIGURE_INPUT
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+    assert entry.options[CONF_HOST] == "solarfocus.local"

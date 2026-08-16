@@ -1,6 +1,7 @@
 """Config flow for Solarfocus integration."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 import logging
 from typing import Any
 
@@ -77,6 +78,24 @@ _COMPONENT_COUNT_ZERO_FOUR_SELECTOR = vol.All(
     ),
     vol.Coerce(int),
 )
+
+def _connection_schema(current: Mapping[str, Any]) -> vol.Schema:
+    """Return the form for where the heating system is and how often to ask it."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_HOST, default=current[CONF_HOST]): cv.string,
+            vol.Optional(CONF_PORT, default=current[CONF_PORT]): cv.port,
+            vol.Optional(
+                CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
+            ): cv.positive_int,
+            vol.Required(
+                CONF_API_VERSION, default=current[CONF_API_VERSION]
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(options=SOLARFOCUS_API_VERSIONS),
+            ),
+        }
+    )
+
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -286,6 +305,65 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_BIOMASS_BOILER: self.data[CONF_BIOMASS_BOILER],
                 CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
             },
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Point an entry at the address its heating system is on now.
+
+        The options flow can already change these four settings, but it asks for
+        the whole component layout in the same form: a user whose controller
+        moved to another address has to answer for every component of their
+        heating system in order to say so, and a wrong answer there removes
+        entities. This is the connection on its own.
+        """
+        entry = self._get_reconfigure_entry()
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reconfigure", data_schema=_connection_schema(entry.options)
+            )
+
+        errors: dict[str, str] = {}
+        unique_id = build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
+
+        if any(
+            other.unique_id == unique_id and other.entry_id != entry.entry_id
+            for other in self._async_current_entries()
+        ):
+            errors["base"] = "already_configured"
+        else:
+            try:
+                await validate_input(
+                    self.hass,
+                    {
+                        CONF_NAME: entry.data[CONF_NAME],
+                        CONF_SOLARFOCUS_SYSTEM: entry.data[CONF_SOLARFOCUS_SYSTEM],
+                        **user_input,
+                    },
+                )
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidScanInterval:
+                errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                return self.async_update_reload_and_abort(
+                    entry,
+                    # An entry the migration left without a unique id shares an
+                    # address with another one by definition, so giving it one
+                    # here is the collision that migration avoided.
+                    unique_id=None if entry.unique_id is None else unique_id,
+                    options={**entry.options, **user_input},
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_connection_schema(user_input),
+            errors=errors,
         )
 
     @staticmethod
