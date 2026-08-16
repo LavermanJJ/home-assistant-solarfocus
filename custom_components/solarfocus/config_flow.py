@@ -249,6 +249,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "cannot_connect"
         except InvalidAuth:
             errors["base"] = "invalid_auth"
+        except InvalidScanInterval:
+            errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
@@ -435,6 +437,8 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             errors["base"] = "cannot_connect"
         except InvalidAuth:
             errors["base"] = "invalid_auth"
+        except InvalidScanInterval:
+            errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"

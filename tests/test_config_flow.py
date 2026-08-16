@@ -217,11 +217,16 @@ async def test_form_unknown_error(
 async def test_form_scan_interval_below_minimum(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
-    """A scan interval below 5 seconds is rejected as an unknown error."""
+    """A scan interval below five seconds is reported on the field it is in.
+
+    It used to fall through to the broad handler and be shown as "unknown
+    error", with a traceback in the log, which says nothing about the one field
+    the user has to change.
+    """
     result = await _start_user_step(hass, {**USER_INPUT, CONF_SCAN_INTERVAL: 1})
 
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"] == {"base": "unknown"}
+    assert result["errors"] == {CONF_SCAN_INTERVAL: "invalid_scan_interval"}
 
 
 async def test_entry_is_identified_by_its_address(
@@ -816,3 +821,32 @@ async def test_reconfigure_reports_an_unexpected_failure(
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "unknown"}
     assert entry.options[CONF_HOST] == "solarfocus.local"
+
+
+async def test_options_flow_scan_interval_below_minimum(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The options form has the same floor, and reports it the same way."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_HOST: "solarfocus.local",
+            CONF_PORT: 502,
+            CONF_SCAN_INTERVAL: 1,
+            CONF_API_VERSION: ApiVersions.V_23_020.value,
+            CONF_HEATING_CIRCUIT: 1,
+            CONF_BUFFER: 0,
+            CONF_BOILER: 0,
+            CONF_FRESH_WATER_MODULE: 0,
+            CONF_HEATPUMP: True,
+            CONF_PHOTOVOLTAIC: False,
+            CONF_SOLAR: 0,
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_SCAN_INTERVAL: "invalid_scan_interval"}
