@@ -46,10 +46,16 @@ def create_description(
     _description.component = component
     _description.component_prefix = prefix
 
-    _name = name_prefix + " " + idx + " " + description.key.replace("_", " ")
-    _description.name = " ".join(
-        _name.split()
-    )  # remove double space in case of missing idx
+    # The name is not built here any more. `has_entity_name` makes it the name of
+    # the entity as the user reads it, and a name built from the key is English
+    # whatever language Home Assistant is in, so it comes from the translation of
+    # `translation_key` instead. The index is the one part of it that is not in
+    # the key - `hc_supply_temperature` is the same for every heating circuit -
+    # so it is passed as a placeholder for the translation to put back.
+    # The space belongs to the placeholder: a single solar circuit keeps the
+    # unnumbered name it has always had, and `format` does not tidy up after
+    # an empty one.
+    _description.translation_placeholders = {"idx": f" {idx}" if idx else ""}
 
     _description.key = "".join(
         filter(

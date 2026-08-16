@@ -29,7 +29,17 @@ from custom_components.solarfocus import (
     switch,
     water_heater,
 )
-from custom_components.solarfocus.const import DOMAIN
+from custom_components.solarfocus.const import (
+    BIOMASS_BOILER_PREFIX,
+    BOILER_PREFIX,
+    BUFFER_PREFIX,
+    DOMAIN,
+    FRESH_WATER_MODULE_PREFIX,
+    HEAT_PUMP_PREFIX,
+    HEATING_CIRCUIT_PREFIX,
+    PHOTOVOLTAIC_PREFIX,
+    SOLAR_PREFIX,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.translation import async_get_translations
 
@@ -339,4 +349,117 @@ async def test_home_assistant_renders_a_raised_exception(
 
     assert message.format(address="solarfocus.local:502") == (
         "Cannot connect to the Solarfocus system at solarfocus.local:502."
+    )
+
+
+# The display prefix `create_description` used to build names from, per component.
+COMPONENT_PREFIXES = {
+    "hc": HEATING_CIRCUIT_PREFIX,
+    "bu": BUFFER_PREFIX,
+    "bo": BOILER_PREFIX,
+    "hp": HEAT_PUMP_PREFIX,
+    "bb": BIOMASS_BOILER_PREFIX,
+    "pv": PHOTOVOLTAIC_PREFIX,
+    "so": SOLAR_PREFIX,
+    "fm": FRESH_WATER_MODULE_PREFIX,
+}
+
+
+async def _descriptions(hass: HomeAssistant):
+    """Yield every (domain, description) the integration can create."""
+    for domain, module in PLATFORMS.items():
+        for system in Systems:
+            entry = build_config_entry(
+                system,
+                api_version=ApiVersions.V_26_020.value,
+                heating_circuit=2,
+                buffer=2,
+                boiler=2,
+                fresh_water_module=2,
+                solar=2,
+                heatpump=True,
+                biomassboiler=True,
+                photovoltaic=True,
+            )
+            entry.add_to_hass(hass)
+            entry.runtime_data = build_coordinator(entry)
+
+            created = []
+            await module.async_setup_entry(hass, entry, created.extend)
+
+            for entity in created:
+                yield domain, entity.entity_description
+
+
+async def test_every_entity_has_a_translated_name(hass: HomeAssistant) -> None:
+    """An entity with no name translation is shown as its object id.
+
+    This is the whole of `entity-translations`: with `has_entity_name` the name
+    of the entity is what the user reads, and it used to be built out of the key
+    in English regardless of the language Home Assistant runs in.
+    """
+    entity = _load("strings.json")["entity"]
+
+    missing = [
+        (domain, description.translation_key)
+        async for domain, description in _descriptions(hass)
+        if not entity.get(domain, {}).get(description.translation_key, {}).get("name")
+    ]
+
+    assert not missing
+
+
+async def test_no_entity_name_changed(hass: HomeAssistant) -> None:
+    """The names are the ones the integration has always shown.
+
+    Moving them into the translations is not meant to rename anything: every
+    name is still its component, its index and the words of its key, which is
+    what `create_description` built. A user's dashboards keep working and the
+    friendly names in their history stay continuous.
+    """
+    entity = _load("strings.json")["entity"]
+
+    renamed = []
+    async for domain, description in _descriptions(hass):
+        placeholders = description.translation_placeholders
+        name = entity[domain][description.translation_key]["name"]
+        expected = " ".join(
+            (
+                f"{COMPONENT_PREFIXES[description.component_prefix]}"
+                f"{placeholders['idx']} {description.item.replace('_', ' ')}"
+            ).split()
+        )
+        if name.format(**placeholders) != expected:
+            renamed.append((domain, description.translation_key, name, expected))
+
+    assert not renamed
+
+
+async def test_home_assistant_shows_the_translated_name(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The one that fails if the placeholder never reaches the translation.
+
+    Everything above reads the file. This reads the name off a running entity,
+    which is where a `{idx}` that nothing substitutes would show up literally.
+    """
+    api.heating_circuits[0].room_temperature.scaled_value = 21
+    api.solar[0].collector_temperature_1.scaled_value = 61
+
+    entry = build_config_entry(heating_circuit=2, solar=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    second = hass.states.get("sensor.solarfocus_heating_circuit_2_room_temperature")
+    solar = hass.states.get("sensor.solarfocus_solar_collector_temperature_1")
+
+    assert second.attributes["friendly_name"] == (
+        "Solarfocus Heating circuit 2 room temperature"
+    )
+    # One solar circuit keeps the unnumbered name it had before there could be
+    # four; the trailing 1 is the collector sensor, part of the register name
+    assert solar.attributes["friendly_name"] == (
+        "Solarfocus Solar collector temperature 1"
     )

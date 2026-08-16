@@ -190,11 +190,11 @@ async def async_setup_entry(
                     description,
                 )
 
-                # For single solar instance, remove the number from the name for backward compatibility
                 if count == 1:
-                    # Remove the number from the entity name but keep the index for API access
-                    _description.name = _description.name.replace(" 1 ", " ")
-                    # Also update the key to not include the "1" for single instance
+                    # One solar circuit keeps the unnumbered name and key it had
+                    # before there could be four of them. The index stays on the
+                    # description, the library addresses the component with it.
+                    _description.translation_placeholders = {"idx": ""}
                     _description.key = _description.key.replace("so1_", "so_")
 
                 entity = SolarfocusSensor(coordinator, _description)

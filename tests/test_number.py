@@ -67,7 +67,9 @@ def test_photovoltaic_number_keys_and_names():
     assert description.item == "smart_meter"
     assert description.key == "pv_smart_meter"
     assert description.translation_key == "pv_smart_meter"
-    assert description.name == "Photovoltaic smart meter"
+    # The name comes from the translation of the key now, and the photovoltaic
+    # component exists once, so there is no index to substitute into it
+    assert description.translation_placeholders == {"idx": ""}
     assert description.component == PHOTOVOLTAIC_COMPONENT
 
 
