@@ -387,7 +387,13 @@
         "default": "mdi:lightning-bolt"
       },
       "hp_flow_rate": {
-        "default": "mdi:speedometer"
+        "default": "mdi:speedometer",
+        "range": {
+          "0": "mdi:water-off",
+          "1": "mdi:speedometer-slow",
+          "900": "mdi:speedometer-medium",
+          "1800": "mdi:speedometer"
+        }
       },
       "hp_performance_overall": {
         "default": "mdi:poll"
