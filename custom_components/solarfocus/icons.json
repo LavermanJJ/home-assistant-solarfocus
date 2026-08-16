@@ -2,9 +2,9 @@
   "entity": {
     "binary_sensor": {
       "hp_defrost_active": {
-        "default": "mdi:snowflake-melt",
+        "default": "mdi:snowflake",
         "state": {
-          "off": "mdi:snowflake"
+          "on": "mdi:snowflake-melt"
         }
       }
     },
@@ -164,9 +164,10 @@
         }
       },
       "bo_circulation": {
-        "default": "mdi:sync",
+        "default": "mdi:lock",
         "state": {
-          "0": "mdi:sync-off"
+          "0": "mdi:sync-off",
+          "1": "mdi:sync"
         }
       },
       "bo_mode": {
@@ -179,9 +180,10 @@
         }
       },
       "bo_single_charge": {
-        "default": "mdi:pump",
+        "default": "mdi:lock",
         "state": {
-          "0": "mdi:pump-off"
+          "0": "mdi:pump-off",
+          "1": "mdi:pump"
         }
       },
       "bo_state": {
