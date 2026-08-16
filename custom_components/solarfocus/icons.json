@@ -46,7 +46,7 @@
       "bo_holding_mode": {
         "default": "mdi:water-boiler",
         "state": {
-          "1": "mdi:water-boiler-off",
+          "0": "mdi:water-boiler-off",
           "2": "mdi:calendar-week",
           "3": "mdi:calendar-range",
           "4": "mdi:calendar-today"
