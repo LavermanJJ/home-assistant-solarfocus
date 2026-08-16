@@ -17,7 +17,6 @@ import json
 import pathlib
 
 import pytest
-from homeassistant.components.sensor import SensorDeviceClass
 
 from custom_components.solarfocus import sensor
 from custom_components.solarfocus.const import (
@@ -30,6 +29,10 @@ from custom_components.solarfocus.const import (
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     SOLAR_COMPONENT_PREFIX,
 )
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.core import HomeAssistant
+
+from .conftest import build_config_entry
 
 COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
 
@@ -72,15 +75,18 @@ CASES = list(_cases())
 )
 @pytest.mark.parametrize(("translation_key", "options"), CASES)
 def test_translated_states_are_valid_options(
-    filename: str, translation_key: str, options: list[int]
+    filename: str, translation_key: str, options: list[str]
 ) -> None:
-    """Every translated state must be an accepted option."""
+    """Every translated state must be an accepted option.
+
+    Both are the state as Home Assistant holds it, a string, so they compare
+    directly: the keys of the translation are the options of the sensor.
+    """
     entity = _translations(filename).get(translation_key)
     if entity is None or "state" not in entity:
         pytest.skip(f"{translation_key} has no states in {filename}")
 
-    translated = {int(state) for state in entity["state"]}
-    missing = sorted(translated - set(options))
+    missing = sorted(set(entity["state"]) - set(options), key=int)
 
     assert not missing, (
         f"{filename}: '{translation_key}' translates state(s) {missing} that are not "
@@ -94,7 +100,7 @@ def test_translated_states_are_valid_options(
 )
 @pytest.mark.parametrize(("translation_key", "options"), CASES)
 def test_every_enum_sensor_has_translated_states(
-    filename: str, translation_key: str, options: list[int]
+    filename: str, translation_key: str, options: list[str]
 ) -> None:
     """An enum sensor is a list of names, and without them it is a list of numbers.
 
@@ -105,6 +111,40 @@ def test_every_enum_sensor_has_translated_states(
     entity = _translations(filename).get(translation_key)
 
     assert entity and "state" in entity
+
+
+@pytest.mark.parametrize(("translation_key", "options"), CASES)
+def test_options_are_strings(translation_key: str, options: list[str]) -> None:
+    """The options of an enum sensor are states, and a state is a string.
+
+    Listing the raw numbers instead leaves the state of the sensor outside of its
+    own options, see `test_the_state_of_an_enum_sensor_is_one_of_its_options`.
+    """
+    assert options
+    assert [option for option in options if not isinstance(option, str)] == []
+
+
+async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """Regression test for #193.
+
+    The automation editor offers the options of the sensor to compare its state
+    against, and inserts the option that was picked into the condition. While the
+    options were numbers and the state was the string of one, no condition built
+    that way could ever match.
+    """
+    api.heatpump.vampair_state.scaled_value = 3
+    entry = build_config_entry(heatpump=True)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.solarfocus_heat_pump_vampair_state")
+
+    assert state.state == "3"
+    assert state.state in state.attributes["options"]
 
 
 def test_cases_cover_the_known_enum_sensors() -> None:
@@ -118,7 +158,7 @@ def test_biomass_message_number_covers_acknowledged_range() -> None:
     description = next(
         d for d in sensor.BIOMASS_BOILER_SENSOR_TYPES if d.key == "message_number"
     )
-    for value in (201, 287, 2010):
+    for value in ("201", "287", "2010"):
         assert value in description.options
 
 
@@ -127,4 +167,4 @@ def test_single_charge_allows_locked_state() -> None:
     description = next(
         d for d in sensor.BOILER_SENSOR_TYPES if d.key == "single_charge"
     )
-    assert -1 in description.options
+    assert "-1" in description.options
