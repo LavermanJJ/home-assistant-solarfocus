@@ -78,7 +78,7 @@
         "default": "mdi:leaf",
         "state": {
           "0": "mdi:leaf-off",
-          "1": "mdi:power-standby",
+          "1": "mdi:lock",
           "3": "mdi:thumb-up-outline",
           "4": "mdi:flash"
         }
