@@ -297,6 +297,33 @@ page if you need them. Which entities exist also depends on the configured API v
 the system - a Therminator has no heat pump sensors, and entities added in a later software
 version only appear once that version is selected.
 
+### States of the mode and status entities
+
+The state and mode entities report the value the heating system sends, as a number, and the
+text you read in the interface is a translation of it. That is what Home Assistant expects of
+an entity with a list of options, and it means the state does not change with the language.
+
+So a condition or a template compares the number:
+
+```yaml
+condition:
+  - condition: state
+    entity_id: sensor.solarfocus_heat_pump_vampair_state
+    state: "3" # Cooling
+```
+
+Picking the state in the automation editor does this for you - the dropdown shows the
+translated texts and writes the matching number.
+
+For the text itself, use `state_translated`, which follows the language of Home Assistant:
+
+```yaml
+{{ state_translated('sensor.solarfocus_heat_pump_vampair_state') }} # Cooling
+```
+
+The numbers are the ones in the Solarfocus register documentation, and the texts of every
+state are listed in [`strings.json`](custom_components/solarfocus/strings.json).
+
 ## How Data Is Updated
 
 The integration polls; the eco<sup>manager-touch</sup> does not push anything.

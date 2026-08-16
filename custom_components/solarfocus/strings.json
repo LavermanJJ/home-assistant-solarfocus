@@ -89,7 +89,7 @@
           "2": "Time trigger"
         }
       },
-      "bb_mode" : {
+      "bb_boiler_operating_mode" : {
         "state" : {
           "0": "Log wood",
           "1": "Log wood automatic",
