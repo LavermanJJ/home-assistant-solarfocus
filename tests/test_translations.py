@@ -14,11 +14,35 @@ fit a custom component: numeric state keys are allowed, sloppy values are not.
 import json
 import pathlib
 
+from pysolarfocus import ApiVersions, Systems
 import pytest
 
-from custom_components.solarfocus import sensor
+from custom_components.solarfocus import (
+    binary_sensor,
+    button,
+    climate,
+    number,
+    select,
+    sensor,
+    switch,
+    water_heater,
+)
+from homeassistant.core import HomeAssistant
+
+from .conftest import build_config_entry, build_coordinator
 
 COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
+
+PLATFORMS = {
+    "binary_sensor": binary_sensor,
+    "button": button,
+    "climate": climate,
+    "number": number,
+    "select": select,
+    "sensor": sensor,
+    "switch": switch,
+    "water_heater": water_heater,
+}
 
 FILENAMES = ["strings.json", "translations/en.json", "translations/de.json"]
 
@@ -102,6 +126,78 @@ def test_english_translations_match_the_strings_file() -> None:
     english = dict(_strings(_load("translations/en.json").get("entity", {})))
 
     assert english == strings
+
+
+async def _translation_keys(hass: HomeAssistant) -> dict[str, set[str]]:
+    """Return the translation keys of every entity, per domain."""
+    keys: dict[str, set[str]] = {}
+    for domain, module in PLATFORMS.items():
+        created = []
+        for system in Systems:
+            entry = build_config_entry(
+                system,
+                api_version=ApiVersions.V_26_020.value,
+                heating_circuit=1,
+                buffer=1,
+                boiler=1,
+                fresh_water_module=1,
+                solar=1,
+                heatpump=True,
+                biomassboiler=True,
+                photovoltaic=True,
+            )
+            entry.add_to_hass(hass)
+            entry.runtime_data = build_coordinator(entry)
+
+            await module.async_setup_entry(hass, entry, created.extend)
+
+        keys[domain] = {e.entity_description.translation_key for e in created}
+
+    return keys
+
+
+async def test_every_translated_entity_exists(hass: HomeAssistant) -> None:
+    """A key no entity uses translates nothing.
+
+    Home Assistant looks the states up under the translation key of the entity,
+    so a key that belongs to no entity leaves that entity showing the raw value
+    of the register - which is what `bb_mode` did to the operating mode of the
+    biomass boiler, whose key is `bb_boiler_operating_mode`.
+    """
+    entities = await _translation_keys(hass)
+
+    unused = [
+        (domain, key)
+        for domain, keys in _load("strings.json")["entity"].items()
+        for key in keys
+        if key not in entities.get(domain, set())
+    ]
+
+    assert not unused
+
+
+def _comparable(text: str) -> str:
+    """Return a state text without the differences that are only spelling."""
+    return text.lower().replace("–", "-").replace(" ", "")
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_the_two_boiler_release_modes_agree(filename: str) -> None:
+    """The boiler reports and takes the release mode as the same enumeration.
+
+    Register 502 ("Boiler Freigabeart - Ist", the `bo_mode` sensor) and register
+    32002 ("Boiler - Freigabeart", the `bo_holding_mode` select) are documented
+    with one list of values: 0 is "Immer Aus", 1 is "Immer Ein". The English
+    select had the two the wrong way round, so picking "Always on" wrote a 0 and
+    switched the boiler off.
+    """
+    entity = _load(filename)["entity"]
+    reported = entity["sensor"]["bo_mode"]["state"]
+    settable = entity["select"]["bo_holding_mode"]["state"]
+
+    assert {state: _comparable(text) for state, text in settable.items()} == {
+        state: _comparable(text) for state, text in reported.items()
+    }
 
 
 def test_the_locked_state_is_still_translated() -> None:

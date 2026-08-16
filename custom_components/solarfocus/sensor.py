@@ -1,5 +1,6 @@
 """Sensors for the Solarfocus integration."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 import logging
 
@@ -71,6 +72,17 @@ _LOGGER = logging.getLogger(__name__)
 # Read-only platform: the coordinator polls the heating system, the entities
 # themselves never call into it, so there is nothing to limit.
 PARALLEL_UPDATES = 0
+
+
+def enum_options(*groups: Iterable[int]) -> list[str]:
+    """Return the states an enum sensor can report, as Home Assistant sees them.
+
+    The state of an entity is a string, and the options of an enum sensor are the
+    states it can take, so they have to be strings too. Listing the raw numbers
+    instead leaves the state of the sensor outside of its own options, which is
+    what the automation editor offers to compare against (issue #193).
+    """
+    return [str(value) for group in groups for value in group]
 
 
 async def async_setup_entry(
@@ -228,7 +240,14 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
     def native_value(self):
         """Return native value."""
         sensor = self.entity_description.item
-        return self._get_native_value(sensor)
+        value = self._get_native_value(sensor)
+
+        if self.device_class is SensorDeviceClass.ENUM and value is not None:
+            # The state of an enum sensor has to be one of its options, and those
+            # are the strings of the values the heating system reports.
+            return str(value)
+
+        return value
 
 
 HEATING_CIRCUIT_SENSOR_TYPES = [
@@ -258,7 +277,7 @@ HEATING_CIRCUIT_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(32)) + list(range(200, 229)),
+        options=enum_options(range(32), range(200, 229)),
     ),
 ]
 
@@ -279,12 +298,12 @@ BUFFER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(8)) + list(range(200, 209)),
+        options=enum_options(range(8), range(200, 209)),
     ),
     SolarfocusSensorEntityDescription(
         key="mode",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(3)),
+        options=enum_options(range(3)),
     ),
     SolarfocusSensorEntityDescription(
         key="x35_temperature",
@@ -337,24 +356,24 @@ BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 14)) + list(range(200, 213)),
+        options=enum_options(range(0, 14), range(200, 213)),
     ),
     SolarfocusSensorEntityDescription(
         key="mode",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 5)),
+        options=enum_options(range(0, 5)),
         entity_registry_enabled_default=False,
     ),
     SolarfocusSensorEntityDescription(
         key="single_charge",
         device_class=SensorDeviceClass.ENUM,
         # -1 ("Locked") is a valid reading, same as for circulation below
-        options=list(range(-1, 2)),
+        options=enum_options(range(-1, 2)),
     ),
     SolarfocusSensorEntityDescription(
         key="circulation",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(-1, 2)),
+        options=enum_options(range(-1, 2)),
     ),
 ]
 
@@ -456,7 +475,7 @@ HEATPUMP_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="vampair_state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 13)),
+        options=enum_options(range(0, 13)),
     ),
     SolarfocusSensorEntityDescription(
         key="cop_cooling",
@@ -528,7 +547,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="status",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 60)) + list(range(200, 247)) + list(range(300, 345)),
+        options=enum_options(range(0, 60), range(200, 247), range(300, 345)),
     ),
     SolarfocusSensorEntityDescription(
         key="message_number",
@@ -536,7 +555,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         # The 200-range mirrors the 0-range as "acknowledged", and 2010 is a
         # standalone code. All three blocks are translated, so all three have to
         # be listed or core rejects the state -- see issue #165.
-        options=list(range(0, 88)) + list(range(200, 288)) + [2010],
+        options=enum_options(range(0, 88), range(200, 288), [2010]),
     ),
     SolarfocusSensorEntityDescription(
         key="cleaning",
@@ -555,7 +574,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="boiler_operating_mode",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 6)),
+        options=enum_options(range(0, 6)),
         unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
@@ -575,7 +594,7 @@ BIOMASS_BOILER_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="log_wood",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 2)),
+        options=enum_options(range(0, 2)),
         unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
@@ -670,7 +689,7 @@ SOLAR_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 19)) + list(range(200, 223)),
+        options=enum_options(range(0, 19), range(200, 223)),
     ),
 ]
 
@@ -678,7 +697,7 @@ FRESH_WATER_MODULE_SENSOR_TYPES = [
     SolarfocusSensorEntityDescription(
         key="state",
         device_class=SensorDeviceClass.ENUM,
-        options=list(range(0, 5)),
+        options=enum_options(range(0, 5)),
         min_required_version="23.020",
     ),
     SolarfocusSensorEntityDescription(
