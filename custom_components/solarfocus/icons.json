@@ -351,7 +351,13 @@
         }
       },
       "hp_compressor_speed": {
-        "default": "mdi:gauge"
+        "default": "mdi:gauge",
+        "range": {
+          "0": "mdi:gauge-empty",
+          "1": "mdi:gauge-low",
+          "1500": "mdi:gauge",
+          "3000": "mdi:gauge-full"
+        }
       },
       "hp_cop_cooling": {
         "default": "mdi:poll"

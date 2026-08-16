@@ -204,9 +204,10 @@ def test_range_keys_are_numbers() -> None:
 def test_a_range_starts_at_the_bottom_of_the_scale() -> None:
     """Below the lowest step there is nothing to find but the default icon.
 
-    Every entity with a range reports a percentage, so the scale starts at 0. A
-    range that starts higher leaves its own first band showing the default and
-    the step is dead, which is invisible in the file itself.
+    Every entity with a range counts up from nothing - a percentage, or a
+    compressor that is not turning - so the scale starts at 0. A range that
+    starts higher leaves its own first band showing the default and the step is
+    dead, which is invisible in the file itself.
     """
     starting_late = [
         path for path, steps in _icon_ranges() if min(float(key) for key in steps) > 0
