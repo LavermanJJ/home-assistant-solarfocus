@@ -61,6 +61,17 @@
       }
     }
   },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Keine Verbindung zur Solarfocus-Anlage unter {address}."
+    },
+    "cannot_read": {
+      "message": "{components} kann nicht von der Solarfocus-Anlage unter {address} gelesen werden. Keine der konfigurierten Komponenten hat geantwortet, die Anlage gilt daher als nicht erreichbar."
+    },
+    "cannot_set_up": {
+      "message": "Von der Solarfocus-Anlage unter {address} kann nicht gelesen werden. Sie nimmt die Verbindung an, antwortet aber nicht auf die Register."
+    }
+  },
   "entity": {
     "sensor": {
       "fm_state" : {

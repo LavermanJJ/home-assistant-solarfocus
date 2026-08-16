@@ -70,8 +70,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         # Reading every configured component once tells us whether the entry can
         # be set up at all; Home Assistant retries the setup afterwards.
         raise ConfigEntryNotReady(
-            f"Cannot read from the Solarfocus system at "
-            f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
+            translation_domain=DOMAIN,
+            translation_key="cannot_set_up",
+            translation_placeholders={
+                "address": f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
+            },
         ) from coordinator.last_exception
 
     entry.runtime_data = coordinator

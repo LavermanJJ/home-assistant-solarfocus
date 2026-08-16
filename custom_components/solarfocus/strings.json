@@ -62,6 +62,17 @@
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Cannot connect to the Solarfocus system at {address}."
+    },
+    "cannot_read": {
+      "message": "Cannot read {components} from the Solarfocus system at {address}. No configured component answered, so the system is treated as unreachable."
+    },
+    "cannot_set_up": {
+      "message": "Cannot read from the Solarfocus system at {address}. It accepted the connection but did not answer the registers."
+    }
+  },
   "entity": {
     "sensor": {
       "fm_state" : {

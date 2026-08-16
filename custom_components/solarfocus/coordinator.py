@@ -65,7 +65,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         if not self.api.is_connected and not await self.hass.async_add_executor_job(
             self.api.connect
         ):
-            raise UpdateFailed(f"Cannot connect to {self._address}")
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="cannot_connect",
+                translation_placeholders={"address": self._address},
+            )
 
         configured = 0
         failed = []
@@ -81,7 +85,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             # components being unhappy. Reporting that as a success would leave
             # every entity available and showing its last value.
             raise UpdateFailed(
-                f"Failed to read {', '.join(failed)} from {self._address}"
+                translation_domain=DOMAIN,
+                translation_key="cannot_read",
+                translation_placeholders={
+                    "address": self._address,
+                    "components": ", ".join(failed),
+                },
             )
 
         self._report_partial_failure(failed)
