@@ -55,6 +55,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     @property
+    def failed_components(self) -> set[str]:
+        """Return the components that could not be read on the last refresh."""
+        return set(self._failed_components)
+
+    @property
     def _address(self) -> str:
         """Return the address of the heating system, for log messages."""
         return f"{self._entry.options[CONF_HOST]}:{self._entry.options[CONF_PORT]}"
