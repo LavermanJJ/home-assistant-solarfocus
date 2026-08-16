@@ -132,7 +132,6 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
 HEATING_CIRCUIT_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="target_supply_temperature",
-        icon="mdi:thermostat",
         device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -142,7 +141,6 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="target_room_temperature",
-        icon="mdi:thermostat",
         device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -152,7 +150,6 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="indoor_temperature_external",
-        icon="mdi:thermostat",
         device_class=NumberDeviceClass.TEMPERATURE,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -162,7 +159,6 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="indoor_humidity_external",
-        icon="mdi:water-percent",
         device_class=NumberDeviceClass.HUMIDITY,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=PERCENTAGE,
@@ -175,7 +171,6 @@ HEATING_CIRCUIT_NUMBER_TYPES = [
 BOILER_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="target_temperature",
-        icon="mdi:thermostat",
         device_class=NumberDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.CONFIG,
@@ -189,7 +184,6 @@ BOILER_NUMBER_TYPES = [
 PHOTOVOLTAIC_NUMBER_TYPES = [
     SolarfocusNumberEntityDescription(
         key="smart_meter",
-        icon="mdi:meter-electric-outline",
         device_class=NumberDeviceClass.POWER,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -200,7 +194,6 @@ PHOTOVOLTAIC_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="photovoltaic",
-        icon="mdi:solar-power",
         device_class=NumberDeviceClass.POWER,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -211,7 +204,6 @@ PHOTOVOLTAIC_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="grid_im_export",
-        icon="mdi:transmission-tower",
         device_class=NumberDeviceClass.POWER,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -222,7 +214,6 @@ PHOTOVOLTAIC_NUMBER_TYPES = [
     ),
     SolarfocusNumberEntityDescription(
         key="hems_target_electrical_power",
-        icon="mdi:home-lightning-bolt",
         device_class=NumberDeviceClass.POWER,
         entity_category=EntityCategory.CONFIG,
         native_unit_of_measurement=UnitOfPower.WATT,

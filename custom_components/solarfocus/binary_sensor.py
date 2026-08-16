@@ -206,7 +206,6 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
     ),
     SolarfocusBinarySensorEntityDescription(
         key="defrost_active",
-        icon="mdi:snowflake-melt",
         on_state="1",
     ),
     SolarfocusBinarySensorEntityDescription(
