@@ -267,7 +267,13 @@
         "default": "mdi:thermometer-high"
       },
       "fm_flow_rate": {
-        "default": "mdi:speedometer"
+        "default": "mdi:speedometer",
+        "range": {
+          "0": "mdi:water-off",
+          "1": "mdi:speedometer-slow",
+          "5": "mdi:speedometer-medium",
+          "10": "mdi:speedometer"
+        }
       },
       "fm_state": {
         "default": "mdi:faucet",
