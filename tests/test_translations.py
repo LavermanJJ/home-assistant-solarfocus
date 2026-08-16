@@ -463,3 +463,46 @@ async def test_home_assistant_shows_the_translated_name(
     assert solar.attributes["friendly_name"] == (
         "Solarfocus Solar collector temperature 1"
     )
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_every_entity_name_is_translated(filename: str) -> None:
+    """Every entity has a name in every language.
+
+    A file that names some and not others falls back to English in the middle
+    of a list, which reads worse than one that names none.
+    """
+    entity = _load(filename)["entity"]
+    english = _load("strings.json")["entity"]
+
+    missing = [
+        (domain, key)
+        for domain, keys in english.items()
+        for key in keys
+        if not entity.get(domain, {}).get(key, {}).get("name")
+    ]
+
+    assert not missing, f"{filename}: {missing}"
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_the_index_placeholder_is_where_the_english_name_has_it(
+    filename: str,
+) -> None:
+    """A translation decides whether the index is shown at all.
+
+    The placeholder carries its own space, so a name that leaves out `{idx}`
+    silently merges every heating circuit into one name, and one that adds it
+    where the component exists only once renders a double space.
+    """
+    entity = _load(filename)["entity"]
+    english = _load("strings.json")["entity"]
+
+    wrong = [
+        (domain, key)
+        for domain, keys in english.items()
+        for key, block in keys.items()
+        if ("{idx}" in entity[domain][key]["name"]) != ("{idx}" in block["name"])
+    ]
+
+    assert not wrong, f"{filename}: {wrong}"
