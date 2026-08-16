@@ -374,7 +374,12 @@ def test_switch_reports_its_state() -> None:
 
 @pytest.mark.parametrize("description", BOILER_BUTTON_TYPES, ids=lambda d: d.key)
 async def test_button_triggers_its_item(description) -> None:
-    """Pressing a button writes True to the register it names."""
+    """Pressing a button writes 1 to the register it names.
+
+    A number, not a bool: the sensor of the same name reads the register back and
+    turns it into a state, and "True" is not one of the states it accepts. Since
+    `True == 1`, the type is what the assertion is about.
+    """
     entity = _make(
         SolarfocusButtonEntity,
         description,
@@ -386,7 +391,8 @@ async def test_button_triggers_its_item(description) -> None:
     with patch.object(entity, "_set_native_value") as set_value:
         await entity.async_press()
 
-    assert set_value.call_args_list == [((description.key, True),)]
+    assert set_value.call_args_list == [((description.key, 1),)]
+    assert not isinstance(set_value.call_args.args[1], bool)
 
 
 # --- water heater -----------------------------------------------------------
