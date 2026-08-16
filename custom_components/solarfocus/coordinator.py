@@ -7,6 +7,7 @@ from pysolarfocus import SolarfocusAPI
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -119,7 +120,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         if set(failed) == self._failed_components:
             return
 
+        recovered = self._failed_components - set(failed)
         self._failed_components = set(failed)
+        self._report_failed_components(failed, recovered)
+
         if failed:
             _LOGGER.warning(
                 "Could not read %s from %s, its entities keep their last value."
@@ -129,6 +133,48 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             )
         else:
             _LOGGER.info("Reading all components of %s works again", self._address)
+
+    def _report_failed_components(
+        self, failed: list[str], recovered: set[str]
+    ) -> None:
+        """Raise a repair issue per component that cannot be read, one per entry.
+
+        A register range a particular firmware does not answer fails on every
+        poll and never recovers on its own. The entities of that component keep
+        their last value for good, which looks like a heating system that has
+        stopped moving rather than like a component that is not there - and the
+        log line saying so is written once, so it has usually scrolled away by
+        the time anybody looks.
+
+        Nothing here can fix it: either the component is not installed and the
+        user should switch it off in the options, or the api version is set
+        higher than the controller runs.
+        """
+        for option in recovered:
+            ir.async_delete_issue(self.hass, DOMAIN, self._issue_id(option))
+
+        for option in failed:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                self._issue_id(option),
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="component_unavailable",
+                translation_placeholders={
+                    "component": option,
+                    "address": self._address,
+                    "title": self._entry.title,
+                },
+            )
+
+    def _issue_id(self, option: str) -> str:
+        """Return the issue id of one component of this entry.
+
+        Per component rather than one for all of them, so that a component
+        coming back clears its own issue and leaves the others standing.
+        """
+        return f"component_unavailable_{self._entry.entry_id}_{option}"
 
 
 # The coordinator of an entry lives on the entry itself, this spells that out

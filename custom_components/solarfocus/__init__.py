@@ -16,6 +16,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import issue_registry as ir
 
 from .const import (
     CONF_BIOMASS_BOILER,
@@ -50,6 +51,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
     """Set up Solarfocus from a config entry."""
     _async_sync_unique_id(hass, entry)
+    _async_report_duplicate_entry(hass, entry)
 
     api = SolarfocusAPI(
         ip=entry.options[CONF_HOST],
@@ -129,6 +131,43 @@ def _async_sync_unique_id(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> 
         return
 
     hass.config_entries.async_update_entry(entry, unique_id=unique_id)
+
+
+@callback
+def _async_report_duplicate_entry(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Tell the user about the second entry nothing here can fix.
+
+    Two entries for one controller predate the unique id, see #185. The
+    migration left the later one without one rather than colliding, which keeps
+    it working - and leaves two entries polling one heating system over one
+    Modbus connection, with every entity of it existing twice.
+
+    Which of the two to remove is the user's to say: they are the one who knows
+    which set of entities their dashboards and automations name.
+    """
+    issue_id = f"duplicate_entry_{entry.entry_id}"
+
+    if entry.unique_id is not None:
+        # Removing the other entry and reloading this one clears it.
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+        return
+
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        issue_id,
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="duplicate_entry",
+        translation_placeholders={
+            "title": entry.title,
+            "address": build_unique_id(
+                entry.options[CONF_HOST], entry.options[CONF_PORT]
+            ),
+        },
+    )
 
 
 async def async_update_options(
