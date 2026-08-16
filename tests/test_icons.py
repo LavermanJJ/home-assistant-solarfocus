@@ -13,6 +13,7 @@ None of it shows up in a test of the platforms, only in the frontend, which is
 what these tests are for.
 """
 
+import itertools
 import json
 import pathlib
 import re
@@ -73,12 +74,25 @@ def _icon_sections():
     yield from _sections(_icons())
 
 
+def _icon_ranges():
+    """Yield every ((domain, key, attribute), range) of the icon translations.
+
+    A `range` is what a numeric entity has where an enum has a `state`: the icon
+    shown is the one of the highest key the value does not fall below.
+    """
+    for path, section in _icon_sections():
+        if "range" in section:
+            yield path, section["range"]
+
+
 def _translated_icons():
     """Yield every (domain, translation key, icon) of the icon translations."""
     for (domain, key, _), section in _icon_sections():
         if "default" in section:
             yield domain, key, section["default"]
         for icon in section.get("state", {}).values():
+            yield domain, key, icon
+        for icon in section.get("range", {}).values():
             yield domain, key, icon
 
 
@@ -166,6 +180,54 @@ def test_no_state_icon_repeats_the_default() -> None:
         for path, section in _icon_sections()
         for state, icon in section.get("state", {}).items()
         if icon == section.get("default")
+    ]
+
+    assert not repeated
+
+
+def test_range_keys_are_numbers() -> None:
+    """A range is looked up by value, so a key that is not one matches nothing.
+
+    The rule for translation keys does not apply here: these are not keys of a
+    translation, they are the bottom of a band of the scale.
+    """
+    invalid = [
+        (*path, key)
+        for path, steps in _icon_ranges()
+        for key in steps
+        if not re.fullmatch(r"-?\d+(\.\d+)?", key)
+    ]
+
+    assert not invalid
+
+
+def test_a_range_starts_at_the_bottom_of_the_scale() -> None:
+    """Below the lowest step there is nothing to find but the default icon.
+
+    Every entity with a range reports a percentage, so the scale starts at 0. A
+    range that starts higher leaves its own first band showing the default and
+    the step is dead, which is invisible in the file itself.
+    """
+    starting_late = [
+        path for path, steps in _icon_ranges() if min(float(key) for key in steps) > 0
+    ]
+
+    assert not starting_late
+
+
+def test_no_range_icon_repeats_the_step_below_it() -> None:
+    """Two steps showing one icon is a step that changes nothing.
+
+    Unlike a state, the lowest step is allowed to repeat the default: naming it
+    is what keeps the step above it from swallowing the bottom of the scale.
+    """
+    repeated = [
+        (*path, key)
+        for path, steps in _icon_ranges()
+        for (_, below), (key, icon) in itertools.pairwise(
+            sorted(steps.items(), key=lambda step: float(step[0]))
+        )
+        if icon == below
     ]
 
     assert not repeated
