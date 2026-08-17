@@ -92,6 +92,16 @@
       "message": "Cannot read from the Solarfocus system at {address}. It accepted the connection but did not answer the registers."
     }
   },
+  "issues": {
+    "duplicate_entry": {
+      "title": "Two Solarfocus entries for one heating system",
+      "description": "\"{title}\" and another entry both point at {address}, which predates this integration identifying a system by its address. Both keep working, but they poll one controller over one Modbus connection and every entity exists twice.\n\nRemove whichever of the two your dashboards and automations do not name. Nothing here can choose for you, and removing the wrong one renames the entities you kept. The entry you keep takes the address over the next time it is loaded, and this warning goes with it."
+    },
+    "component_unavailable": {
+      "title": "{component} cannot be read from your Solarfocus system",
+      "description": "\"{title}\" reads every other component of the system at {address}, but {component} answers nothing. Its entities keep the last value they had, which is not the same as being unavailable, so they look like a heating system that has stopped moving.\n\nThis does not recover on its own. Either the component is not installed, in which case switch it off under Configure, or the API version of the entry is set higher than the controller runs - the version is shown on the controller under Fachmann - Modbus."
+    }
+  },
   "entity": {
     "sensor": {
       "fm_state" : {

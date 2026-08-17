@@ -91,6 +91,16 @@
       "message": "Von der Solarfocus-Anlage unter {address} kann nicht gelesen werden. Sie nimmt die Verbindung an, antwortet aber nicht auf die Register."
     }
   },
+  "issues": {
+    "duplicate_entry": {
+      "title": "Zwei Solarfocus-Einträge für eine Heizungsanlage",
+      "description": "\"{title}\" und ein weiterer Eintrag zeigen beide auf {address}. Das stammt aus der Zeit, bevor diese Integration eine Anlage anhand ihrer Adresse identifiziert hat. Beide funktionieren weiterhin, fragen aber einen Regler über eine Modbus-Verbindung ab, und jede Entität existiert doppelt.\n\nEntferne den der beiden, den deine Dashboards und Automatisierungen nicht verwenden. Diese Entscheidung kann hier niemand abnehmen, und wird der falsche entfernt, werden die verbliebenen Entitäten umbenannt. Der Eintrag, den du behältst, übernimmt die Adresse beim nächsten Laden, und diese Meldung verschwindet damit."
+    },
+    "component_unavailable": {
+      "title": "{component} kann nicht von der Solarfocus-Anlage gelesen werden",
+      "description": "\"{title}\" liest alle anderen Komponenten der Anlage unter {address}, {component} antwortet jedoch nicht. Die zugehörigen Entitäten behalten ihren letzten Wert - das ist nicht dasselbe wie nicht verfügbar, sie wirken daher wie eine Heizungsanlage, die stehengeblieben ist.\n\nDas geht nicht von selbst weg. Entweder ist die Komponente nicht vorhanden, dann schalte sie unter Konfigurieren ab, oder die API-Version des Eintrags ist höher eingestellt als der Regler tatsächlich hat - die Version steht am Regler unter Fachmann - Modbus."
+    }
+  },
   "entity": {
     "sensor": {
       "fm_state" : {

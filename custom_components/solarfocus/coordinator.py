@@ -7,6 +7,8 @@ from pysolarfocus import SolarfocusAPI
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
+from homeassistant.core import callback
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -92,8 +94,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             #
             # No component is failing on its own any more, so whatever was doing
             # that is forgotten here rather than left behind to be reported as
-            # still true. The outage itself is what the failed refresh says.
+            # still true: named in the diagnostics download, and raised as an
+            # issue saying that every other component reads fine. The outage
+            # itself is what the failed refresh says, and the issue comes back
+            # on the first refresh that reads anything at all.
             self._failed_components = set()
+            self._report_failed_components([])
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_read",
@@ -116,10 +122,13 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         written - would go with it. So the rest keeps updating and the failure
         is logged instead, once, until the set of failing components changes.
         """
+        self._report_failed_components(failed)
+
         if set(failed) == self._failed_components:
             return
 
         self._failed_components = set(failed)
+
         if failed:
             _LOGGER.warning(
                 "Could not read %s from %s, its entities keep their last value."
@@ -129,6 +138,66 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             )
         else:
             _LOGGER.info("Reading all components of %s works again", self._address)
+
+    def _report_failed_components(self, failed: list[str]) -> None:
+        """Raise a repair issue per component that cannot be read, one per entry.
+
+        A register range a particular firmware does not answer fails on every
+        poll and never recovers on its own. The entities of that component keep
+        their last value for good, which looks like a heating system that has
+        stopped moving rather than like a component that is not there - and the
+        log line saying so is written once, so it has usually scrolled away by
+        the time anybody looks.
+
+        Nothing here can fix it: either the component is not installed and the
+        user should switch it off in the options, or the api version is set
+        higher than the controller runs.
+
+        Every component is answered for, not only the ones that changed or are
+        configured: switching a component off is what the issue asks the user to
+        do, and that reloads the entry into a coordinator that knows nothing
+        about the issues the one before it raised.
+        """
+        for option, _ in COMPONENT_UPDATES:
+            issue_id = component_issue_id(self._entry.entry_id, option)
+            if option not in failed:
+                ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+                continue
+
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="component_unavailable",
+                translation_placeholders={
+                    "component": option,
+                    "address": self._address,
+                    "title": self._entry.title,
+                },
+            )
+
+
+def component_issue_id(entry_id: str, option: str) -> str:
+    """Return the issue id of one component of one entry.
+
+    Per component rather than one for all of them, so that a component coming
+    back clears its own issue and leaves the others standing.
+    """
+    return f"component_unavailable_{entry_id}_{option}"
+
+
+@callback
+def async_delete_component_issues(hass, entry) -> None:
+    """Delete every component issue an entry raised.
+
+    An entry that is unloaded is not reading anything, and one that is removed
+    is not there to be configured, so an issue naming it has nothing left to
+    say. Neither is noticed by the issue registry on its own.
+    """
+    for option, _ in COMPONENT_UPDATES:
+        ir.async_delete_issue(hass, DOMAIN, component_issue_id(entry.entry_id, option))
 
 
 # The coordinator of an entry lives on the entry itself, this spells that out
