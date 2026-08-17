@@ -42,6 +42,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Below this the controller is asked faster than it answers.
+MINIMUM_SCAN_INTERVAL = 5
+
 SOLARFOCUS_SYSTEMS = [
     selector.SelectOptionDict(value="Vampair", label="Heat pump vampair"),
     selector.SelectOptionDict(
@@ -198,7 +201,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     if not await hass.async_add_executor_job(client.api.connect):
         raise CannotConnect
 
-    if data[CONF_SCAN_INTERVAL] < 5:
+    if data[CONF_SCAN_INTERVAL] < MINIMUM_SCAN_INTERVAL:
         raise InvalidScanInterval
 
     # Return info that you want to store in the config entry.
@@ -208,7 +211,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 7
+    VERSION = 8
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -292,12 +295,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data={
                 CONF_NAME: self.data[CONF_NAME],
                 CONF_SOLARFOCUS_SYSTEM: self.data[CONF_SOLARFOCUS_SYSTEM],
-            },
-            options={
                 CONF_HOST: self.data[CONF_HOST],
                 CONF_PORT: self.data[CONF_PORT],
-                CONF_SCAN_INTERVAL: self.data[CONF_SCAN_INTERVAL],
                 CONF_API_VERSION: self.data[CONF_API_VERSION],
+            },
+            options={
+                CONF_SCAN_INTERVAL: self.data[CONF_SCAN_INTERVAL],
                 CONF_BOILER: user_input[CONF_BOILER],
                 CONF_BUFFER: user_input[CONF_BUFFER],
                 CONF_HEATING_CIRCUIT: user_input[CONF_HEATING_CIRCUIT],
@@ -324,7 +327,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is None:
             return self.async_show_form(
-                step_id="reconfigure", data_schema=_connection_schema(entry.options)
+                step_id="reconfigure",
+                data_schema=_connection_schema({**entry.data, **entry.options}),
             )
 
         errors: dict[str, str] = {}
@@ -358,13 +362,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # options flow as much as for here. Asking for the reload as
                 # well would do it twice, and Home Assistant refuses to from
                 # 2026.12 for exactly that reason.
+                connection = dict(user_input)
+                scan_interval = connection.pop(CONF_SCAN_INTERVAL)
                 return self.async_update_and_abort(
                     entry,
                     # An entry the migration left without a unique id shares an
                     # address with another one by definition, so giving it one
                     # here is the collision that migration avoided.
                     unique_id=None if entry.unique_id is None else unique_id,
-                    options={**entry.options, **user_input},
+                    data={**entry.data, **connection},
+                    options={**entry.options, CONF_SCAN_INTERVAL: scan_interval},
                 )
 
         return self.async_show_form(
@@ -383,217 +390,79 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
-    """Solarfocus config flow options handler."""
+    """Solarfocus config flow options handler.
 
-    def __init__(self) -> None:
-        """Initialize Solarfocus options flow."""
-
-        self._errors = {}
-        self.options: dict[str, Any] = {}
+    What an entry that already works lets a user change: how often to ask the
+    heating system, and which of its components to ask about. Where the system
+    is and which register layout it speaks are what it takes to read anything
+    at all, so they live in `ConfigEntry.data` and are changed by the
+    reconfigure flow.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
-
-        errors = {}
-        self.options = dict(self.config_entry.options)
-
         if user_input is None:
-            return await self._show_init_form(user_input, errors)
+            return self._show_init_form(self.config_entry.options, {})
 
-        # The address is the unique id, so moving this entry onto the address of
-        # another one would give two entries for the same controller. An entry
-        # that has no unique id is a duplicate the migration found and left
-        # alone; it already shares an address, and refusing to save its options
-        # would only lock it out of its own form.
-        if self.config_entry.unique_id is not None and self._address_is_taken(
-            build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
-        ):
-            return await self._show_init_form(
-                user_input, {"base": "already_configured"}
+        if user_input[CONF_SCAN_INTERVAL] < MINIMUM_SCAN_INTERVAL:
+            return self._show_init_form(
+                user_input, {CONF_SCAN_INTERVAL: "invalid_scan_interval"}
             )
 
-        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
-            self.options[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
-            self.options[CONF_BIOMASS_BOILER] = False
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in [
-            Systems.THERMINATOR,
-            Systems.ECOTOP,
-        ]:
-            self.options[CONF_BIOMASS_BOILER] = user_input[CONF_BIOMASS_BOILER]
-            self.options[CONF_HEATPUMP] = False
+        # Which of the two the system can have is not asked, so it is not in the
+        # form and has to be carried over rather than read back from it.
+        vampair = self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR
 
-        try:
-            await validate_input(
-                self.hass,
-                {
-                    CONF_NAME: self.config_entry.data[CONF_NAME],
-                    CONF_HOST: user_input[CONF_HOST],
-                    CONF_PORT: user_input[CONF_PORT],
-                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
-                    CONF_API_VERSION: user_input[CONF_API_VERSION],
-                    CONF_SOLARFOCUS_SYSTEM: self.config_entry.data[
-                        CONF_SOLARFOCUS_SYSTEM
-                    ],
-                },
-            )
-        except CannotConnect:
-            errors["base"] = "cannot_connect"
-        except InvalidAuth:
-            errors["base"] = "invalid_auth"
-        except InvalidScanInterval:
-            errors[CONF_SCAN_INTERVAL] = "invalid_scan_interval"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
-            errors["base"] = "unknown"
-        else:
-            # The unique id is not updated here: that fires the update listener
-            # and reloads the entry against the options it still has, which
-            # means a connect to the address the user just left. Saving the
-            # options reloads anyway, and `async_setup_entry` syncs it then.
-            return self.async_create_entry(
-                title="",
-                data={
-                    CONF_HOST: user_input[CONF_HOST],
-                    CONF_PORT: user_input[CONF_PORT],
-                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
-                    CONF_API_VERSION: user_input[CONF_API_VERSION],
-                    CONF_BOILER: user_input[CONF_BOILER],
-                    CONF_BUFFER: user_input[CONF_BUFFER],
-                    CONF_HEATING_CIRCUIT: user_input[CONF_HEATING_CIRCUIT],
-                    CONF_PHOTOVOLTAIC: user_input[CONF_PHOTOVOLTAIC],
-                    CONF_SOLAR: user_input[CONF_SOLAR],
-                    CONF_HEATPUMP: self.options[CONF_HEATPUMP],
-                    CONF_BIOMASS_BOILER: self.options[CONF_BIOMASS_BOILER],
-                    CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
-                },
-            )
-
-        return await self._show_init_form(user_input, errors)
-
-    def _address_is_taken(self, unique_id: str) -> bool:
-        """Return whether another entry already covers this address."""
-        return any(
-            entry.unique_id == unique_id
-            and entry.entry_id != self.config_entry.entry_id
-            for entry in self.hass.config_entries.async_entries(DOMAIN)
+        return self.async_create_entry(
+            title="",
+            data={
+                **user_input,
+                CONF_HEATPUMP: user_input[CONF_HEATPUMP] if vampair else False,
+                CONF_BIOMASS_BOILER: (
+                    False if vampair else user_input[CONF_BIOMASS_BOILER]
+                ),
+            },
         )
 
-    async def _show_init_form(self, user_input, errors):
-        """Show the options form to edit info."""
-
-        data_schema = {}
+    @callback
+    def _show_init_form(self, current: Mapping[str, Any], errors: dict[str, str]):
+        """Show the options form, filled in with what the entry has now."""
+        schema = {
+            vol.Optional(
+                CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
+            ): cv.positive_int,
+            vol.Optional(
+                CONF_HEATING_CIRCUIT, default=current[CONF_HEATING_CIRCUIT]
+            ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
+            vol.Optional(
+                CONF_BUFFER, default=current[CONF_BUFFER]
+            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+            vol.Optional(
+                CONF_BOILER, default=current[CONF_BOILER]
+            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+            vol.Optional(
+                CONF_FRESH_WATER_MODULE, default=current[CONF_FRESH_WATER_MODULE]
+            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        }
 
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
-            data_schema = vol.Schema(
-                {
-                    vol.Required(
-                        CONF_HOST, default=self.config_entry.options[CONF_HOST]
-                    ): cv.string,
-                    vol.Optional(
-                        CONF_PORT, default=self.config_entry.options[CONF_PORT]
-                    ): cv.port,
-                    vol.Optional(
-                        CONF_SCAN_INTERVAL,
-                        default=self.config_entry.options[CONF_SCAN_INTERVAL],
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_API_VERSION,
-                        default=self.config_entry.options[CONF_API_VERSION],
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=SOLARFOCUS_API_VERSIONS,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        ),
-                    ),
-                    vol.Optional(
-                        CONF_HEATING_CIRCUIT,
-                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
-                    ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-                    vol.Optional(
-                        CONF_BUFFER, default=self.config_entry.options[CONF_BUFFER]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_BOILER, default=self.config_entry.options[CONF_BOILER]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_FRESH_WATER_MODULE,
-                        default=self.config_entry.options[CONF_FRESH_WATER_MODULE],
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_HEATPUMP,
-                        default=self.config_entry.options[CONF_HEATPUMP],
-                    ): bool,
-                    vol.Optional(
-                        CONF_PHOTOVOLTAIC,
-                        default=self.config_entry.options[CONF_PHOTOVOLTAIC],
-                    ): bool,
-                    vol.Optional(
-                        CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                }
-            )
+            schema[vol.Optional(CONF_HEATPUMP, default=current[CONF_HEATPUMP])] = bool
+        else:
+            schema[
+                vol.Optional(CONF_BIOMASS_BOILER, default=current[CONF_BIOMASS_BOILER])
+            ] = bool
 
-        elif self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] in [
-            Systems.THERMINATOR,
-            Systems.ECOTOP,
-        ]:
-            data_schema = vol.Schema(
-                {
-                    vol.Required(
-                        CONF_HOST, default=self.config_entry.options[CONF_HOST]
-                    ): cv.string,
-                    vol.Optional(
-                        CONF_PORT, default=self.config_entry.options[CONF_PORT]
-                    ): cv.port,
-                    vol.Optional(
-                        CONF_SCAN_INTERVAL,
-                        default=self.config_entry.options[CONF_SCAN_INTERVAL],
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_API_VERSION,
-                        default=self.config_entry.options[CONF_API_VERSION],
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=SOLARFOCUS_API_VERSIONS,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        ),
-                    ),
-                    vol.Optional(
-                        CONF_HEATING_CIRCUIT,
-                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
-                    ): bool,
-                    vol.Optional(
-                        CONF_HEATING_CIRCUIT,
-                        default=self.config_entry.options[CONF_HEATING_CIRCUIT],
-                    ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-                    vol.Optional(
-                        CONF_BUFFER, default=self.config_entry.options[CONF_BUFFER]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_BOILER, default=self.config_entry.options[CONF_BOILER]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_FRESH_WATER_MODULE,
-                        default=self.config_entry.options[CONF_FRESH_WATER_MODULE],
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                    vol.Optional(
-                        CONF_BIOMASS_BOILER,
-                        default=self.config_entry.options[CONF_BIOMASS_BOILER],
-                    ): bool,
-                    vol.Optional(
-                        CONF_PHOTOVOLTAIC,
-                        default=self.config_entry.options[CONF_PHOTOVOLTAIC],
-                    ): bool,
-                    vol.Optional(
-                        CONF_SOLAR, default=self.config_entry.options[CONF_SOLAR]
-                    ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-                }
-            )
+        schema[
+            vol.Optional(CONF_PHOTOVOLTAIC, default=current[CONF_PHOTOVOLTAIC])
+        ] = bool
+        schema[
+            vol.Optional(CONF_SOLAR, default=current[CONF_SOLAR])
+        ] = _COMPONENT_COUNT_ZERO_FOUR_SELECTOR
 
         return self.async_show_form(
-            step_id="init", data_schema=data_schema, errors=errors
+            step_id="init", data_schema=vol.Schema(schema), errors=errors
         )
 
 

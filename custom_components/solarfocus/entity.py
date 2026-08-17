@@ -94,7 +94,7 @@ def create_description(
 
 def filterVersionAndSystem(config_entry: ConfigEntry, entities):
     """Filter entities not compatible to version or system."""
-    api_version = version.parse(config_entry.options[CONF_API_VERSION])
+    api_version = version.parse(config_entry.data[CONF_API_VERSION])
 
     filtered_entities = filter(
         lambda entity: version.parse(entity.entity_description.min_required_version)

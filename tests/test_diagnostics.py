@@ -46,9 +46,9 @@ async def test_diagnostics_hide_the_address_of_the_controller(
     """The host is the one thing in the options a user should not have to strip."""
     diagnostics = await _diagnostics(hass, api, heating_circuit=1)
 
-    assert diagnostics["entry"]["options"][CONF_HOST] == REDACTED
+    assert diagnostics["entry"]["data"][CONF_HOST] == REDACTED
     # The port says nothing on its own and tells a non-standard setup apart
-    assert diagnostics["entry"]["options"][CONF_PORT] == 502
+    assert diagnostics["entry"]["data"][CONF_PORT] == 502
     assert "solarfocus.local" not in str(diagnostics)
 
 
@@ -77,7 +77,7 @@ async def test_home_assistant_serves_the_download(
 
     diagnostics = await get_diagnostics_for_config_entry(hass, hass_client, entry)
 
-    assert diagnostics["entry"]["options"][CONF_HOST] == REDACTED
+    assert diagnostics["entry"]["data"][CONF_HOST] == REDACTED
     assert diagnostics["components"]["heating_circuits"][0]["supply_temperature"] == 0
 
 
@@ -102,9 +102,9 @@ async def test_diagnostics_describe_how_the_entry_is_configured(
 
     entry = diagnostics["entry"]
 
-    assert entry["version"] == 7
+    assert entry["version"] == 8
     assert entry["options"]["heating_circuit"] == 2
-    assert entry["options"]["api_version"] == ApiVersions.V_23_020.value
+    assert entry["data"]["api_version"] == ApiVersions.V_23_020.value
     assert entry["data"]["system"] is not None
 
 

@@ -257,12 +257,12 @@ async def test_migration_from_version_1(hass: HomeAssistant) -> None:
     # Systems default to the heat pump the integration started out with
     assert entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR
     # Connection details moved from data to options
-    assert entry.options[CONF_HOST] == "solarfocus.local"
-    assert entry.options[CONF_PORT] == 502
+    assert entry.data[CONF_HOST] == "solarfocus.local"
+    assert entry.data[CONF_PORT] == 502
     assert entry.options[CONF_SCAN_INTERVAL] == 10
-    assert CONF_HOST not in entry.data
+    assert CONF_HOST not in entry.options
     # New options got a default
-    assert entry.options[CONF_API_VERSION] == "21.140"
+    assert entry.data[CONF_API_VERSION] == "21.140"
     assert entry.options[CONF_FRESH_WATER_MODULE] == 0
     assert entry.options[CONF_SOLAR] == 0
     # pelletsboiler was renamed
@@ -300,8 +300,10 @@ async def test_migration_from_version_3_moves_options(hass: HomeAssistant) -> No
     assert entry.data == {
         CONF_NAME: DEFAULT_NAME,
         CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR,
+        CONF_HOST: "10.0.0.2",
+        CONF_PORT: 502,
+        CONF_API_VERSION: "21.140",
     }
-    assert entry.options[CONF_HOST] == "10.0.0.2"
     assert entry.options[CONF_SCAN_INTERVAL] == 15
     assert entry.options[CONF_HEATING_CIRCUIT] == 2
     assert entry.options[CONF_BIOMASS_BOILER] is True
@@ -451,21 +453,28 @@ async def test_migrated_entries_can_be_set_up(
 
 
 def _version_6_entry(**option_overrides) -> MockConfigEntry:
-    """Return an entry in the layout of version 6, which had no unique id."""
+    """Return an entry as version 6 stored one: no unique id, and the
+    connection still among the options."""
+    options = {
+        CONF_HOST: "solarfocus.local",
+        CONF_PORT: 502,
+        CONF_API_VERSION: ApiVersions.V_23_020.value,
+        **build_options(**option_overrides),
+    }
     return MockConfigEntry(
         domain=DOMAIN,
         title=DEFAULT_NAME,
         version=6,
         unique_id=None,
         data={CONF_NAME: DEFAULT_NAME, CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR},
-        options=build_options(**option_overrides),
+        options=options,
     )
 
 
 async def test_setup_moves_the_unique_id_to_the_configured_address(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
-    """The address can change in the options, the unique id follows on reload."""
+    """The address can change, and the unique id follows it on the next load."""
     entry = build_config_entry(heating_circuit=1)
     entry.add_to_hass(hass)
     hass.config_entries.async_update_entry(entry, unique_id="stale.local:502")
@@ -513,6 +522,50 @@ async def test_setup_does_not_move_a_unique_id_onto_another_entry(
 
     assert other.unique_id == "10.0.0.7:502"
     assert "another entry already has it" in caplog.text
+
+
+async def test_migration_moves_the_connection_into_the_entry_data(
+    hass: HomeAssistant,
+) -> None:
+    """Version 8 keeps what it takes to read the system in `data`.
+
+    Everything used to be an option, including the address. What a user
+    changes about a system that already answers - how often to ask it, and
+    which of its components to ask about - stays in `options`.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title=DEFAULT_NAME,
+        version=7,
+        unique_id="10.0.0.2:503",
+        data={CONF_NAME: DEFAULT_NAME, CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR},
+        options={
+            CONF_HOST: "10.0.0.2",
+            CONF_PORT: 503,
+            CONF_API_VERSION: "25.030",
+            **build_options(heating_circuit=2, biomassboiler=True),
+        },
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.data == {
+        CONF_NAME: DEFAULT_NAME,
+        CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR,
+        CONF_HOST: "10.0.0.2",
+        CONF_PORT: 503,
+        CONF_API_VERSION: "25.030",
+    }
+    for moved in (CONF_HOST, CONF_PORT, CONF_API_VERSION):
+        assert moved not in entry.options
+
+    # What the user chose about the system is left where it was
+    assert entry.options[CONF_SCAN_INTERVAL] == 10
+    assert entry.options[CONF_HEATING_CIRCUIT] == 2
+    assert entry.options[CONF_BIOMASS_BOILER] is True
+    assert entry.unique_id == "10.0.0.2:503"
 
 
 async def test_migration_backfills_the_unique_id(hass: HomeAssistant) -> None:

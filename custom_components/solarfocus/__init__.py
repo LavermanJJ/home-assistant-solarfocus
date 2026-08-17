@@ -58,15 +58,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
     _async_report_duplicate_entry(hass, entry)
 
     api = SolarfocusAPI(
-        ip=entry.options[CONF_HOST],
-        port=entry.options[CONF_PORT],
+        ip=entry.data[CONF_HOST],
+        port=entry.data[CONF_PORT],
         heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
         fresh_water_module_count=entry.options[CONF_FRESH_WATER_MODULE],
-        solar_count=solar_count(entry.options),
+        solar_count=solar_count(entry),
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
-        api_version=ApiVersions(entry.options[CONF_API_VERSION]),
+        api_version=ApiVersions(entry.data[CONF_API_VERSION]),
     )
     coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
 
@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         # user to different places: nothing at the address to talk to at all, or
         # a controller that answered the connection and then none of the
         # registers. Whether the library is still connected is what says which.
-        address = f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
+        address = f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}"
         if not api.is_connected:
             raise ConfigEntryNotReady(
                 translation_domain=DOMAIN,
@@ -108,17 +108,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
 def _async_sync_unique_id(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> None:
     """Keep the unique id on the address the entry is actually talking to.
 
-    The address can be changed in the options. Doing this here rather than in
-    the options flow keeps the update out of the flow, where it would fire the
-    update listener and reload the entry against the options it is about to
-    replace. Saving options reloads the entry, so this runs right after.
+    The reconfigure flow can move an entry to another address, and a
+    hand-edited entry can arrive at one, so the id is settled here rather than
+    in the flow - where updating it would fire the update listener and reload
+    the entry against the address it is about to leave.
 
     An entry the migration left without a unique id is given one here as soon
     as the address is free, which is how the duplicate reported below stops
     being reported: the user removes the other entry, and the one they kept
     takes the address over on its next load.
     """
-    unique_id = build_unique_id(entry.options[CONF_HOST], entry.options[CONF_PORT])
+    unique_id = build_unique_id(entry.data[CONF_HOST], entry.data[CONF_PORT])
     if entry.unique_id == unique_id:
         return
 
@@ -171,7 +171,7 @@ def _async_report_duplicate_entry(
         translation_placeholders={
             "title": entry.title,
             "address": build_unique_id(
-                entry.options[CONF_HOST], entry.options[CONF_PORT]
+                entry.data[CONF_HOST], entry.data[CONF_PORT]
             ),
         },
     )
@@ -335,6 +335,21 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
             config_entry,
             unique_id=None if already_taken else unique_id,
             version=7,
+        )
+
+    if config_entry.version == 7:
+        # Where the controller is and which register layout it speaks are what
+        # it takes to read anything at all, so they belong in `data`. `options`
+        # keeps what a user changes about an entry that already works: how often
+        # to poll, and which components to poll.
+        new_data = {**config_entry.data}
+        new_options = {**config_entry.options}
+
+        for setting in (CONF_HOST, CONF_PORT, CONF_API_VERSION):
+            new_data[setting] = new_options.pop(setting)
+
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=8
         )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
