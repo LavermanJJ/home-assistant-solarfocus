@@ -175,7 +175,7 @@ async def async_setup_entry(
 
     if config_entry.options[CONF_SOLAR]:
         # The same count the library was built with, see `solar_count`
-        count = solar_count(config_entry.options)
+        count = solar_count(config_entry)
 
         for i in range(count):
             for description in SOLAR_SENSOR_TYPES:

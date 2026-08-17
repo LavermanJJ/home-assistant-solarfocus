@@ -64,7 +64,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def _address(self) -> str:
         """Return the address of the heating system, for log messages."""
-        return f"{self._entry.options[CONF_HOST]}:{self._entry.options[CONF_PORT]}"
+        return f"{self._entry.data[CONF_HOST]}:{self._entry.data[CONF_PORT]}"
 
     async def _async_update_data(self):
         """Update data via library."""

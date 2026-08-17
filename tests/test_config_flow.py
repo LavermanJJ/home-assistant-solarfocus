@@ -113,15 +113,17 @@ async def test_full_flow_vampair(
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == DEFAULT_NAME
+    # What it takes to read the system is data, what the user chose about it
+    # is options
     assert result["data"] == {
         CONF_NAME: DEFAULT_NAME,
         CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR,
-    }
-    assert result["options"] == {
         CONF_HOST: "solarfocus.local",
         CONF_PORT: 502,
-        CONF_SCAN_INTERVAL: 10,
         CONF_API_VERSION: ApiVersions.V_23_020.value,
+    }
+    assert result["options"] == {
+        CONF_SCAN_INTERVAL: 10,
         CONF_HEATING_CIRCUIT: 2,
         CONF_BUFFER: 1,
         CONF_BOILER: 1,
@@ -342,6 +344,18 @@ async def test_options_flow_form(
     assert result["data_schema"] is not None
 
 
+OPTIONS_INPUT = {
+    CONF_SCAN_INTERVAL: 30,
+    CONF_HEATING_CIRCUIT: 3,
+    CONF_BUFFER: 2,
+    CONF_BOILER: 1,
+    CONF_FRESH_WATER_MODULE: 1,
+    CONF_HEATPUMP: True,
+    CONF_PHOTOVOLTAIC: True,
+    CONF_SOLAR: 1,
+}
+
+
 async def test_options_flow_updates_options(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
@@ -353,140 +367,56 @@ async def test_options_flow_updates_options(
 
     with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
         result = await hass.config_entries.options.async_configure(
-            result["flow_id"],
-            {
-                CONF_HOST: "10.0.0.5",
-                CONF_PORT: 503,
-                CONF_SCAN_INTERVAL: 30,
-                CONF_API_VERSION: ApiVersions.V_25_030.value,
-                CONF_HEATING_CIRCUIT: 3,
-                CONF_BUFFER: 2,
-                CONF_BOILER: 1,
-                CONF_FRESH_WATER_MODULE: 1,
-                CONF_HEATPUMP: True,
-                CONF_PHOTOVOLTAIC: True,
-                CONF_SOLAR: 1,
-            },
+            result["flow_id"], OPTIONS_INPUT
         )
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_HOST] == "10.0.0.5"
-    assert result["data"][CONF_PORT] == 503
     assert result["data"][CONF_SCAN_INTERVAL] == 30
-    assert result["data"][CONF_API_VERSION] == ApiVersions.V_25_030.value
     assert result["data"][CONF_HEATING_CIRCUIT] == 3
     assert result["data"][CONF_HEATPUMP] is True
     assert result["data"][CONF_BIOMASS_BOILER] is False
 
 
-async def test_options_flow_follows_the_address(
+async def test_the_options_form_does_not_ask_for_the_connection(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
-    """Moving an entry to another address moves its unique id along.
+    """Where the system is belongs to the entry data and the reconfigure flow.
 
-    A stale unique id would let the same system be added a second time under
-    its new address. The move happens on the reload that saving the options
-    triggers, not in the flow itself, so this runs the real setup.
+    Asking for it here as well was how the same setting ended up in both
+    halves of the entry, and how a user came to the form to add a heating
+    circuit and left having changed the address.
     """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    fields = {key.schema for key in result["data_schema"].schema}
+
+    assert fields.isdisjoint({CONF_HOST, CONF_PORT, CONF_API_VERSION, CONF_NAME})
+    assert CONF_SCAN_INTERVAL in fields
+    assert CONF_HEATING_CIRCUIT in fields
+
+
+async def test_saving_options_leaves_the_connection_alone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The data of the entry is not the options flow's to write."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: "10.0.0.5",
-            CONF_PORT: 503,
-            CONF_SCAN_INTERVAL: 30,
-            CONF_API_VERSION: ApiVersions.V_25_030.value,
-            CONF_HEATING_CIRCUIT: 1,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
-    )
-    await hass.async_block_till_done()
-
-    assert entry.options[CONF_HOST] == "10.0.0.5"
-    assert entry.unique_id == "10.0.0.5:503"
-
-
-async def test_saving_options_does_not_reload_against_the_old_address(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
-) -> None:
-    """The entry is reloaded once, with the options the user just saved.
-
-    Updating the unique id inside the flow fired the update listener before the
-    new options were stored, so the entry was reloaded twice and the first of
-    those reloads connected to the address the user had just left.
-    """
-    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-
-    mock_api.reset_mock()
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: "10.0.0.5",
-            CONF_PORT: 503,
-            CONF_SCAN_INTERVAL: 30,
-            CONF_API_VERSION: ApiVersions.V_25_030.value,
-            CONF_HEATING_CIRCUIT: 1,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
-    )
-    await hass.async_block_till_done()
-
-    setups = [call for call in mock_api.call_args_list if "heating_circuit_count" in call.kwargs]
-    assert len(setups) == 1
-    assert setups[0].kwargs["ip"] == "10.0.0.5"
-
-
-async def test_options_flow_rejects_the_address_of_another_entry(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
-) -> None:
-    """Two entries must not end up pointing at the same system."""
-    other = build_config_entry()
-    other.add_to_hass(hass)
-    entry = build_config_entry(Systems.VAMPAIR, host="10.0.0.5", heatpump=True)
-    entry.add_to_hass(hass)
+    before = dict(entry.data)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: other.options[CONF_HOST],
-            CONF_PORT: other.options[CONF_PORT],
-            CONF_SCAN_INTERVAL: 10,
-            CONF_API_VERSION: ApiVersions.V_23_020.value,
-            CONF_HEATING_CIRCUIT: 0,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
-    )
+    await hass.config_entries.options.async_configure(result["flow_id"], OPTIONS_INPUT)
+    await hass.async_block_till_done()
 
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "init"
-    assert result["errors"] == {"base": "already_configured"}
-    assert entry.unique_id == "10.0.0.5:502"
+    assert entry.data == before
+    assert entry.options[CONF_SCAN_INTERVAL] == 30
+    assert entry.unique_id == "solarfocus.local:502"
 
 
 async def test_a_legacy_duplicate_can_still_edit_its_options(
@@ -494,9 +424,9 @@ async def test_a_legacy_duplicate_can_still_edit_its_options(
 ) -> None:
     """The migration leaves one of two entries for a system without a unique id.
 
-    That entry shares its address with the other one by definition, so the
-    duplicate check must not fire for it - it would refuse every save and lock
-    the entry out of its own options form.
+    That entry shares its address with the other one by definition, so nothing
+    about saving its options may refuse it - that would lock the entry out of
+    its own form.
     """
     first = build_config_entry()
     first.add_to_hass(hass)
@@ -506,20 +436,7 @@ async def test_a_legacy_duplicate_can_still_edit_its_options(
 
     result = await hass.config_entries.options.async_init(duplicate.entry_id)
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: first.options[CONF_HOST],
-            CONF_PORT: first.options[CONF_PORT],
-            CONF_SCAN_INTERVAL: 30,
-            CONF_API_VERSION: ApiVersions.V_23_020.value,
-            CONF_HEATING_CIRCUIT: 0,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
+        result["flow_id"], OPTIONS_INPUT
     )
     await hass.async_block_till_done()
 
@@ -533,7 +450,9 @@ async def test_options_flow_biomass_system_disables_heatpump(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
     """A therminator keeps the biomass boiler flag and never enables the heat pump."""
-    entry = build_config_entry(Systems.THERMINATOR, heating_circuit=1, biomassboiler=True)
+    entry = build_config_entry(
+        Systems.THERMINATOR, heating_circuit=1, biomassboiler=True
+    )
     entry.add_to_hass(hass)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
@@ -542,10 +461,7 @@ async def test_options_flow_biomass_system_disables_heatpump(
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
             {
-                CONF_HOST: "solarfocus.local",
-                CONF_PORT: 502,
                 CONF_SCAN_INTERVAL: 10,
-                CONF_API_VERSION: ApiVersions.V_23_020.value,
                 CONF_HEATING_CIRCUIT: 1,
                 CONF_BUFFER: 1,
                 CONF_BOILER: 1,
@@ -560,80 +476,6 @@ async def test_options_flow_biomass_system_disables_heatpump(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_BIOMASS_BOILER] is True
     assert result["data"][CONF_HEATPUMP] is False
-
-
-async def test_options_flow_cannot_connect(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
-) -> None:
-    """A device that stops answering keeps the user on the options form."""
-    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
-    entry.add_to_hass(hass)
-
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-
-    api.connect.return_value = False
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: "unreachable",
-            CONF_PORT: 502,
-            CONF_SCAN_INTERVAL: 10,
-            CONF_API_VERSION: ApiVersions.V_23_020.value,
-            CONF_HEATING_CIRCUIT: 1,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
-    )
-
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "init"
-    assert result["errors"] == {"base": "cannot_connect"}
-
-
-@pytest.mark.parametrize(
-    ("side_effect", "expected"),
-    [(InvalidAuth, "invalid_auth"), (RuntimeError("boom"), "unknown")],
-)
-async def test_options_flow_errors(
-    hass: HomeAssistant,
-    enable_custom_integrations,
-    mock_api,
-    side_effect: Exception,
-    expected: str,
-) -> None:
-    """Auth and unexpected failures are reported on the options form."""
-    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
-    entry.add_to_hass(hass)
-
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-
-    with patch(
-        "custom_components.solarfocus.config_flow.validate_input",
-        side_effect=side_effect,
-    ):
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"],
-            {
-                CONF_HOST: "solarfocus.local",
-                CONF_PORT: 502,
-                CONF_SCAN_INTERVAL: 10,
-                CONF_API_VERSION: ApiVersions.V_23_020.value,
-                CONF_HEATING_CIRCUIT: 1,
-                CONF_BUFFER: 0,
-                CONF_BOILER: 0,
-                CONF_FRESH_WATER_MODULE: 0,
-                CONF_HEATPUMP: True,
-                CONF_PHOTOVOLTAIC: False,
-                CONF_SOLAR: 0,
-            },
-        )
-
-    assert result["type"] is FlowResultType.FORM
-    assert result["errors"] == {"base": expected}
 
 
 # --- reconfigure -------------------------------------------------------------
@@ -692,10 +534,10 @@ async def test_reconfigure_moves_the_entry_and_its_unique_id(
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
 
-    assert entry.options[CONF_HOST] == "10.0.0.5"
-    assert entry.options[CONF_PORT] == 503
+    assert entry.data[CONF_HOST] == "10.0.0.5"
+    assert entry.data[CONF_PORT] == 503
     assert entry.options[CONF_SCAN_INTERVAL] == 30
-    assert entry.options[CONF_API_VERSION] == ApiVersions.V_25_030.value
+    assert entry.data[CONF_API_VERSION] == ApiVersions.V_25_030.value
     assert entry.unique_id == "10.0.0.5:503"
 
 
@@ -765,7 +607,7 @@ async def test_reconfigure_refuses_the_address_of_another_entry(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "already_configured"}
-    assert entry.options[CONF_HOST] == "solarfocus.local"
+    assert entry.data[CONF_HOST] == "solarfocus.local"
 
 
 async def test_reconfigure_reports_a_system_it_cannot_reach(
@@ -784,7 +626,7 @@ async def test_reconfigure_reports_a_system_it_cannot_reach(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
-    assert entry.options[CONF_HOST] == "solarfocus.local"
+    assert entry.data[CONF_HOST] == "solarfocus.local"
 
 
 async def test_reconfigure_rejects_a_polling_interval_below_five(
@@ -823,7 +665,7 @@ async def test_reconfigure_keeps_a_duplicate_entry_without_a_unique_id(
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.ABORT
-    assert entry.options[CONF_HOST] == "10.0.0.5"
+    assert entry.data[CONF_HOST] == "10.0.0.5"
     assert entry.unique_id is None
 
 
@@ -846,7 +688,7 @@ async def test_reconfigure_reports_an_unexpected_failure(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "unknown"}
-    assert entry.options[CONF_HOST] == "solarfocus.local"
+    assert entry.data[CONF_HOST] == "solarfocus.local"
 
 
 async def test_options_flow_scan_interval_below_minimum(
@@ -858,20 +700,7 @@ async def test_options_flow_scan_interval_below_minimum(
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            CONF_HOST: "solarfocus.local",
-            CONF_PORT: 502,
-            CONF_SCAN_INTERVAL: 1,
-            CONF_API_VERSION: ApiVersions.V_23_020.value,
-            CONF_HEATING_CIRCUIT: 1,
-            CONF_BUFFER: 0,
-            CONF_BOILER: 0,
-            CONF_FRESH_WATER_MODULE: 0,
-            CONF_HEATPUMP: True,
-            CONF_PHOTOVOLTAIC: False,
-            CONF_SOLAR: 0,
-        },
+        result["flow_id"], {**OPTIONS_INPUT, CONF_SCAN_INTERVAL: 1}
     )
 
     assert result["type"] is FlowResultType.FORM

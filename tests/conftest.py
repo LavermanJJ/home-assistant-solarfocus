@@ -29,16 +29,24 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 7
+CURRENT_VERSION = 8
+
+
+def build_data(system: Systems = Systems.VAMPAIR) -> dict:
+    """Return the entry data: what it takes to read the heating system at all."""
+    return {
+        CONF_NAME: DEFAULT_NAME,
+        CONF_SOLARFOCUS_SYSTEM: system,
+        CONF_HOST: "solarfocus.local",
+        CONF_PORT: 502,
+        CONF_API_VERSION: ApiVersions.V_23_020.value,
+    }
 
 
 def build_options(**overrides) -> dict:
     """Return config entry options with all components off unless overridden."""
     options = {
-        CONF_HOST: "solarfocus.local",
-        CONF_PORT: 502,
         CONF_SCAN_INTERVAL: 10,
-        CONF_API_VERSION: ApiVersions.V_23_020.value,
         CONF_HEATING_CIRCUIT: 0,
         CONF_BUFFER: 0,
         CONF_BOILER: 0,
@@ -53,16 +61,30 @@ def build_options(**overrides) -> dict:
 
 
 def build_config_entry(
-    system: Systems = Systems.VAMPAIR, **option_overrides
+    system: Systems = Systems.VAMPAIR, **overrides
 ) -> MockConfigEntry:
-    """Return a config entry in the layout the current version stores."""
-    options = build_options(**option_overrides)
+    """Return a config entry in the layout the current version stores.
+
+    An override goes to whichever half of the entry holds that setting, so a
+    test says what its entry is rather than where the integration keeps it.
+    """
+    data = build_data(system)
+    options = build_options()
+
+    for setting, value in overrides.items():
+        if setting in data:
+            data[setting] = value
+        elif setting in options:
+            options[setting] = value
+        else:
+            raise KeyError(f"{setting} is in neither the data nor the options")
+
     return MockConfigEntry(
         domain=DOMAIN,
         title=DEFAULT_NAME,
         version=CURRENT_VERSION,
-        unique_id=build_unique_id(options[CONF_HOST], options[CONF_PORT]),
-        data={CONF_NAME: DEFAULT_NAME, CONF_SOLARFOCUS_SYSTEM: system},
+        unique_id=build_unique_id(data[CONF_HOST], data[CONF_PORT]),
+        data=data,
         options=options,
     )
 

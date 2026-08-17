@@ -5,11 +5,7 @@
         "title": "Update Component Selection",
         "description": "Select which components are available in your setup and should be read.",
         "data": {
-          "name": "Name",
-          "host": "Host",
-          "port": "Port",
           "scan_interval": "Polling interval (s)",
-          "api_version": "Solarfocus API Version",
           "heating_circuit": "Heating Circuit",
           "buffer": "Buffer",
           "boiler": "Boiler",
@@ -18,6 +14,17 @@
           "biomassboiler": "Biomass boiler",
           "solar": "Solar",
           "fresh_water_module": "Fresh water module"
+        },
+        "data_description": {
+          "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
+          "heating_circuit": "How many heating circuits the controller has. Each one becomes its own set of entities.",
+          "buffer": "How many buffer tanks are installed.",
+          "boiler": "How many hot water boilers are installed.",
+          "heatpump": "Whether the heat pump of the system should be read.",
+          "photovoltaic": "Whether the photovoltaic registers should be read. Only answered if a meter is connected.",
+          "biomassboiler": "Whether the biomass boiler of the system should be read.",
+          "solar": "How many solar circuits are installed. More than one needs API version 25.030 or newer.",
+          "fresh_water_module": "How many fresh water modules are installed."
         }
       }
     },
@@ -35,6 +42,14 @@
           "scan_interval": "Polling interval (s)",
           "system": "Solarfocus system",
           "api_version": "Solarfocus API Version"
+        },
+        "data_description": {
+          "name": "The name of this entry. The entities of the heating system are named after it.",
+          "host": "The hostname or IP address of the eco manager-touch.",
+          "port": "The Modbus TCP port of the controller, 502 unless it was changed.",
+          "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
+          "system": "Which Solarfocus system this is. It decides which components can be selected in the next step.",
+          "api_version": "The version the controller shows under Fachmann - Modbus. A higher one than it runs creates entities it cannot answer."
         }
       },
       "component": {
@@ -49,6 +64,16 @@
           "biomassboiler": "Biomass boiler",
           "solar": "Solar",
           "fresh_water_module": "Fresh water module"
+        },
+        "data_description": {
+          "heating_circuit": "How many heating circuits the controller has. Each one becomes its own set of entities.",
+          "buffer": "How many buffer tanks are installed.",
+          "boiler": "How many hot water boilers are installed.",
+          "heatpump": "Whether the heat pump of the system should be read.",
+          "photovoltaic": "Whether the photovoltaic registers should be read. Only answered if a meter is connected.",
+          "biomassboiler": "Whether the biomass boiler of the system should be read.",
+          "solar": "How many solar circuits are installed. More than one needs API version 25.030 or newer.",
+          "fresh_water_module": "How many fresh water modules are installed."
         }
       },
       "reconfigure": {

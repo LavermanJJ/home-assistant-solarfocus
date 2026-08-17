@@ -190,27 +190,26 @@ def test_the_gold_rules_that_are_a_file_or_a_function_exist() -> None:
     assert (COMPONENT_DIR / "icons.json").stat().st_size > 0
 
 
-def test_the_config_flow_rule_is_still_open() -> None:
-    """The two things holding Bronze up, so that fixing one is noticed.
+def test_every_field_of_every_step_is_described() -> None:
+    """Half of the config flow rule, and the half that rots.
 
-    `data_description` on every step and the connection settings living in
-    `ConfigEntry.data`. When either is done this test fails, which is the
-    reminder to move the rule on rather than leave it saying `todo` forever.
+    A field added to a form without a `data_description` is one the user is
+    asked about with nothing but its label to go on. The other half of the
+    rule - the connection in `ConfigEntry.data` and the rest in `.options` -
+    is what the config flow and migration tests are about.
     """
-    assert _status("config-flow") == "todo"
+    assert _status("config-flow") == "done"
 
     strings = yaml.safe_load((COMPONENT_DIR / "strings.json").read_text("utf-8"))
-    steps = {
-        **strings["config"]["step"],
-        **strings["options"]["step"],
-    }
-    undescribed = [
-        step
+    steps = {**strings["config"]["step"], **strings["options"]["step"]}
+
+    undescribed = {
+        step: sorted(set(block.get("data", {})) - set(block.get("data_description", {})))
         for step, block in steps.items()
         if set(block.get("data", {})) - set(block.get("data_description", {}))
-    ]
+    }
 
-    assert undescribed, "every step is described now, move config-flow on"
+    assert not undescribed
 
 
 def test_the_platinum_rules_are_still_open() -> None:

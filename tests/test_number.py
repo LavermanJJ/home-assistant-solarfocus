@@ -21,8 +21,8 @@ from homeassistant.const import CONF_API_VERSION
 def _config_entry(api_version: str):
     """Create a minimal config entry stub for entity filtering."""
     return SimpleNamespace(
-        options={CONF_API_VERSION: api_version},
-        data={"system": Systems.VAMPAIR},
+        data={CONF_API_VERSION: api_version, "system": Systems.VAMPAIR},
+        options={},
     )
 
 

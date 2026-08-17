@@ -5,11 +5,7 @@
         "title": "Aktualisiere Komponenten Auswahl",
         "description": "Welche Komponenten sollen integriert werden?",
         "data": {
-          "name": "Name",
-          "host": "Host",
-          "port": "Port",
           "scan_interval": "Abfrage Intervall (s)",
-          "api_version": "Solarfocus API Version",
           "boiler": "Boiler",
           "buffer": "Pufferspeicher",
           "heating_circuit": "Heizkreise",
@@ -18,6 +14,17 @@
           "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module": "Frischwassermodule"
+        },
+        "data_description": {
+          "scan_interval": "Wie oft jede konfigurierte Komponente gelesen wird, in Sekunden. Fünf ist der kleinste akzeptierte Wert.",
+          "boiler": "Wie viele Boiler vorhanden sind.",
+          "buffer": "Wie viele Pufferspeicher vorhanden sind.",
+          "heating_circuit": "Wie viele Heizkreise der Regler hat. Jeder wird zu einem eigenen Satz Entitäten.",
+          "heatpump": "Ob die Wärmepumpe der Anlage gelesen werden soll.",
+          "photovoltaic": "Ob die Photovoltaik-Register gelesen werden sollen. Sie werden nur beantwortet, wenn ein Zähler angeschlossen ist.",
+          "biomassboiler": "Ob der Biomassekessel der Anlage gelesen werden soll.",
+          "solar": "Wie viele Solarkreise vorhanden sind. Mehr als einer benötigt API-Version 25.030 oder neuer.",
+          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind."
         }
       }
     },
@@ -46,6 +53,14 @@
           "scan_interval": "Abfrage Intervall (s)",
           "system": "Solarfocus System",
           "api_version": "Solarfocus API Version"
+        },
+        "data_description": {
+          "name": "Der Name dieses Eintrags. Die Entitäten der Anlage werden danach benannt.",
+          "host": "Hostname oder IP-Adresse des eco manager-touch.",
+          "port": "Der Modbus-TCP-Port des Reglers, 502 sofern er nicht geändert wurde.",
+          "scan_interval": "Wie oft jede konfigurierte Komponente gelesen wird, in Sekunden. Fünf ist der kleinste akzeptierte Wert.",
+          "system": "Um welche Solarfocus-Anlage es sich handelt. Davon hängt ab, welche Komponenten im nächsten Schritt zur Auswahl stehen.",
+          "api_version": "Die Version, die der Regler unter Fachmann - Modbus anzeigt. Eine höhere als die tatsächliche erzeugt Entitäten, die er nicht beantworten kann."
         }
       },
       "component": {
@@ -60,6 +75,16 @@
           "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module": "Frischwassermodule"
+        },
+        "data_description": {
+          "boiler": "Wie viele Boiler vorhanden sind.",
+          "buffer": "Wie viele Pufferspeicher vorhanden sind.",
+          "heating_circuit": "Wie viele Heizkreise der Regler hat. Jeder wird zu einem eigenen Satz Entitäten.",
+          "heatpump": "Ob die Wärmepumpe der Anlage gelesen werden soll.",
+          "photovoltaic": "Ob die Photovoltaik-Register gelesen werden sollen. Sie werden nur beantwortet, wenn ein Zähler angeschlossen ist.",
+          "biomassboiler": "Ob der Biomassekessel der Anlage gelesen werden soll.",
+          "solar": "Wie viele Solarkreise vorhanden sind. Mehr als einer benötigt API-Version 25.030 oder neuer.",
+          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind."
         }
       },
       "reconfigure": {

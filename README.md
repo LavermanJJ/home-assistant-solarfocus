@@ -229,10 +229,7 @@ immediately.
 
 | Option | Range | Description |
 |---|---|---|
-| Host | | Address of the controller, e.g. after a DHCP change. |
-| Port | | Modbus TCP port. |
 | Polling interval (s) | ≥ 5 | Seconds between two reads. |
-| Solarfocus API Version | `21.140` - `26.020` | Raise this after a software update of the heating system to get the entities that version added. |
 | Heating Circuit | 0 - 8 | Number of heating circuits (_Heizkreise_) to read. |
 | Buffer | 0 - 4 | Number of buffer cylinders (_Puffer_). |
 | Boiler | 0 - 4 | Number of boilers (_Boiler_). |
@@ -244,6 +241,20 @@ immediately.
 
 Setting a count to 0 (or a switch to off) stops that component from being polled and removes
 its entities.
+
+### Changing the Connection
+
+The address of the controller, its Modbus TCP port and the API version are what it takes to
+read the system at all, so they are not in the form above. Change them via **Settings →
+Devices & Services → Solarfocus → the three-dot menu of the entry → Reconfigure**, which
+asks for the connection on its own and leaves your component layout untouched.
+
+| Setting | Description |
+|---|---|
+| Host | Address of the controller, e.g. after a DHCP change. |
+| Port | Modbus TCP port. |
+| Polling interval (s) | Seconds between two reads, the same setting as above. |
+| Solarfocus API Version | Raise this after a software update of the heating system to get the entities that version added. Setting it higher than the controller runs makes it answer the wrong registers, see [Troubleshooting](#troubleshooting). |
 
 ### Removing the Integration
 
