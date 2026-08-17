@@ -24,7 +24,9 @@ column (`int16`, `uint16`, `int32`, `uint32`) into name and remark, rejoining
 the words the layout breaks across lines, and keeping only the first instance of
 each repeated component block. The `Gelesen als` column is joined on the address:
 the base address of a `pysolarfocus` component plus the relative address of its
-`DataValue` is the `Adr.` of the table.
+`DataValue` is the `Adr.` of the table. The arrows in the document are Wingdings
+and come out in the private use area, where they render as tofu; they are written
+as `→` here.
 
 ## How to read it
 
@@ -328,7 +330,7 @@ _einmalig_
 | 2401 | Statuszeile Kessel | `uint16` | `bb_status` |
 | 2402 | Betriebsminuten zum Wartungszeitpunkt | `int32` | `bb_time_of_operation_at_maintenance` |
 | 2404 | Nachrichtennummer | `int16` | `bb_message_number` |
-| 2405 | Türkontakt  offen/geschlossen | `int16` | `bb_door_contact` |
+| 2405 | Türkontakt → offen/geschlossen | `int16` | `bb_door_contact` |
 | 2406 | Kesselreinigung | `int16` | `bb_cleaning` |
 | 2407 | Ascheboxfüllstand | `int16` | `bb_ash_container` |
 | 2408 | Außentemperatur | `int16` | `hp_outdoor_temperature`, `bb_outdoor_temperature` |
