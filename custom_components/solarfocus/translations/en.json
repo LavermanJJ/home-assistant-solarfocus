@@ -2,8 +2,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Update Component Selection",
-        "description": "Select which components are available in your setup and should be read.",
+        "title": "Components and Polling",
+        "description": "How often the heating system is read, and which of its components to read. The address of the controller and its API version are changed under Reconfigure.",
         "data": {
           "scan_interval": "Polling interval (s)",
           "heating_circuit": "Heating Circuit",
@@ -29,7 +29,7 @@
       }
     },
     "error": {
-      "already_configured": "This address is already used by another Solarfocus entry"
+      "invalid_scan_interval": "The polling interval has to be at least five seconds"
     }
   },
   "config": {

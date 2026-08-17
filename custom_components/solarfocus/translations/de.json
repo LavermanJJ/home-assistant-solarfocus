@@ -2,8 +2,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Aktualisiere Komponenten Auswahl",
-        "description": "Welche Komponenten sollen integriert werden?",
+        "title": "Komponenten und Abfrage",
+        "description": "Wie oft die Anlage gelesen wird und welche ihrer Komponenten. Die Adresse des Reglers und die API-Version werden unter „Neu konfigurieren“ geändert.",
         "data": {
           "scan_interval": "Abfrage Intervall (s)",
           "boiler": "Boiler",
@@ -29,7 +29,7 @@
       }
     },
     "error": {
-      "already_configured": "Diese Adresse wird bereits von einem anderen Solarfocus-Eintrag verwendet"
+      "invalid_scan_interval": "Das Abfrageintervall muss mindestens fünf Sekunden betragen"
     }
   },
   "config": {

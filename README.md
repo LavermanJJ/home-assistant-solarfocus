@@ -30,6 +30,7 @@
    - [Integration Setup](#integration-setup)
    - [Installation Parameters](#installation-parameters)
    - [Configuration Options](#configuration-options)
+   - [Changing the Connection](#changing-the-connection)
    - [Removing the Integration](#removing-the-integration)
 5. [Supported Functionality](#supported-functionality)
 6. [How Data Is Updated](#how-data-is-updated)
@@ -411,21 +412,21 @@ time, so close other Modbus clients pointing at it.
 **All entities are unavailable.**
 The heating system could not be read at all on the last poll. The log says why, once per outage
 rather than once per interval. Common causes are the controller being restarted, a DHCP address
-change (fix it in the options, see [Configuration Options](#configuration-options)) or another
-Modbus client holding the connection.
+change (point the entry at the new address, see [Changing the Connection](#changing-the-connection))
+or another Modbus client holding the connection.
 
 **One component is stuck on old values while the rest updates.**
 That component could not be read. The log names it, with a warning when it starts failing and
 another when it recovers. If it fails on every poll, the registers of that component are
 probably not answered by your software version - lower the API version under
-[Configuration Options](#configuration-options) or set the component to 0 if your installation
-does not have it.
+[Changing the Connection](#changing-the-connection) or set the component to 0 under
+[Configuration Options](#configuration-options) if your installation does not have it.
 
 **Entities I expect are missing.**
 Either the component is set to 0 in the options, or the entity needs a newer API version than
 the one configured, or it does not exist for your system. Check the version selected under
-[Configuration Options](#configuration-options) against the version shown on your display, and
-note that some entities are created disabled and have to be enabled on the device page.
+[Changing the Connection](#changing-the-connection) against the version shown on your display,
+and note that some entities are created disabled and have to be enabled on the device page.
 
 **More than one solar circuit does not show up.**
 Multiple solar circuits require API version `25.030` or newer. Below that the count is capped
