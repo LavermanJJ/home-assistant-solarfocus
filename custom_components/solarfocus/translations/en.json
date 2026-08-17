@@ -50,16 +50,35 @@
           "solar" : "Solar",
           "fresh_water_module" : "Fresh water module"
         }
+      },
+      "reconfigure": {
+        "title": "Solarfocus connection",
+        "description": "Change where this entry looks for your heating system. Which components it reads stays as it is.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Polling interval (s)",
+          "api_version": "Solarfocus API Version"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of the eco manager-touch.",
+          "port": "The Modbus TCP port of the controller, 502 unless it was changed.",
+          "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
+          "api_version": "The version the controller shows under Fachmann - Modbus. A higher one than it runs creates entities it cannot answer."
+        }
       }
     },
     "error": {
       "name_exists": "Another Solarfocus entry already uses this name",
+      "already_configured": "Another Solarfocus entry already uses this address",
+      "invalid_scan_interval": "The polling interval has to be at least five seconds",
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "exceptions": {

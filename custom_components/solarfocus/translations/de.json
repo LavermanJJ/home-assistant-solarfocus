@@ -27,10 +27,13 @@
   },
   "config": {
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "reconfigure_successful": "Neu konfiguriert"
     },
     "error": {
       "name_exists": "Dieser Name wird bereits von einem anderen Solarfocus-Eintrag verwendet",
+      "already_configured": "Diese Adresse wird bereits von einem anderen Solarfocus-Eintrag verwendet",
+      "invalid_scan_interval": "Das Abfrageintervall muss mindestens fünf Sekunden betragen",
       "cannot_connect": "Verbindung Fehlgeschlagen",
       "unknown": "Unexpected error"
     },
@@ -57,6 +60,22 @@
           "biomassboiler": "Kessel",
           "solar": "Solar",
           "fresh_water_module" : "Frischwassermodule"
+        }
+      },
+      "reconfigure": {
+        "title": "Solarfocus-Verbindung",
+        "description": "Ändern, wo dieser Eintrag die Heizungsanlage sucht. Welche Komponenten gelesen werden, bleibt unverändert.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "scan_interval": "Abfrage Intervall (s)",
+          "api_version": "Solarfocus API Version"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des eco manager-touch.",
+          "port": "Der Modbus-TCP-Port des Reglers, 502 sofern er nicht geändert wurde.",
+          "scan_interval": "Wie oft jede konfigurierte Komponente gelesen wird, in Sekunden. Fünf ist der kleinste akzeptierte Wert.",
+          "api_version": "Die Version, die der Regler unter Fachmann - Modbus anzeigt. Eine höhere als die tatsächliche erzeugt Entitäten, die er nicht beantworten kann."
         }
       }
     }
