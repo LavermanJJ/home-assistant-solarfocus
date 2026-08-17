@@ -149,9 +149,11 @@ async def test_unreachable_device_fails_the_update(hass: HomeAssistant) -> None:
     api.is_connected = False
     coordinator = _coordinator(hass, api, heating_circuit=1)
 
-    with pytest.raises(UpdateFailed, match="solarfocus.local:502"):
+    with pytest.raises(UpdateFailed) as failure:
         await coordinator._async_update_data()
 
+    assert failure.value.translation_key == "cannot_connect"
+    assert failure.value.translation_placeholders == {"address": "solarfocus.local:502"}
     assert not api.update_heating.called
 
 
@@ -167,8 +169,14 @@ async def test_all_reads_failing_fails_the_refresh(hass: HomeAssistant) -> None:
     api.update_buffer.return_value = False
     coordinator = _coordinator(hass, api, heating_circuit=1, buffer=1)
 
-    with pytest.raises(UpdateFailed, match=CONF_HEATING_CIRCUIT):
+    with pytest.raises(UpdateFailed) as failure:
         await coordinator._async_update_data()
+
+    assert failure.value.translation_key == "cannot_read"
+    assert failure.value.translation_placeholders == {
+        "address": "solarfocus.local:502",
+        "components": f"{CONF_HEATING_CIRCUIT}, {CONF_BUFFER}",
+    }
 
 
 async def test_one_failing_component_keeps_the_others_working(

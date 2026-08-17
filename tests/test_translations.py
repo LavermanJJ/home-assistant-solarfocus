@@ -11,8 +11,10 @@ These tests take over the part of that plugin that does matter, under rules that
 fit a custom component: numeric state keys are allowed, sloppy values are not.
 """
 
+import ast
 import json
 import pathlib
+import re
 
 from pysolarfocus import ApiVersions, Systems
 import pytest
@@ -27,7 +29,9 @@ from custom_components.solarfocus import (
     switch,
     water_heater,
 )
+from custom_components.solarfocus.const import DOMAIN
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.translation import async_get_translations
 
 from .conftest import build_config_entry, build_coordinator
 
@@ -206,3 +210,133 @@ def test_the_locked_state_is_still_translated() -> None:
         sensors = _load(filename)["entity"]["sensor"]
         for key in ("bo_circulation", "bo_single_charge"):
             assert sensors[key]["state"]["-1"]
+
+
+def _domain(node: ast.expr) -> str:
+    """Return the domain a raise names, spelled out or as the constant."""
+    if isinstance(node, ast.Constant):
+        return node.value
+
+    return DOMAIN if ast.unparse(node) == "DOMAIN" else ast.unparse(node)
+
+
+def _raised_translations():
+    """Yield every (module, key, domain, placeholders) the integration raises.
+
+    Read out of the source rather than listed here: a raise added with a key
+    nobody translated is the failure these tests are for, and a list would have
+    to be remembered at exactly the moment it was not.
+    """
+    for path in sorted(COMPONENT_DIR.glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call):
+                continue
+
+            keywords = {kw.arg: kw.value for kw in node.exc.keywords}
+            if "translation_key" not in keywords:
+                continue
+
+            given = keywords.get("translation_placeholders")
+            yield (
+                path.name,
+                ast.literal_eval(keywords["translation_key"]),
+                _domain(keywords["translation_domain"]),
+                {ast.literal_eval(key) for key in given.keys} if given else set(),
+            )
+
+
+RAISED = list(_raised_translations())
+
+
+def _placeholders(message: str) -> set[str]:
+    """Return the names Home Assistant substitutes into a message."""
+    return set(re.findall(r"\{(\w+)\}", message))
+
+
+def test_something_raises_a_translated_exception() -> None:
+    """Guard the source scan against silently finding nothing."""
+    assert {key for _, key, _, _ in RAISED} == {
+        "cannot_connect",
+        "cannot_read",
+        "cannot_set_up",
+    }
+
+
+def test_every_raised_exception_names_this_integration() -> None:
+    """The message is looked up in the domain given, so a wrong one finds none."""
+    wrong = [(module, key) for module, key, domain, _ in RAISED if domain != DOMAIN]
+
+    assert not wrong
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_every_raised_exception_is_translated(filename: str) -> None:
+    """An exception with no message shows the user its key instead.
+
+    `HomeAssistantError` builds the message from the translation when it is
+    raised without one, so a key that is missing here reaches the user as
+    `cannot_read` rather than as a sentence.
+    """
+    messages = _load(filename).get("exceptions", {})
+
+    missing = [
+        (module, key) for module, key, _, _ in RAISED if not messages.get(key, {}).get("message")
+    ]
+
+    assert not missing, f"{filename}: {missing}"
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_exception_messages_use_exactly_the_placeholders_they_are_given(
+    filename: str,
+) -> None:
+    """A placeholder is only substituted if both sides name it.
+
+    One the message does not use drops the detail; one the raise does not pass
+    is rendered as `{address}`, in curly braces, to the user.
+    """
+    messages = _load(filename).get("exceptions", {})
+
+    mismatched = [
+        (module, key, given, _placeholders(messages[key]["message"]))
+        for module, key, _, given in RAISED
+        if key in messages and _placeholders(messages[key]["message"]) != given
+    ]
+
+    assert not mismatched, f"{filename}: {mismatched}"
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_no_exception_translation_is_left_over(filename: str) -> None:
+    """A message nothing raises is a rename that left its old key behind."""
+    raised = {key for _, key, _, _ in RAISED}
+
+    unused = [key for key in _load(filename).get("exceptions", {}) if key not in raised]
+
+    assert not unused, f"{filename}: {unused}"
+
+
+def test_english_exception_messages_match_the_strings_file() -> None:
+    """`translations/en.json` is the English copy of `strings.json`."""
+    assert _load("translations/en.json")["exceptions"] == (
+        _load("strings.json")["exceptions"]
+    )
+
+
+async def test_home_assistant_renders_a_raised_exception(
+    hass: HomeAssistant, enable_custom_integrations
+) -> None:
+    """The messages have to be where Home Assistant looks for them.
+
+    Everything above reads the files off disk. This reads them back the way the
+    exception does, which is the part that fails if the section is named or
+    nested wrongly - the user gets the bare key and no error anywhere says why.
+    """
+    translations = await async_get_translations(hass, "en", "exceptions", [DOMAIN])
+
+    message = translations[f"component.{DOMAIN}.exceptions.cannot_connect.message"]
+
+    assert message.format(address="solarfocus.local:502") == (
+        "Cannot connect to the Solarfocus system at solarfocus.local:502."
+    )

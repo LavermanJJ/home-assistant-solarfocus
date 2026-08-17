@@ -146,6 +146,41 @@ async def test_setup_retries_when_the_device_is_unreachable(
     assert config_entry.state is ConfigEntryState.SETUP_RETRY
 
 
+async def test_a_refused_connection_says_so(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api, config_entry
+) -> None:
+    """Nothing to talk to at the address is the common half of a failed setup.
+
+    Telling that user their controller answered and then went quiet sends them
+    looking at the heating system for a problem that is in the network.
+    """
+    api.connect.return_value = False
+    api.is_connected = False
+    config_entry.add_to_hass(hass)
+
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert config_entry.error_reason_translation_key == "cannot_connect"
+
+
+async def test_a_controller_that_answers_nothing_says_that_instead(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api, config_entry
+) -> None:
+    """A connection that is accepted and read from anyway is the other half."""
+    api.is_connected = True
+    for component in ("heating", "buffer", "boiler", "heatpump"):
+        getattr(api, f"update_{component}").return_value = False
+    config_entry.add_to_hass(hass)
+
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert config_entry.error_reason_translation_key == "cannot_set_up"
+
+
 async def test_updating_options_reloads_the_entry(
     hass: HomeAssistant, enable_custom_integrations, mock_api, config_entry
 ) -> None:
