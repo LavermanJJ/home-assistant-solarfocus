@@ -10,6 +10,7 @@ fail this file and be answered for, which is exactly what a list that has to be
 updated by hand does.
 """
 
+import json
 import pathlib
 
 import pytest
@@ -18,6 +19,16 @@ import yaml
 from custom_components.solarfocus import sensor
 
 COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
+
+# `strings.json` is the source of the translations; the files under
+# `translations` are what Home Assistant actually loads for a custom
+# integration, so a description that only reaches the first of them reaches no
+# user.
+STRING_FILES = (
+    "strings.json",
+    "translations/en.json",
+    "translations/de.json",
+)
 
 PLATFORMS = (
     "binary_sensor",
@@ -190,7 +201,8 @@ def test_the_gold_rules_that_are_a_file_or_a_function_exist() -> None:
     assert (COMPONENT_DIR / "icons.json").stat().st_size > 0
 
 
-def test_every_field_of_every_step_is_described() -> None:
+@pytest.mark.parametrize("strings_file", STRING_FILES)
+def test_every_field_of_every_step_is_described(strings_file: str) -> None:
     """Half of the config flow rule, and the half that rots.
 
     A field added to a form without a `data_description` is one the user is
@@ -200,7 +212,7 @@ def test_every_field_of_every_step_is_described() -> None:
     """
     assert _status("config-flow") == "done"
 
-    strings = yaml.safe_load((COMPONENT_DIR / "strings.json").read_text("utf-8"))
+    strings = json.loads((COMPONENT_DIR / strings_file).read_text("utf-8"))
     steps = {**strings["config"]["step"], **strings["options"]["step"]}
 
     undescribed = {
@@ -210,6 +222,26 @@ def test_every_field_of_every_step_is_described() -> None:
     }
 
     assert not undescribed
+
+
+@pytest.mark.parametrize("strings_file", STRING_FILES)
+def test_every_error_a_form_shows_is_a_string(strings_file: str) -> None:
+    """An error with no string reaches the user as its own key.
+
+    The two flows do not share an error block: what the options form returns is
+    looked up under `options`, what the config and reconfigure steps return
+    under `config`. The options form rejects one thing, a polling interval
+    below the minimum; a key left behind on either side is one that no longer
+    matches what the flow can say.
+    """
+    strings = json.loads((COMPONENT_DIR / strings_file).read_text("utf-8"))
+    source = _source("config_flow")
+
+    assert set(strings["options"]["error"]) == {"invalid_scan_interval"}
+
+    unused = [key for key in strings["config"]["error"] if f'"{key}"' not in source]
+
+    assert not unused
 
 
 def test_the_platinum_rules_are_still_open() -> None:
