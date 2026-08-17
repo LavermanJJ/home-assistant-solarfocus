@@ -7,6 +7,7 @@ from pysolarfocus import SolarfocusAPI
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
+from homeassistant.core import callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -117,12 +118,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         written - would go with it. So the rest keeps updating and the failure
         is logged instead, once, until the set of failing components changes.
         """
+        self._report_failed_components(failed)
+
         if set(failed) == self._failed_components:
             return
 
-        recovered = self._failed_components - set(failed)
         self._failed_components = set(failed)
-        self._report_failed_components(failed, recovered)
 
         if failed:
             _LOGGER.warning(
@@ -134,9 +135,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.info("Reading all components of %s works again", self._address)
 
-    def _report_failed_components(
-        self, failed: list[str], recovered: set[str]
-    ) -> None:
+    def _report_failed_components(self, failed: list[str]) -> None:
         """Raise a repair issue per component that cannot be read, one per entry.
 
         A register range a particular firmware does not answer fails on every
@@ -149,15 +148,22 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         Nothing here can fix it: either the component is not installed and the
         user should switch it off in the options, or the api version is set
         higher than the controller runs.
-        """
-        for option in recovered:
-            ir.async_delete_issue(self.hass, DOMAIN, self._issue_id(option))
 
-        for option in failed:
+        Every component is answered for, not only the ones that changed or are
+        configured: switching a component off is what the issue asks the user to
+        do, and that reloads the entry into a coordinator that knows nothing
+        about the issues the one before it raised.
+        """
+        for option, _ in COMPONENT_UPDATES:
+            issue_id = component_issue_id(self._entry.entry_id, option)
+            if option not in failed:
+                ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+                continue
+
             ir.async_create_issue(
                 self.hass,
                 DOMAIN,
-                self._issue_id(option),
+                issue_id,
                 is_fixable=False,
                 severity=ir.IssueSeverity.WARNING,
                 translation_key="component_unavailable",
@@ -168,13 +174,26 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
                 },
             )
 
-    def _issue_id(self, option: str) -> str:
-        """Return the issue id of one component of this entry.
 
-        Per component rather than one for all of them, so that a component
-        coming back clears its own issue and leaves the others standing.
-        """
-        return f"component_unavailable_{self._entry.entry_id}_{option}"
+def component_issue_id(entry_id: str, option: str) -> str:
+    """Return the issue id of one component of one entry.
+
+    Per component rather than one for all of them, so that a component coming
+    back clears its own issue and leaves the others standing.
+    """
+    return f"component_unavailable_{entry_id}_{option}"
+
+
+@callback
+def async_delete_component_issues(hass, entry) -> None:
+    """Delete every component issue an entry raised.
+
+    An entry that is unloaded is not reading anything, and one that is removed
+    is not there to be configured, so an issue naming it has nothing left to
+    say. Neither is noticed by the issue registry on its own.
+    """
+    for option, _ in COMPONENT_UPDATES:
+        ir.async_delete_issue(hass, DOMAIN, component_issue_id(entry.entry_id, option))
 
 
 # The coordinator of an entry lives on the entry itself, this spells that out

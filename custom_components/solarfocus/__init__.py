@@ -32,7 +32,11 @@ from .const import (
     build_unique_id,
     solar_count,
 )
-from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
+from .coordinator import (
+    SolarfocusConfigEntry,
+    SolarfocusDataUpdateCoordinator,
+    async_delete_component_issues,
+)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -108,11 +112,12 @@ def _async_sync_unique_id(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> 
     the options flow keeps the update out of the flow, where it would fire the
     update listener and reload the entry against the options it is about to
     replace. Saving options reloads the entry, so this runs right after.
-    """
-    if entry.unique_id is None:
-        # A duplicate the migration deliberately left without one.
-        return
 
+    An entry the migration left without a unique id is given one here as soon
+    as the address is free, which is how the duplicate reported below stops
+    being reported: the user removes the other entry, and the one they kept
+    takes the address over on its next load.
+    """
     unique_id = build_unique_id(entry.options[CONF_HOST], entry.options[CONF_PORT])
     if entry.unique_id == unique_id:
         return
@@ -121,13 +126,16 @@ def _async_sync_unique_id(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> 
         other.unique_id == unique_id and other.entry_id != entry.entry_id
         for other in hass.config_entries.async_entries(DOMAIN)
     ):
-        # The options flow refuses this, so it takes a hand-edited entry to get
-        # here. Leave the old unique id rather than colliding.
-        _LOGGER.warning(
-            "Not moving the unique id of %s to %s, another entry already has it",
-            entry.title,
-            unique_id,
-        )
+        # Another entry is on this address already: the duplicate the migration
+        # deliberately left without a unique id, or a hand-edited one, which the
+        # options flow refuses. Either way this entry keeps what it has rather
+        # than colliding.
+        if entry.unique_id is not None:
+            _LOGGER.warning(
+                "Not moving the unique id of %s to %s, another entry already has it",
+                entry.title,
+                unique_id,
+            )
         return
 
     hass.config_entries.async_update_entry(entry, unique_id=unique_id)
@@ -147,17 +155,16 @@ def _async_report_duplicate_entry(
     Which of the two to remove is the user's to say: they are the one who knows
     which set of entities their dashboards and automations name.
     """
-    issue_id = f"duplicate_entry_{entry.entry_id}"
-
     if entry.unique_id is not None:
-        # Removing the other entry and reloading this one clears it.
-        ir.async_delete_issue(hass, DOMAIN, issue_id)
+        # Removing the other entry and reloading this one takes the address
+        # over, which is what clears this.
+        ir.async_delete_issue(hass, DOMAIN, _duplicate_issue_id(entry))
         return
 
     ir.async_create_issue(
         hass,
         DOMAIN,
-        issue_id,
+        _duplicate_issue_id(entry),
         is_fixable=False,
         severity=ir.IssueSeverity.WARNING,
         translation_key="duplicate_entry",
@@ -170,6 +177,11 @@ def _async_report_duplicate_entry(
     )
 
 
+def _duplicate_issue_id(entry: SolarfocusConfigEntry) -> str:
+    """Return the issue id naming this entry as one of a duplicate pair."""
+    return f"duplicate_entry_{entry.entry_id}"
+
+
 async def async_update_options(
     hass: HomeAssistant, entry: SolarfocusConfigEntry
 ) -> None:
@@ -180,10 +192,16 @@ async def async_update_options(
 async def async_unload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
     """Unload a config entry.
 
-    The coordinator lives on the entry, so unloading the platforms is all there
-    is to clean up.
+    The coordinator lives on the entry, so the platforms are all there is to
+    unload. The repair issues are not on the entry and outlive it, including
+    the removal of the entry they name, so they are deleted here.
     """
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    ir.async_delete_issue(hass, DOMAIN, _duplicate_issue_id(entry))
+    async_delete_component_issues(hass, entry)
+
+    return unloaded
 
 
 async def async_reload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> None:

@@ -95,7 +95,7 @@
   "issues": {
     "duplicate_entry": {
       "title": "Two Solarfocus entries for one heating system",
-      "description": "\"{title}\" and another entry both point at {address}, which predates this integration identifying a system by its address. Both keep working, but they poll one controller over one Modbus connection and every entity exists twice.\n\nRemove whichever of the two your dashboards and automations do not name. Nothing here can choose for you, and removing the wrong one renames the entities you kept."
+      "description": "\"{title}\" and another entry both point at {address}, which predates this integration identifying a system by its address. Both keep working, but they poll one controller over one Modbus connection and every entity exists twice.\n\nRemove whichever of the two your dashboards and automations do not name. Nothing here can choose for you, and removing the wrong one renames the entities you kept. The entry you keep takes the address over the next time it is loaded, and this warning goes with it."
     },
     "component_unavailable": {
       "title": "{component} cannot be read from your Solarfocus system",

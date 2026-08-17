@@ -43,6 +43,9 @@ async def test_the_duplicate_the_migration_left_behind_is_reported(
     colliding, so it keeps working and nothing says why there are two of every
     entity. Which one to remove is the user's call.
     """
+    other = build_config_entry(heating_circuit=1)
+    other.add_to_hass(hass)
+
     entry = build_config_entry(heating_circuit=1)
     entry.add_to_hass(hass)
     hass.config_entries.async_update_entry(entry, unique_id=None)
@@ -57,23 +60,100 @@ async def test_the_duplicate_the_migration_left_behind_is_reported(
     assert issue.translation_placeholders["address"] == "solarfocus.local:502"
 
 
-async def test_the_duplicate_issue_clears_once_the_entry_has_an_address(
+async def test_an_entry_alone_on_its_address_is_not_a_duplicate(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
-    """Removing the other entry and reloading is the fix, so it has to clear."""
+    """Having no unique id is only worth reporting while something else has it.
+
+    An entry that lost its unique id with nothing else on the address is the
+    same entry the migration would have given one, so it is given one here
+    rather than reported as a pair that does not exist.
+    """
     entry = build_config_entry(heating_circuit=1)
     entry.add_to_hass(hass)
     hass.config_entries.async_update_entry(entry, unique_id=None)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.unique_id == "solarfocus.local:502"
+    assert not ir.async_get(hass).issues
+
+
+async def test_the_duplicate_issue_clears_once_the_other_entry_is_gone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Doing what the issue asks has to be what clears it.
+
+    The user removes one of the two entries; the one they keep is still the
+    one the migration left without a unique id, and takes the address over on
+    its next load. Without that it asks them again for something they did.
+    """
+    other = build_config_entry(heating_circuit=1)
+    other.add_to_hass(hass)
+
+    entry = build_config_entry(heating_circuit=1)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, unique_id=None)
+
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
     assert _issue(hass, f"duplicate_entry_{entry.entry_id}") is not None
 
-    hass.config_entries.async_update_entry(entry, unique_id="solarfocus.local:502")
+    await hass.config_entries.async_remove(other.entry_id)
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
 
+    assert entry.unique_id == "solarfocus.local:502"
     assert _issue(hass, f"duplicate_entry_{entry.entry_id}") is None
+
+
+async def test_removing_an_entry_takes_its_issues_with_it(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """An issue outlives the entry it names, which the registry does not notice.
+
+    What is left behind is a warning about a heating system that is no longer
+    configured, naming an entry the user cannot open, until Home Assistant is
+    restarted.
+    """
+    api.update_heating.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+
+    assert _issue(
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+    ) is not None
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert not ir.async_get(hass).issues
+
+
+async def test_switching_a_failing_component_off_clears_its_issue(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The issue asks the user to switch the component off, so that has to work.
+
+    Doing it saves the options, which reloads the entry into a coordinator that
+    has never seen the component fail - and one that never reads it again, so
+    nothing about the failure changes for it to notice.
+    """
+    api.update_boiler.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}"
+
+    assert _issue(hass, issue_id) is not None
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_BOILER: 0}
+    )
+    await hass.async_block_till_done()
+
+    assert _issue(hass, issue_id) is None
 
 
 async def test_a_component_that_answers_nothing_is_reported(
