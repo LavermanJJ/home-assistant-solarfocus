@@ -85,6 +85,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             # Nothing could be read: the system is gone rather than one of its
             # components being unhappy. Reporting that as a success would leave
             # every entity available and showing its last value.
+            #
+            # No component is failing on its own any more, so whatever was doing
+            # that is forgotten here rather than left behind to be reported as
+            # still true. The outage itself is what the failed refresh says.
+            self._failed_components = set()
             raise UpdateFailed(
                 f"Failed to read {', '.join(failed)} from {self._address}"
             )

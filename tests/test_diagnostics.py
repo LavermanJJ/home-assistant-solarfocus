@@ -170,3 +170,37 @@ async def test_diagnostics_name_the_components_that_could_not_be_read(
 
     assert diagnostics["coordinator"]["last_update_success"] is True
     assert diagnostics["coordinator"]["failed_components"] == ["boiler"]
+
+
+async def test_diagnostics_do_not_blame_one_component_for_a_whole_outage(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """A component named here is one that fails while the others read fine.
+
+    When the heating system stops answering altogether the refresh fails, and
+    that is what the download says. Naming the component that happened to be
+    failing before would point a report at the wrong thing.
+    """
+    api.heating_circuits = [HeatingCircuit()]
+    api.boilers = [Boiler()]
+
+    entry = build_config_entry(heating_circuit=1, boiler=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    api.update_boiler.return_value = False
+    await entry.runtime_data.async_refresh()
+
+    assert (await async_get_config_entry_diagnostics(hass, entry))["coordinator"][
+        "failed_components"
+    ] == ["boiler"]
+
+    api.update_heating.return_value = False
+    await entry.runtime_data.async_refresh()
+
+    diagnostics = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert diagnostics["coordinator"]["last_update_success"] is False
+    assert diagnostics["coordinator"]["failed_components"] == []
