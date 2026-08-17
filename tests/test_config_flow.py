@@ -699,6 +699,32 @@ async def test_reconfigure_moves_the_entry_and_its_unique_id(
     assert entry.unique_id == "10.0.0.5:503"
 
 
+async def test_reconfigure_reloads_the_entry_once(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Saving the new address is what reloads the entry, and only that.
+
+    The integration registers an update listener that reloads on an options
+    change. Asking the flow to reload as well reloads twice, which Home
+    Assistant reports from 2026.6 and refuses from 2026.12.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_reload"
+    ) as async_reload:
+        result = await _start_reconfigure(hass, entry)
+        await hass.config_entries.flow.async_configure(
+            result["flow_id"], RECONFIGURE_INPUT
+        )
+        await hass.async_block_till_done()
+
+    assert async_reload.call_args_list == [((entry.entry_id,),)]
+
+
 async def test_reconfigure_leaves_the_components_alone(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:

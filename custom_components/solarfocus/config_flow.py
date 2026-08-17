@@ -353,7 +353,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
-                return self.async_update_reload_and_abort(
+                # Updating the options is what reloads the entry: the update
+                # listener the integration registers does that already, for the
+                # options flow as much as for here. Asking for the reload as
+                # well would do it twice, and Home Assistant refuses to from
+                # 2026.12 for exactly that reason.
+                return self.async_update_and_abort(
                     entry,
                     # An entry the migration left without a unique id shares an
                     # address with another one by definition, so giving it one
