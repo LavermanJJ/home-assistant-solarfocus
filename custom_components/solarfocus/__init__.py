@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 import logging
 
 from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
@@ -16,7 +17,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr, issue_registry as ir
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 
 from .const import (
     CONF_BIOMASS_BOILER,
@@ -188,26 +193,43 @@ def _async_identify_device_by_entry_id(
 ) -> None:
     """Re-identify the device of this entry by the entry id.
 
-    The identifier is changed on the device that is there rather than a new one
-    being created: the device keeps its id, and with it the area it is in, the
+    The identifier is changed on a device that is already there rather than a
+    new one being created: it keeps its id, and with it the area it is in, the
     name the user gave it, and every automation and dashboard that points at it
     by device.
 
-    An entry that has never been set up has no device yet, and one that has
-    already been through this has no old identifier left. Both are left alone.
+    The old identifier is not looked for by name. It was the title of the entry
+    as of the last successful setup, and a title changed since then - or changed
+    while the controller was unreachable - is not the one the device carries.
+    Every device of this entry is a device this migration is about.
+
+    There can be more than one, because renaming an entry is what built a second
+    device under the new title in the first place. The one the entities are on
+    is the one that is kept; the others hold nothing and would stay in the
+    registry forever otherwise, since they still name a config entry that
+    exists.
     """
     registry = dr.async_get(hass)
-    old_identifier = (DOMAIN, entry.title)
+    devices = dr.async_entries_for_config_entry(registry, entry.entry_id)
+    identifier = (DOMAIN, entry.entry_id)
 
-    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
-        if old_identifier not in device.identifiers:
-            continue
+    if not devices or any(identifier in device.identifiers for device in devices):
+        return
 
-        registry.async_update_device(
-            device.id,
-            new_identifiers=(device.identifiers - {old_identifier})
-            | {(DOMAIN, entry.entry_id)},
-        )
+    entities = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+    entity_count = Counter(entity.device_id for entity in entities)
+    keep = max(devices, key=lambda device: entity_count[device.id])
+
+    registry.async_update_device(keep.id, new_identifiers={identifier})
+
+    for device in devices:
+        if device.id != keep.id:
+            _LOGGER.debug(
+                "Removing device %s, left behind by a rename of %s",
+                device.id,
+                entry.title,
+            )
+            registry.async_remove_device(device.id)
 
 
 async def async_update_options(

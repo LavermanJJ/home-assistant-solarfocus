@@ -102,11 +102,15 @@ in local test runs.
 - **Deprecated:** `DeviceEntry.config_entries`, `config_entries_subentries`,
   `primary_config_entry`, `DeviceRegistry.async_get_device()`, the `via_device` parameter, and the
   config-entry-management kwargs of `async_update_device()`.
-- **Impact here:** low — `entity.py:118-130` only returns a `DeviceInfo`-shaped dict and never
-  touches the device registry API. **But** the device identifier is
-  `{(DOMAIN, self.coordinator._entry.title)}`, i.e. keyed on the user-chosen entry *title*. Two
-  entries with the same title would now collide under the one-device-one-entry rule. Switch the
-  identifier to `entry.entry_id`, or add a unique ID (see 3.5).
+- **Impact here:** low — `entity.py` only returns a `DeviceInfo`-shaped dict and never touches the
+  device registry API from the entity. The identifier used to be
+  `{(DOMAIN, self.coordinator._entry.title)}`, i.e. keyed on the user-chosen entry *title*, which
+  two entries of the same name would have made collide under the one-device-one-entry rule.
+- **Done** in #210: entry version 9 keys the identifier off `entry.entry_id` and re-identifies the
+  existing device in place, so it keeps its id, area and name override. Where an earlier rename had
+  already built a second device, the migration removes the one the entities are not on — with
+  `async_remove_device()` rather than the config-entry-management kwargs of
+  `async_update_device()`, which this post deprecates.
 
 ---
 
@@ -284,7 +288,8 @@ the same controller.
    scale rules, and touches every platform file once.
 4. **3.2 / 3.3** Coordinator cleanup: pass `config_entry`, move `api.connect()` into `_async_setup`,
    use `async_config_entry_first_refresh()`, raise `UpdateFailed`, turn off entity polling.
-5. **3.5 + 2.4** Add a config flow unique ID and key the device identifier off `entry_id`.
+5. **3.5 + 2.4** Add a config flow unique ID and key the device identifier off `entry_id`. Both
+   done: the unique id in #185 (entry version 7), the device identifier in #210 (entry version 9).
 6. **2.1** Swap `PERCENTAGE` for `UnitOfRatio.PERCENTAGE`.
 7. **3.4 / 3.6 / 3.7 / 3.8** Polish: `icons.json`, `suggested_display_precision`, unit translations,
    `brand/` images.
