@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 import logging
 
 from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
@@ -16,7 +17,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 
 from .const import (
     CONF_BIOMASS_BOILER,
@@ -180,6 +185,51 @@ def _async_report_duplicate_entry(
 def _duplicate_issue_id(entry: SolarfocusConfigEntry) -> str:
     """Return the issue id naming this entry as one of a duplicate pair."""
     return f"duplicate_entry_{entry.entry_id}"
+
+
+@callback
+def _async_identify_device_by_entry_id(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Re-identify the device of this entry by the entry id.
+
+    The identifier is changed on a device that is already there rather than a
+    new one being created: it keeps its id, and with it the area it is in, the
+    name the user gave it, and every automation and dashboard that points at it
+    by device.
+
+    The old identifier is not looked for by name. It was the title of the entry
+    as of the last successful setup, and a title changed since then - or changed
+    while the controller was unreachable - is not the one the device carries.
+    Every device of this entry is a device this migration is about.
+
+    There can be more than one, because renaming an entry is what built a second
+    device under the new title in the first place. The one the entities are on
+    is the one that is kept; the others hold nothing and would stay in the
+    registry forever otherwise, since they still name a config entry that
+    exists.
+    """
+    registry = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(registry, entry.entry_id)
+    identifier = (DOMAIN, entry.entry_id)
+
+    if not devices or any(identifier in device.identifiers for device in devices):
+        return
+
+    entities = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+    entity_count = Counter(entity.device_id for entity in entities)
+    keep = max(devices, key=lambda device: entity_count[device.id])
+
+    registry.async_update_device(keep.id, new_identifiers={identifier})
+
+    for device in devices:
+        if device.id != keep.id:
+            _LOGGER.debug(
+                "Removing device %s, left behind by a rename of %s",
+                device.id,
+                entry.title,
+            )
+            registry.async_remove_device(device.id)
 
 
 async def async_update_options(
@@ -351,6 +401,14 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=8
         )
+
+    if config_entry.version == 8:
+        # The device was identified by the title of the entry, so renaming an
+        # entry left its device behind and built a second one next to it. The
+        # entry id is the one name an entry has that a user cannot change.
+        _async_identify_device_by_entry_id(hass, config_entry)
+
+        hass.config_entries.async_update_entry(config_entry, version=9)
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(

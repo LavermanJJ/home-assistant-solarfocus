@@ -29,6 +29,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .conftest import CURRENT_VERSION, build_config_entry, build_options
 
@@ -616,3 +617,190 @@ async def test_migration_of_a_current_entry_changes_nothing(
     assert entry.version == CURRENT_VERSION
     assert entry.data == data
     assert entry.options == options
+
+
+def _version_8_entry(hass: HomeAssistant, title: str = DEFAULT_NAME) -> MockConfigEntry:
+    """Return an entry as version 8 stored one, added to hass."""
+    entry = build_config_entry()
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, title=title, version=8)
+    return entry
+
+
+async def test_migration_identifies_the_device_by_the_entry_id(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """Version 9 takes the device identity off the title of the entry.
+
+    The device is re-identified rather than replaced, so it keeps its id and
+    everything the user hung on it: the area, the name they gave it, and every
+    automation that points at it by device.
+    """
+    entry = _version_8_entry(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.title)},
+        name="Solarfocus",
+    )
+    device_registry.async_update_device(device.id, name_by_user="Heizung Keller")
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+
+    migrated = device_registry.async_get(device.id)
+    assert migrated is not None
+    assert migrated.identifiers == {(DOMAIN, entry.entry_id)}
+    # The same device, so what the user put on it is still there
+    assert migrated.id == device.id
+    assert migrated.name_by_user == "Heizung Keller"
+    assert device_registry.async_get_device({(DOMAIN, entry.title)}) is None
+
+
+async def test_migration_without_a_device_is_still_a_migration(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """An entry that has never been set up has no device to re-identify."""
+    entry = _version_8_entry(hass)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+
+
+async def test_migration_finds_the_device_of_an_entry_renamed_since_setup(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """The registry holds the title of the last setup, not the current one.
+
+    Renaming a version 8 entry while the controller was unreachable left the
+    device under the old title and the entry under the new one. Looking the old
+    identifier up by the current title found nothing and the migration did
+    nothing, so the next setup built a fresh device and orphaned the original -
+    exactly what this migration exists to prevent.
+    """
+    entry = _version_8_entry(hass, title="Haus")
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Haus")}
+    )
+    hass.config_entries.async_update_entry(entry, title="Werkstatt")
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert device_registry.async_get(device.id).identifiers == {
+        (DOMAIN, entry.entry_id)
+    }
+
+
+async def test_migration_keeps_the_device_the_entities_are_on(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry, entity_registry
+) -> None:
+    """A rename under version 8 built a second device, so there can be two.
+
+    The one the entities sit on is the live one. The other holds nothing and
+    would never leave the registry on its own, because it still names a config
+    entry that exists.
+    """
+    entry = _version_8_entry(hass, title="Werkstatt")
+    abandoned = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Haus")}
+    )
+    live = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Werkstatt")}
+    )
+    entity_registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        "Werkstatt_bo1_temperature",
+        config_entry=entry,
+        device_id=live.id,
+    )
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert device_registry.async_get(live.id).identifiers == {(DOMAIN, entry.entry_id)}
+    assert device_registry.async_get(abandoned.id) is None
+    assert len(dr.async_entries_for_config_entry(device_registry, entry.entry_id)) == 1
+
+
+async def test_migration_leaves_the_device_of_another_entry_alone(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """Two entries under different names each keep their own device.
+
+    The old identifier was the title, which is global to the domain rather than
+    to the entry, so the lookup has to be scoped to the entry being migrated.
+    """
+    entry = _version_8_entry(hass, title="Haus")
+    other = _version_8_entry(hass, title="Werkstatt")
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Haus")}
+    )
+    untouched = device_registry.async_get_or_create(
+        config_entry_id=other.entry_id, identifiers={(DOMAIN, "Werkstatt")}
+    )
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert device_registry.async_get(untouched.id).identifiers == {
+        (DOMAIN, "Werkstatt")
+    }
+
+
+async def test_a_renamed_entry_keeps_its_device(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """What the whole migration is for.
+
+    Renaming an entry used to leave its device behind and build a second one
+    under the new title, taking every entity with it.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    before = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    assert len(before) == 1
+
+    hass.config_entries.async_update_entry(entry, title="Heizung Keller")
+    await hass.async_block_till_done()
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    after = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    assert len(after) == 1
+    assert after[0].id == before[0].id
+
+
+async def test_a_renamed_entry_still_duplicates_its_entities(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+) -> None:
+    """The device half of the rename is fixed, the entity half is not.
+
+    Entity unique ids are `f"{entry.title}_{key}"`, so a rename gives every
+    entity of the entry a new one and the registry keeps the old: two sets, the
+    dead one and a `_2` suffixed one, both now on the single device the
+    migration keeps rather than split across two.
+
+    This is here to record it rather than leave it to be discovered. It is the
+    other half of #208, and this test is what will fail when that half is done -
+    which is the point of writing it down.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    before = er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+
+    hass.config_entries.async_update_entry(entry, title="Heizung Keller")
+    await hass.async_block_till_done()
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    after = er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+
+    assert len(after) == 2 * len(before)
+    assert any(registered.entity_id.endswith("_2") for registered in after)
