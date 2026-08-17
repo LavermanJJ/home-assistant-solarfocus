@@ -69,12 +69,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
     if not coordinator.last_update_success:
         # Reading every configured component once tells us whether the entry can
         # be set up at all; Home Assistant retries the setup afterwards.
+        #
+        # The two ways that fails are worth telling apart, because they send the
+        # user to different places: nothing at the address to talk to at all, or
+        # a controller that answered the connection and then none of the
+        # registers. Whether the library is still connected is what says which.
+        address = f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
+        if not api.is_connected:
+            raise ConfigEntryNotReady(
+                translation_domain=DOMAIN,
+                translation_key="cannot_connect",
+                translation_placeholders={"address": address},
+            ) from coordinator.last_exception
+
         raise ConfigEntryNotReady(
             translation_domain=DOMAIN,
             translation_key="cannot_set_up",
-            translation_placeholders={
-                "address": f"{entry.options[CONF_HOST]}:{entry.options[CONF_PORT]}"
-            },
+            translation_placeholders={"address": address},
         ) from coordinator.last_exception
 
     entry.runtime_data = coordinator
