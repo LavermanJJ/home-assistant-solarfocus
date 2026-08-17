@@ -191,10 +191,14 @@ async def async_setup_entry(
                 )
 
                 if count == 1:
-                    # One solar circuit keeps the unnumbered name and key it had
-                    # before there could be four of them. The index stays on the
-                    # description, the library addresses the component with it.
+                    # One solar circuit keeps the unnumbered name, entity id and
+                    # key it had before there could be four of them. The index
+                    # stays on the description, the library addresses the
+                    # component with it.
                     _description.translation_placeholders = {"idx": ""}
+                    _description.object_id_name = _description.object_id_name.replace(
+                        " 1 ", " "
+                    )
                     _description.key = _description.key.replace("so1_", "so_")
 
                 entity = SolarfocusSensor(coordinator, _description)

@@ -104,7 +104,7 @@
   "entity": {
     "binary_sensor": {
       "bb_door_contact": {
-        "name": "Kessel Türkontakt  offen/geschlossen"
+        "name": "Kessel Türkontakt offen/geschlossen"
       },
       "bu_pump": {
         "name": "Pufferspeicher{idx} Ladepumpe"

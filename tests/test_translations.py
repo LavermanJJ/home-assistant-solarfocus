@@ -41,6 +41,7 @@ from custom_components.solarfocus.const import (
     SOLAR_PREFIX,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.translation import async_get_translations
 
 from .conftest import build_config_entry, build_coordinator
@@ -463,6 +464,74 @@ async def test_home_assistant_shows_the_translated_name(
     assert solar.attributes["friendly_name"] == (
         "Solarfocus Solar collector temperature 1"
     )
+
+
+async def test_a_german_installation_keeps_the_english_entity_ids(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The name is translated, the entity id is not.
+
+    Home Assistant builds an entity id from the name in the user's own language
+    for the languages it generates native ids for, German among them. Left to
+    it, a German installation would name its entities
+    `sensor.solarfocus_heizkreis_1_vorlauftemperatur` - and only the ones added
+    from then on, because the entities already in the registry keep the id they
+    were given. Every id ever written into a dashboard, an automation or an
+    answer in an issue is the English one.
+    """
+    await hass.config.async_update(language="de")
+
+    api.heating_circuits[0].room_temperature.scaled_value = 21
+
+    entry = build_config_entry(heating_circuit=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.solarfocus_heating_circuit_1_room_temperature")
+
+    assert state is not None
+    assert state.attributes["friendly_name"] == "Solarfocus Heizkreis 1 Raumtemperatur"
+
+    german = [
+        entry.entity_id
+        for entry in er.async_get(hass).entities.values()
+        if "heizkreis" in entry.entity_id or "vorlauf" in entry.entity_id
+    ]
+
+    assert not german
+
+
+def _unreadable(text: str) -> list[str]:
+    """Return the characters of a string that render as nothing readable.
+
+    The newline is not one of them: the descriptions of the repair issues are
+    markdown, and the blank line between their paragraphs is part of it.
+    """
+    return [
+        hex(ord(char))
+        for char in text
+        if 0xE000 <= ord(char) <= 0xF8FF
+        or (not char.isprintable() and char != "\n")
+    ]
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+def test_no_name_carries_a_character_from_the_specification(filename: str) -> None:
+    """The register documentation is a PDF, and its arrows are Wingdings.
+
+    A glyph copied out of it lands in the private use area, where it renders as
+    tofu in the interface and is slugified out of the entity id - so it neither
+    reads as anything nor stays out of the way.
+    """
+    unreadable = [
+        (path, _unreadable(text))
+        for path, text in _strings(_load(filename))
+        if _unreadable(text)
+    ]
+
+    assert not unreadable, f"{filename}: {unreadable}"
 
 
 @pytest.mark.parametrize("filename", FILENAMES)

@@ -27,6 +27,7 @@ class SolarfocusEntityDescription(EntityDescription):
     component: str | None = None
     component_prefix: str | None = None
     component_idx: str | None = None
+    object_id_name: str | None = None
     min_required_version: str = "21.140"
     unsupported_systems: list[Systems] | None = None
 
@@ -46,8 +47,8 @@ def create_description(
     _description.component = component
     _description.component_prefix = prefix
 
-    # The name is not built here any more. `has_entity_name` makes it the name of
-    # the entity as the user reads it, and a name built from the key is English
+    # The name the user reads is not built here any more. `has_entity_name` makes
+    # it the name of the entity, and a name built from the key is English
     # whatever language Home Assistant is in, so it comes from the translation of
     # `translation_key` instead. The index is the one part of it that is not in
     # the key - `hc_supply_temperature` is the same for every heating circuit -
@@ -56,6 +57,14 @@ def create_description(
     # unnumbered name it has always had, and `format` does not tidy up after
     # an empty one.
     _description.translation_placeholders = {"idx": f" {idx}" if idx else ""}
+
+    # The entity id is still built from it, though. Home Assistant derives one
+    # from the name in the user's own language where that language is written in
+    # latin script, German among them, so translating the name alone would have
+    # renamed every entity of a German installation - and only the ones added
+    # from then on, since the ones in the registry keep the id they were given.
+    _name = name_prefix + " " + idx + " " + description.key.replace("_", " ")
+    _description.object_id_name = " ".join(_name.split())
 
     _description.key = "".join(
         filter(
@@ -150,6 +159,18 @@ class SolarfocusEntity(Entity):
         """Return a translation key to use for this entity."""
         _LOGGER.debug("Translation_key - %s", self.entity_description.translation_key)
         return f"{self.entity_description.translation_key}"
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        """Return the name the entity id is built from.
+
+        Home Assistant builds it from the translated name otherwise, in every
+        language it generates native entity ids for. The name is what the
+        translations are for; the id is what dashboards, automations and every
+        answer ever given in an issue are written against, so it stays the
+        English one it has always been.
+        """
+        return self.entity_description.object_id_name
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
