@@ -205,6 +205,33 @@ async def test_a_component_coming_back_clears_only_its_own_issue(
     assert _issue(hass, boiler) is not None
 
 
+async def test_an_outage_takes_the_component_issues_down_with_it(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The issue says every other component reads fine, so it has to go.
+
+    While nothing answers at all the entities are unavailable and Home
+    Assistant is retrying, which is not a component the user should be asked
+    to check their configuration for. It comes back with the system.
+    """
+    api.update_boiler.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}"
+
+    assert _issue(hass, issue_id) is not None
+
+    api.update_heating.return_value = False
+    await entry.runtime_data.async_refresh()
+
+    assert _issue(hass, issue_id) is None
+
+    api.update_heating.return_value = True
+    await entry.runtime_data.async_refresh()
+
+    assert _issue(hass, issue_id) is not None
+
+
 async def test_nothing_is_raised_when_the_whole_system_is_unreachable(
     hass: HomeAssistant, enable_custom_integrations, mock_api, api
 ) -> None:

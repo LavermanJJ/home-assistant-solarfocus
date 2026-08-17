@@ -94,8 +94,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
             #
             # No component is failing on its own any more, so whatever was doing
             # that is forgotten here rather than left behind to be reported as
-            # still true. The outage itself is what the failed refresh says.
+            # still true: named in the diagnostics download, and raised as an
+            # issue saying that every other component reads fine. The outage
+            # itself is what the failed refresh says, and the issue comes back
+            # on the first refresh that reads anything at all.
             self._failed_components = set()
+            self._report_failed_components([])
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_read",
