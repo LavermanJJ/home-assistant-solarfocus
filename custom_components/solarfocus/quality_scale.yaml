@@ -1,0 +1,121 @@
+# The status of this integration against Home Assistant's integration quality
+# scale, tracked in issue #125.
+#
+# The scale is a gate for integrations in Home Assistant core and does not bind
+# a custom integration, so nothing validates this file here. It is kept because
+# its rule list is the clearest description of what is left to do, and a status
+# written down is one that can be argued with.
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: |
+      This integration registers no service actions.
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow-test-coverage: done
+  config-flow:
+    status: todo
+    comment: |
+      The flow works and is tested, but two parts of the rule are not met.
+      `data_description` is only on the reconfigure step, not on the user, the
+      component or the options step. And the connection settings live in
+      `ConfigEntry.options` rather than in `ConfigEntry.data`, where the rule
+      wants everything that is not a user preference; moving them needs another
+      entry migration.
+  dependency-transparency: done
+  docs-actions:
+    status: exempt
+    comment: |
+      This integration registers no service actions.
+  docs-conditions:
+    status: exempt
+    comment: |
+      This integration provides no conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: |
+      This integration provides no triggers.
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions:
+    status: exempt
+    comment: |
+      This integration registers no service actions.
+  config-entry-unloading: done
+  docs-configuration-parameters: done
+  docs-installation-parameters: done
+  entity-unavailable: done
+  integration-owner: done
+  log-when-unavailable: done
+  parallel-updates: done
+  reauthentication-flow:
+    status: exempt
+    comment: |
+      Modbus TCP has no authentication, so there are no credentials to renew.
+  test-coverage: done
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery-update-info:
+    status: exempt
+    comment: |
+      Nothing is discovered, so there is no discovery information to follow.
+  discovery:
+    status: exempt
+    comment: |
+      The eco manager-touch announces itself over nothing Home Assistant can
+      pick up; the controller is reached at an address the user knows.
+  docs-data-update: done
+  docs-examples: done
+  docs-known-limitations: done
+  docs-supported-devices: done
+  docs-supported-functions: done
+  docs-troubleshooting: done
+  docs-use-cases: done
+  dynamic-devices:
+    status: exempt
+    comment: |
+      One device per config entry, and its components are chosen by the user
+      rather than found, so nothing appears after setup.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default: done
+  entity-translations: done
+  exception-translations: done
+  icon-translations: done
+  reconfiguration-flow: done
+  repair-issues: done
+  stale-devices:
+    status: exempt
+    comment: |
+      The one device of an entry is removed with the entry.
+
+  # Platinum
+  async-dependency:
+    status: todo
+    comment: |
+      pysolarfocus is synchronous, so every read and write goes through
+      `async_add_executor_job`. This is a change in the library rather than
+      here.
+  inject-websession:
+    status: exempt
+    comment: |
+      Modbus TCP, there is no HTTP session to inject.
+  strict-typing:
+    status: todo
+    comment: |
+      There is no `py.typed` and no mypy configuration; the platform modules
+      are only partly annotated.
