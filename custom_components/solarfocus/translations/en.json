@@ -17,7 +17,7 @@
           "photovoltaic": "Photovoltaic",
           "biomassboiler": "Biomass boiler",
           "solar": "Solar",
-          "fresh_water_module" : "Fresh water module"
+          "fresh_water_module": "Fresh water module"
         }
       }
     },
@@ -47,8 +47,8 @@
           "heatpump": "Heat pump",
           "photovoltaic": "Photovoltaic",
           "biomassboiler": "Biomass boiler",
-          "solar" : "Solar",
-          "fresh_water_module" : "Fresh water module"
+          "solar": "Solar",
+          "fresh_water_module": "Fresh water module"
         }
       },
       "reconfigure": {
@@ -103,34 +103,143 @@
     }
   },
   "entity": {
-    "sensor": {
-      "fm_state" : {
-        "state": {
-          "0": "Flow sensor not connected",
-          "1": "Pump turned off",
-          "2": "Pump turned on",
-          "3": "Manual mode activated",
-          "4": "Manual mode deactivated"
-        }
+    "binary_sensor": {
+      "bb_door_contact": {
+        "name": "Biomass boiler door contact"
       },
-      "bo_mode" : {
-        "state" : {
-          "0": "Always Off",
-          "1": "Always On",
-          "2": "Monday - Sunday",
-          "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
+      "bu_pump": {
+        "name": "Buffer{idx} pump"
+      },
+      "fm_valve": {
+        "name": "Fresh water module{idx} valve"
+      },
+      "hc_circulator_pump": {
+        "name": "Heating circuit{idx} circulator pump"
+      },
+      "hc_limit_thermostat": {
+        "name": "Heating circuit{idx} limit thermostat"
+      },
+      "hp_boiler_charge": {
+        "name": "Heat pump boiler charge"
+      },
+      "hp_defrost_active": {
+        "name": "Heat pump defrost active"
+      },
+      "hp_evu_lock_active": {
+        "name": "Heat pump evu lock active"
+      },
+      "pv_overcharge_active": {
+        "name": "Photovoltaic overcharge active"
+      },
+      "pv_overcharge_possible": {
+        "name": "Photovoltaic overcharge possible"
+      }
+    },
+    "button": {
+      "bo_circulation": {
+        "name": "Boiler{idx} circulation"
+      },
+      "bo_single_charge": {
+        "name": "Boiler{idx} single charge"
+      }
+    },
+    "climate": {
+      "hc_thermostat": {
+        "name": "Heating circuit{idx} thermostat",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "comfort": "On",
+              "eco": "Reduced operation",
+              "auto": "Automatic (time setting)",
+              "off": "Off"
+            }
+          }
+        }
+      }
+    },
+    "number": {
+      "bo_target_temperature": {
+        "name": "Boiler{idx} target temperature"
+      },
+      "hc_indoor_humidity_external": {
+        "name": "Heating circuit{idx} indoor humidity external"
+      },
+      "hc_indoor_temperature_external": {
+        "name": "Heating circuit{idx} indoor temperature external"
+      },
+      "hc_target_room_temperature": {
+        "name": "Heating circuit{idx} target room temperature"
+      },
+      "hc_target_supply_temperature": {
+        "name": "Heating circuit{idx} target supply temperature"
+      },
+      "pv_grid_im_export": {
+        "name": "Photovoltaic grid im export"
+      },
+      "pv_hems_target_electrical_power": {
+        "name": "Photovoltaic hems target electrical power"
+      },
+      "pv_photovoltaic": {
+        "name": "Photovoltaic photovoltaic"
+      },
+      "pv_smart_meter": {
+        "name": "Photovoltaic smart meter"
+      }
+    },
+    "select": {
+      "bo_holding_mode": {
+        "name": "Boiler{idx} holding mode",
+        "state": {
+          "0": "Always off",
+          "1": "Always on",
+          "2": "Monday – Sunday",
+          "3": "Blockwise (Monday – Friday, Saturday – Sunday)",
           "4": "Daywise"
         }
       },
-      "bu_mode" : {
-        "state" : {
-          "0": "Always Off",
-          "1": "Always On",
-          "2": "Time trigger"
+      "hc_cooling": {
+        "name": "Heating circuit{idx} cooling",
+        "state": {
+          "0": "Heating",
+          "1": "Cooling"
         }
       },
-      "bb_boiler_operating_mode" : {
-        "state" : {
+      "hc_heating_mode": {
+        "name": "Heating circuit{idx} heating mode",
+        "state": {
+          "0": "Heating",
+          "1": "Cooling",
+          "2": "Heating + Cooling"
+        }
+      },
+      "hc_mode": {
+        "name": "Heating circuit{idx} mode",
+        "state": {
+          "0": "Continuous operation",
+          "1": "Reduced operation",
+          "2": "Automatic (time setting)",
+          "3": "Heating off (frost protection only)"
+        }
+      },
+      "hp_smart_grid": {
+        "name": "Heat pump smart grid",
+        "state": {
+          "0": "Deactivated",
+          "1": "No operation",
+          "2": "Normal operation",
+          "3": "Recommended",
+          "4": "Request operation"
+        }
+      }
+    },
+    "sensor": {
+      "bb_ash_container": {
+        "name": "Biomass boiler ash container"
+      },
+      "bb_boiler_operating_mode": {
+        "name": "Biomass boiler boiler operating mode",
+        "state": {
           "0": "Log wood",
           "1": "Log wood automatic",
           "2": "Log wood + Pellets",
@@ -139,14 +248,163 @@
           "5": "Wood chips"
         }
       },
-      "bb_log_wood" : {
-        "state" : {
+      "bb_cleaning": {
+        "name": "Biomass boiler cleaning"
+      },
+      "bb_heat_energy_total": {
+        "name": "Biomass boiler heat energy total"
+      },
+      "bb_log_wood": {
+        "name": "Biomass boiler log wood",
+        "state": {
           "0": "Begin to heat log wood / putting more wood not required / possible",
           "1": "More Log wood can be put on the fire"
         }
       },
-      "bb_status" : {
-        "state" : {
+      "bb_message_number": {
+        "name": "Biomass boiler message number",
+        "state": {
+          "0": "No Message",
+          "1": "Internal memory is invalid",
+          "3": "Container sensor possibly dusty",
+          "5": "Flue gas temperature too low",
+          "6": "Flue gas sensor interrupted",
+          "7": "Flue gas sensor wrong measured value",
+          "9": "Flue gas sensor short circuit",
+          "10": "Factory settings loaded",
+          "11": "Error speed feedback",
+          "12": "Speed feedback test",
+          "13": "Speed feedback not OK",
+          "14": "Maximum suction time reached",
+          "16": "Error lambda sensor measurement",
+          "17": "Error boiler sensor",
+          "18": "Boiler temperature is too high",
+          "19": "Extraction auger is blocked",
+          "20": "First ignition attempt failed",
+          "21": "Triac filling auger defective",
+          "22": "Triac output room extraction defective",
+          "23": "Communication to electronic module interrupted",
+          "24": "Safety chain has triggered",
+          "25": "Power failure has occurred",
+          "26": "Mains fuse F3 defective",
+          "27": "Triac fuse F6 defective",
+          "30": "Feed blockage",
+          "31": "Heat exchanger is blocked",
+          "32": "Heat exchanger is blocked",
+          "33": "No feed motor current flow",
+          "35": "CAN bus interruption",
+          "36": "Fuse at fresh water module defective",
+          "37": "A fuse in the electronic module (solarmodule) is defective",
+          "38": "Commissioning settings loaded",
+          "40": "Pellet ignition fault/pellet shortage?",
+          "41": "Fuse F1 or F8 defective",
+          "42": "Shortage of pellets in storage area",
+          "43": "Fault in diverter for suction heads",
+          "44": "Kommunikationsfehler Kaskade",
+          "46": "The ash box is full and must be emptied",
+          "47": "Maintenance of the boiler recommended!",
+          "50": "Boiler door is open!",
+          "51": "Display battery is dead",
+          "52": "Limit thermostat is open",
+          "67": "Room air flap does not open",
+          "68": "Room air flap does not close",
+          "69": "Communication error with room air module",
+          "71": "No current flow heat exchanger",
+          "72": "Note: No current flow heat exchanger",
+          "73": "Fault in reference switch for suction heads",
+          "75": "Room sensor assignment",
+          "76": "Safety temperature limiter triggered",
+          "77": "Fuse F12 is defective",
+          "78": "Blockage of ash extraction",
+          "79": "No current flow ash extraction",
+          "80": "Differential pressure - Boiler stop",
+          "81": "Electrostatic dust collector offline",
+          "82": "Differential pressure - suction turbine",
+          "83": "Differential pressure - insertion",
+          "84": "Warning electrostatic dust collector",
+          "85": "High voltage cable Dust collector",
+          "86": "Emergency operation Differential pressure sensor",
+          "87": "Differential pressure - Boiler immediate stop",
+          "201": "Internal memory is invalid",
+          "203": "Container sensor possibly dusty",
+          "205": "Flue gas temperature too low",
+          "206": "Flue gas sensor interrupted",
+          "207": "Flue gas sensor wrong measured value",
+          "209": "Flue gas sensor short circuit",
+          "2010": "Factory settings loaded",
+          "211": "Error speed feedback",
+          "212": "Speed feedback test",
+          "213": "Speed feedback not OK",
+          "214": "Maximum suction time reached",
+          "216": "Error lambda sensor measurement",
+          "217": "Error boiler sensor",
+          "218": "Boiler temperature is too high",
+          "219": "Extraction auger is blocked",
+          "220": "First ignition attempt failed",
+          "221": "Triac filling auger defective",
+          "222": "Triac output room extraction defective",
+          "223": "Communication to electronic module interrupted",
+          "224": "Safety chain has triggered",
+          "225": "Power failure has occurred",
+          "226": "Mains fuse F3 defective",
+          "227": "Triac fuse F6 defective",
+          "230": "Feed blockage",
+          "231": "Heat exchanger is blocked",
+          "232": "Heat exchanger is blocked",
+          "233": "No feed motor current flow",
+          "235": "CAN bus interruption",
+          "236": "Fuse at fresh water module defective",
+          "237": "A fuse in the electronic module (solarmodule) is defective",
+          "238": "Commissioning settings loaded",
+          "240": "Pellet ignition fault/pellet shortage?",
+          "241": "Fuse F1 or F8 defective",
+          "242": "Shortage of pellets in storage area",
+          "243": "Fault in diverter for suction heads",
+          "244": "Kommunikationsfehler Kaskade",
+          "246": "The ash box is full and must be emptied",
+          "247": "Maintenance of the boiler recommended!",
+          "250": "Boiler door is open!",
+          "251": "Display battery is dead",
+          "252": "Limit thermostat is open",
+          "267": "Room air flap does not open",
+          "268": "Room air flap does not close",
+          "269": "Communication error with room air module",
+          "271": "No current flow heat exchanger",
+          "272": "Note: No current flow heat exchanger",
+          "273": "Fault in reference switch for suction heads",
+          "275": "Room sensor assignment",
+          "276": "Safety temperature limiter triggered",
+          "277": "Fuse F12 is defective",
+          "278": "Blockage of ash extraction",
+          "279": "No current flow ash extraction",
+          "280": "Differential pressure - Boiler stop",
+          "281": "Electrostatic dust collector offline",
+          "282": "Differential pressure - suction turbine",
+          "283": "Differential pressure - insertion",
+          "284": "Warning electrostatic dust collector",
+          "285": "High voltage cable Dust collector",
+          "286": "Emergency operation Differential pressure sensor",
+          "287": "Differential pressure - Boiler immediate stop"
+        }
+      },
+      "bb_octoplus_buffer_temperature_bottom": {
+        "name": "Biomass boiler octoplus buffer temperature bottom"
+      },
+      "bb_octoplus_buffer_temperature_top": {
+        "name": "Biomass boiler octoplus buffer temperature top"
+      },
+      "bb_outdoor_temperature": {
+        "name": "Biomass boiler outdoor temperature"
+      },
+      "bb_pellet_usage_last_fill": {
+        "name": "Biomass boiler pellet usage last fill"
+      },
+      "bb_pellet_usage_total": {
+        "name": "Biomass boiler pellet usage total"
+      },
+      "bb_status": {
+        "name": "Biomass boiler status",
+        "state": {
           "0": "Standby",
           "1": "Ignition phase",
           "2": "Pellet mode",
@@ -293,168 +551,38 @@
           "344": "HE-rinse condensing module active"
         }
       },
-      "bb_message_number" : {
-        "state" : {
-          "0": "No Message",
-          "1": "Internal memory is invalid",
-          "3": "Container sensor possibly dusty",
-          "5": "Flue gas temperature too low",
-          "6": "Flue gas sensor interrupted",
-          "7": "Flue gas sensor wrong measured value",
-          "9": "Flue gas sensor short circuit",
-          "10": "Factory settings loaded",
-          "11": "Error speed feedback",
-          "12": "Speed feedback test",
-          "13": "Speed feedback not OK",
-          "14": "Maximum suction time reached",
-          "16": "Error lambda sensor measurement",
-          "17": "Error boiler sensor",
-          "18": "Boiler temperature is too high",
-          "19": "Extraction auger is blocked",
-          "20": "First ignition attempt failed",
-          "21": "Triac filling auger defective",
-          "22": "Triac output room extraction defective",
-          "23": "Communication to electronic module interrupted",
-          "24": "Safety chain has triggered",
-          "25": "Power failure has occurred",
-          "26": "Mains fuse F3 defective",
-          "27": "Triac fuse F6 defective",
-          "30": "Feed blockage",
-          "31": "Heat exchanger is blocked",
-          "32": "Heat exchanger is blocked",
-          "33": "No feed motor current flow",
-          "35": "CAN bus interruption",
-          "36": "Fuse at fresh water module defective",
-          "37": "A fuse in the electronic module (solarmodule) is defective",
-          "38": "Commissioning settings loaded",
-          "40": "Pellet ignition fault/pellet shortage?",
-          "41": "Fuse F1 or F8 defective",
-          "42": "Shortage of pellets in storage area",
-          "43": "Fault in diverter for suction heads",
-          "44": "Kommunikationsfehler Kaskade",
-          "46": "The ash box is full and must be emptied",
-          "47": "Maintenance of the boiler recommended!",
-          "50": "Boiler door is open!",
-          "51": "Display battery is dead",
-          "52": "Limit thermostat is open",
-          "67": "Room air flap does not open",
-          "68": "Room air flap does not close",
-          "69": "Communication error with room air module",
-          "71": "No current flow heat exchanger",
-          "72": "Note: No current flow heat exchanger",
-          "73": "Fault in reference switch for suction heads",
-          "75": "Room sensor assignment",
-          "76": "Safety temperature limiter triggered",
-          "77": "Fuse F12 is defective",
-          "78": "Blockage of ash extraction",
-          "79": "No current flow ash extraction",
-          "80": "Differential pressure - Boiler stop",
-          "81": "Electrostatic dust collector offline",
-          "82": "Differential pressure - suction turbine",
-          "83": "Differential pressure - insertion",
-          "84": "Warning electrostatic dust collector",
-          "85": "High voltage cable Dust collector",
-          "86": "Emergency operation Differential pressure sensor",
-          "87": "Differential pressure - Boiler immediate stop",
-          "201": "Internal memory is invalid",
-          "203": "Container sensor possibly dusty",
-          "205": "Flue gas temperature too low",
-          "206": "Flue gas sensor interrupted",
-          "207": "Flue gas sensor wrong measured value",
-          "209": "Flue gas sensor short circuit",
-          "2010": "Factory settings loaded",
-          "211": "Error speed feedback",
-          "212": "Speed feedback test",
-          "213": "Speed feedback not OK",
-          "214": "Maximum suction time reached",
-          "216": "Error lambda sensor measurement",
-          "217": "Error boiler sensor",
-          "218": "Boiler temperature is too high",
-          "219": "Extraction auger is blocked",
-          "220": "First ignition attempt failed",
-          "221": "Triac filling auger defective",
-          "222": "Triac output room extraction defective",
-          "223": "Communication to electronic module interrupted",
-          "224": "Safety chain has triggered",
-          "225": "Power failure has occurred",
-          "226": "Mains fuse F3 defective",
-          "227": "Triac fuse F6 defective",
-          "230": "Feed blockage",
-          "231": "Heat exchanger is blocked",
-          "232": "Heat exchanger is blocked",
-          "233": "No feed motor current flow",
-          "235": "CAN bus interruption",
-          "236": "Fuse at fresh water module defective",
-          "237": "A fuse in the electronic module (solarmodule) is defective",
-          "238": "Commissioning settings loaded",
-          "240": "Pellet ignition fault/pellet shortage?",
-          "241": "Fuse F1 or F8 defective",
-          "242": "Shortage of pellets in storage area",
-          "243": "Fault in diverter for suction heads",
-          "244": "Kommunikationsfehler Kaskade",
-          "246": "The ash box is full and must be emptied",
-          "247": "Maintenance of the boiler recommended!",
-          "250": "Boiler door is open!",
-          "251": "Display battery is dead",
-          "252": "Limit thermostat is open",
-          "267": "Room air flap does not open",
-          "268": "Room air flap does not close",
-          "269": "Communication error with room air module",
-          "271": "No current flow heat exchanger",
-          "272": "Note: No current flow heat exchanger",
-          "273": "Fault in reference switch for suction heads",
-          "275": "Room sensor assignment",
-          "276": "Safety temperature limiter triggered",
-          "277": "Fuse F12 is defective",
-          "278": "Blockage of ash extraction",
-          "279": "No current flow ash extraction",
-          "280": "Differential pressure - Boiler stop",
-          "281": "Electrostatic dust collector offline",
-          "282": "Differential pressure - suction turbine",
-          "283": "Differential pressure - insertion",
-          "284": "Warning electrostatic dust collector",
-          "285": "High voltage cable Dust collector",
-          "286": "Emergency operation Differential pressure sensor",
-          "287": "Differential pressure - Boiler immediate stop"
-          }
+      "bb_temperature": {
+        "name": "Biomass boiler temperature"
       },
-      "bo_circulation" : {
-        "state" : {
+      "bo_circulation": {
+        "name": "Boiler{idx} circulation",
+        "state": {
           "-1": "Locked",
           "0": "Off",
           "1": "On"
         }
       },
-      "bo_single_charge" : {
-        "state" : {
+      "bo_mode": {
+        "name": "Boiler{idx} mode",
+        "state": {
+          "0": "Always Off",
+          "1": "Always On",
+          "2": "Monday - Sunday",
+          "3": "Blockwise (Monday – Friday, Saturday – Sunday)",
+          "4": "Daywise"
+        }
+      },
+      "bo_single_charge": {
+        "name": "Boiler{idx} single charge",
+        "state": {
           "-1": "Locked",
           "0": "Off",
           "1": "On"
         }
       },
-      "bu_state" : {
-        "state" : {
-          "0": "State unavailable",
-          "1": "Standby",
-          "2": "Buffer charging",
-          "3": "Frost protection mode",
-          "4": "Chimney sweeper",
-          "5": "Heat dissipation",
-          "6": "Pump test run active",
-          "7": "Drinking water buffer charging",
-          "200": "Buffer not enabled",
-          "201": "Standby",
-          "202": "Buffer charging",
-          "203": "Frost protection mode",
-          "204": "Chimney sweeper",
-          "205": "Heat dissipation",
-          "206": "Pump test run active",
-          "207": "RLA-Pump test run active",
-          "208": "Buffer requires energy"
-        }
-      },
-      "bo_state" : {
-        "state" : {
+      "bo_state": {
+        "name": "Boiler{idx} state",
+        "state": {
           "0": "Boiler state unavailable",
           "1": "Standby",
           "10": "Sensor short circuit",
@@ -484,7 +612,87 @@
           "212": "Vacation mode"
         }
       },
-      "hc_state" : {
+      "bo_temperature": {
+        "name": "Boiler{idx} temperature"
+      },
+      "bu_bottom_temperature": {
+        "name": "Buffer{idx} bottom temperature"
+      },
+      "bu_external_bottom_temperature_x35": {
+        "name": "Buffer{idx} external bottom temperature x35"
+      },
+      "bu_external_middle_temperature_x36": {
+        "name": "Buffer{idx} external middle temperature x36"
+      },
+      "bu_external_top_temperature_x44": {
+        "name": "Buffer{idx} external top temperature x44"
+      },
+      "bu_mode": {
+        "name": "Buffer{idx} mode",
+        "state": {
+          "0": "Always Off",
+          "1": "Always On",
+          "2": "Time trigger"
+        }
+      },
+      "bu_state": {
+        "name": "Buffer{idx} state",
+        "state": {
+          "0": "State unavailable",
+          "1": "Standby",
+          "2": "Buffer charging",
+          "3": "Frost protection mode",
+          "4": "Chimney sweeper",
+          "5": "Heat dissipation",
+          "6": "Pump test run active",
+          "7": "Drinking water buffer charging",
+          "200": "Buffer not enabled",
+          "201": "Standby",
+          "202": "Buffer charging",
+          "203": "Frost protection mode",
+          "204": "Chimney sweeper",
+          "205": "Heat dissipation",
+          "206": "Pump test run active",
+          "207": "RLA-Pump test run active",
+          "208": "Buffer requires energy"
+        }
+      },
+      "bu_top_temperature": {
+        "name": "Buffer{idx} top temperature"
+      },
+      "bu_x35_temperature": {
+        "name": "Buffer{idx} x35 temperature"
+      },
+      "fm_flow_rate": {
+        "name": "Fresh water module{idx} flow rate"
+      },
+      "fm_state": {
+        "name": "Fresh water module{idx} state",
+        "state": {
+          "0": "Flow sensor not connected",
+          "1": "Pump turned off",
+          "2": "Pump turned on",
+          "3": "Manual mode activated",
+          "4": "Manual mode deactivated"
+        }
+      },
+      "fm_supply_temperature": {
+        "name": "Fresh water module{idx} supply temperature"
+      },
+      "fm_target_temperature": {
+        "name": "Fresh water module{idx} target temperature"
+      },
+      "hc_humidity": {
+        "name": "Heating circuit{idx} humidity"
+      },
+      "hc_mixer_valve": {
+        "name": "Heating circuit{idx} mixer valve"
+      },
+      "hc_room_temperature": {
+        "name": "Heating circuit{idx} room temperature"
+      },
+      "hc_state": {
+        "name": "Heating circuit{idx} state",
         "state": {
           "0": "Heating is off",
           "1": "Reduced mode",
@@ -508,7 +716,7 @@
           "26": "Priority on pool",
           "27": "Outdoor temperature limit for reduced heating reached",
           "28": "Indoor target temperature reduced heating reached",
-          "29": "Min. return flow temperature \u2013 vampair controller",
+          "29": "Min. return flow temperature – vampair controller",
           "3": "Vacation mode",
           "30": "Outdoor temperature limit for cooling reached",
           "31": "Cooling mode pending",
@@ -548,8 +756,75 @@
           "228": "Outdoor temperature limit for party mode reached"
         }
       },
+      "hc_supply_temperature": {
+        "name": "Heating circuit{idx} supply temperature"
+      },
+      "hp_compressor_speed": {
+        "name": "Heat pump compressor speed"
+      },
+      "hp_cop_cooling": {
+        "name": "Heat pump cop cooling"
+      },
+      "hp_cop_heating": {
+        "name": "Heat pump cop heating"
+      },
+      "hp_electrical_energy_cooling": {
+        "name": "Heat pump electrical energy cooling"
+      },
+      "hp_electrical_energy_drinking_water": {
+        "name": "Heat pump electrical energy drinking water"
+      },
+      "hp_electrical_energy_heating": {
+        "name": "Heat pump electrical energy heating"
+      },
+      "hp_electrical_energy_total": {
+        "name": "Heat pump electrical energy total"
+      },
+      "hp_electrical_power": {
+        "name": "Heat pump electrical power"
+      },
+      "hp_flow_rate": {
+        "name": "Heat pump flow rate"
+      },
+      "hp_outdoor_temperature": {
+        "name": "Heat pump outdoor temperature"
+      },
+      "hp_performance_overall": {
+        "name": "Heat pump performance overall"
+      },
+      "hp_performance_overall_drinking_water": {
+        "name": "Heat pump performance overall drinking water"
+      },
+      "hp_performance_overall_heating": {
+        "name": "Heat pump performance overall heating"
+      },
+      "hp_return_temperature": {
+        "name": "Heat pump return temperature"
+      },
+      "hp_supply_temperature": {
+        "name": "Heat pump supply temperature"
+      },
+      "hp_thermal_energy_cooling": {
+        "name": "Heat pump thermal energy cooling"
+      },
+      "hp_thermal_energy_drinking_water": {
+        "name": "Heat pump thermal energy drinking water"
+      },
+      "hp_thermal_energy_heating": {
+        "name": "Heat pump thermal energy heating"
+      },
+      "hp_thermal_energy_total": {
+        "name": "Heat pump thermal energy total"
+      },
+      "hp_thermal_power_cooling": {
+        "name": "Heat pump thermal power cooling"
+      },
+      "hp_thermal_power_heating": {
+        "name": "Heat pump thermal power heating"
+      },
       "hp_vampair_state": {
-        "state" : {
+        "name": "Heat pump vampair state",
+        "state": {
           "0": "Standby",
           "1": "Heating",
           "10": "Cooling demand",
@@ -565,104 +840,108 @@
           "9": "External boiler active, Heat pump off"
         }
       },
+      "pv_grid_export": {
+        "name": "Photovoltaic grid export"
+      },
+      "pv_grid_import": {
+        "name": "Photovoltaic grid import"
+      },
+      "pv_heatpump_consumption": {
+        "name": "Photovoltaic heatpump consumption"
+      },
+      "pv_house_consumption": {
+        "name": "Photovoltaic house consumption"
+      },
+      "pv_power": {
+        "name": "Photovoltaic power"
+      },
+      "so_buffer_sensor_1": {
+        "name": "Solar{idx} buffer sensor 1"
+      },
+      "so_buffer_sensor_2": {
+        "name": "Solar{idx} buffer sensor 2"
+      },
+      "so_buffer_sensor_3": {
+        "name": "Solar{idx} buffer sensor 3"
+      },
+      "so_collector_return_temperature": {
+        "name": "Solar{idx} collector return temperature"
+      },
+      "so_collector_supply_temperature": {
+        "name": "Solar{idx} collector supply temperature"
+      },
+      "so_collector_temperature_1": {
+        "name": "Solar{idx} collector temperature 1"
+      },
+      "so_collector_temperature_2": {
+        "name": "Solar{idx} collector temperature 2"
+      },
+      "so_current_power": {
+        "name": "Solar{idx} current power"
+      },
+      "so_current_yield_heat_meter": {
+        "name": "Solar{idx} current yield heat meter"
+      },
+      "so_flow_heat_meter": {
+        "name": "Solar{idx} flow heat meter"
+      },
       "so_state": {
+        "name": "Solar{idx} state",
         "state": {
-          "0":"Solar circuit in operation",
-          "1":"Collector sensor short circuit",
-          "2":"Solar circuit switched off",
-          "3":"Tank sensor short circuit",
-          "4":"Tank sensor interruption",
-          "5":"Check circulation",
-          "6":"Excess collector temperature",
-          "7":"Waiting time",
-          "8":"Measuring-rinse pulse",
-          "9":"Collector temperature too low",
-          "10":"Maximum tank temperature bottom reached",
-          "11":"Measuring time",
-          "12":"No release",
-          "13":"Pump lag",
-          "14":"Frost protection mode",
-          "15":"Heat dissipation",
-          "16":"Tank cooling",
-          "17":"Pump test run is active",
-          "18":"Solar output test",
-          "201":"Collector sensor short circuit",
-          "203":"Tank sensor short circuit!",
-          "204":"Tank sensor interruption!",
-          "205":"Check circulation!",
-          "206":"Excess collector temperature!",
-          "207":"Waiting time",
-          "208":"Measuring-rinse pulse",
-          "209":"Collector temperature too low!",
-          "210":"Maximum tank temperature bottom reached",
-          "211":"Measuring time",
-          "212":"No release",
-          "213":"Pump lag",
-          "214":"Frost protection mode",
-          "215":"Heat dissipation",
-          "216":"Tank cooling",
-          "217":"Fuse defective!",
-          "218":"Both fuses defective!",
-          "219":"Solar circuit in operation",
-          "220":"Solar circuit is switched off",
-          "221":"Pump test run is active",
-          "222":"Solar output test"
+          "0": "Solar circuit in operation",
+          "1": "Collector sensor short circuit",
+          "2": "Solar circuit switched off",
+          "3": "Tank sensor short circuit",
+          "4": "Tank sensor interruption",
+          "5": "Check circulation",
+          "6": "Excess collector temperature",
+          "7": "Waiting time",
+          "8": "Measuring-rinse pulse",
+          "9": "Collector temperature too low",
+          "10": "Maximum tank temperature bottom reached",
+          "11": "Measuring time",
+          "12": "No release",
+          "13": "Pump lag",
+          "14": "Frost protection mode",
+          "15": "Heat dissipation",
+          "16": "Tank cooling",
+          "17": "Pump test run is active",
+          "18": "Solar output test",
+          "201": "Collector sensor short circuit",
+          "203": "Tank sensor short circuit!",
+          "204": "Tank sensor interruption!",
+          "205": "Check circulation!",
+          "206": "Excess collector temperature!",
+          "207": "Waiting time",
+          "208": "Measuring-rinse pulse",
+          "209": "Collector temperature too low!",
+          "210": "Maximum tank temperature bottom reached",
+          "211": "Measuring time",
+          "212": "No release",
+          "213": "Pump lag",
+          "214": "Frost protection mode",
+          "215": "Heat dissipation",
+          "216": "Tank cooling",
+          "217": "Fuse defective!",
+          "218": "Both fuses defective!",
+          "219": "Solar circuit in operation",
+          "220": "Solar circuit is switched off",
+          "221": "Pump test run is active",
+          "222": "Solar output test"
         }
+      },
+      "so_today_yield": {
+        "name": "Solar{idx} today yield"
       }
     },
-    "select" : {
-      "hp_smart_grid": {
-        "state": {
-          "0": "Deactivated",
-          "1": "No operation",
-          "2": "Normal operation",
-          "3": "Recommended",
-          "4": "Request operation"
-        }
-      },
-      "hc_cooling" : {
-        "state" : {
-          "0": "Heating",
-          "1": "Cooling"
-        }
-      },
-      "hc_mode" : {
-        "state" : {
-          "0": "Continuous operation",
-          "1": "Reduced operation",
-          "2": "Automatic (time setting)",
-          "3": "Heating off (frost protection only)"
-        }
-      },
-      "hc_heating_mode" : {
-        "state" : {
-          "0": "Heating",
-          "1": "Cooling",
-          "2": "Heating + Cooling"
-        }
-      },
-      "bo_holding_mode" : {
-        "state" : {
-          "0": "Always off",
-          "1": "Always on",
-          "2": "Monday \u2013 Sunday",
-          "3": "Blockwise (Monday \u2013 Friday, Saturday \u2013 Sunday)",
-          "4": "Daywise"
-        }
+    "switch": {
+      "hp_evu_lock": {
+        "name": "Heat pump evu lock"
       }
     },
-    "climate": {
-      "hc_thermostat": {
-        "state_attributes": {
-          "preset_mode": {
-            "state": {
-              "comfort": "On",
-              "eco": "Reduced operation",
-              "auto": "Automatic (time setting)",
-              "off": "Off"
-            }
-          }
-        }
+    "water_heater": {
+      "bo_domestic_hot_water": {
+        "name": "Boiler{idx} domestic hot water"
       }
     }
   }

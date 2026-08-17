@@ -167,7 +167,9 @@ def test_state_icons_belong_to_a_state_of_the_entity() -> None:
         (*path, state)
         for path, section in _icon_sections()
         for state in section.get("state", {})
-        if state not in translated.get(path, {"on", "off"})
+        # An entity with a name but no states falls back to on/off the same
+        # way one with no entry at all does
+        if state not in (translated.get(path) or {"on", "off"})
     ]
 
     assert not unknown
