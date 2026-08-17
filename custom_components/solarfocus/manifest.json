@@ -11,6 +11,6 @@
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
   "requirements": ["pysolarfocus==5.2.2"],
   "ssdp": [],
-  "version": "5.1.0-rc3",
+  "version": "5.1.0-rc4",
   "zeroconf": []
 }
