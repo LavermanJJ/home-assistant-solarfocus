@@ -128,15 +128,24 @@ class SolarfocusEntity(Entity):
         """Initialize the Atag entity."""
         self.coordinator = coordinator
         self._name = coordinator._entry.title
+        self._entry_id = coordinator._entry.entry_id
         self._state = None
         self.entity_description = description
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return info for device registry."""
-        device = self._name
+        """Return info for device registry.
+
+        The entry id identifies the device, not the title of the entry. A title
+        is something a user renames, and renaming one used to leave the device
+        behind and build a second one next to it, with the area, the name and
+        every automation pointing at the one that was left.
+
+        The entity `unique_id` below is still built from the title. That is the
+        other half of the same problem and a migration of its own, see #208.
+        """
         return DeviceInfo(
-            identifiers={(DOMAIN, device)},
+            identifiers={(DOMAIN, self._entry_id)},
             name="Solarfocus",
             model=self.coordinator.api.system.value,
             sw_version=self.coordinator.api.api_version.value,

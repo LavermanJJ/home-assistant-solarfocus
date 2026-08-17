@@ -22,7 +22,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.json import ExtendedJSONEncoder
 from homeassistant.setup import async_setup_component
 
-from .conftest import build_config_entry
+from .conftest import CURRENT_VERSION, build_config_entry
 
 
 async def _diagnostics(hass: HomeAssistant, api, **options) -> dict:
@@ -102,7 +102,7 @@ async def test_diagnostics_describe_how_the_entry_is_configured(
 
     entry = diagnostics["entry"]
 
-    assert entry["version"] == 8
+    assert entry["version"] == CURRENT_VERSION
     assert entry["options"]["heating_circuit"] == 2
     assert entry["data"]["api_version"] == ApiVersions.V_23_020.value
     assert entry["data"]["system"] is not None

@@ -104,18 +104,27 @@ def test_unique_id_combines_the_device_name_and_the_key() -> None:
 
 
 def test_device_info_describes_the_heating_system() -> None:
-    """All entities belong to a single device."""
-    entity = _make(
-        SolarfocusSensor,
-        BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
-        BOILER_COMPONENT,
-        BOILER_COMPONENT_PREFIX,
+    """All entities belong to a single device, identified by the entry id.
+
+    The title of the entry identified it until version 9, which is why renaming
+    an entry built a second device beside the first.
+    """
+    entry = build_config_entry()
+    entity = SolarfocusSensor(
+        build_coordinator(entry),
+        create_description(
+            BOILER_PREFIX,
+            BOILER_COMPONENT,
+            BOILER_COMPONENT_PREFIX,
+            "1",
+            BOILER_SENSOR_TYPES[0],
+        ),
     )
 
     device_info = entity.device_info
 
-    assert device_info["identifiers"] == {(DOMAIN, "Solarfocus")}
+    assert device_info["identifiers"] == {(DOMAIN, entry.entry_id)}
+    assert entry.entry_id != entry.title
     assert device_info["manufacturer"] == "Solarfocus"
     assert device_info["model"] == Systems.VAMPAIR.value
     assert device_info["sw_version"] == ApiVersions.V_23_020.value

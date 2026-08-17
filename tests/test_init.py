@@ -29,6 +29,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from .conftest import CURRENT_VERSION, build_config_entry, build_options
 
@@ -616,3 +617,103 @@ async def test_migration_of_a_current_entry_changes_nothing(
     assert entry.version == CURRENT_VERSION
     assert entry.data == data
     assert entry.options == options
+
+
+def _version_8_entry(hass: HomeAssistant, title: str = DEFAULT_NAME) -> MockConfigEntry:
+    """Return an entry as version 8 stored one, added to hass."""
+    entry = build_config_entry()
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, title=title, version=8)
+    return entry
+
+
+async def test_migration_identifies_the_device_by_the_entry_id(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """Version 9 takes the device identity off the title of the entry.
+
+    The device is re-identified rather than replaced, so it keeps its id and
+    everything the user hung on it: the area, the name they gave it, and every
+    automation that points at it by device.
+    """
+    entry = _version_8_entry(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.title)},
+        name="Solarfocus",
+    )
+    device_registry.async_update_device(device.id, name_by_user="Heizung Keller")
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+
+    migrated = device_registry.async_get(device.id)
+    assert migrated is not None
+    assert migrated.identifiers == {(DOMAIN, entry.entry_id)}
+    # The same device, so what the user put on it is still there
+    assert migrated.id == device.id
+    assert migrated.name_by_user == "Heizung Keller"
+    assert device_registry.async_get_device({(DOMAIN, entry.title)}) is None
+
+
+async def test_migration_without_a_device_is_still_a_migration(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """An entry that has never been set up has no device to re-identify."""
+    entry = _version_8_entry(hass)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+
+
+async def test_migration_leaves_the_device_of_another_entry_alone(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """Two entries under different names each keep their own device.
+
+    The old identifier was the title, which is global to the domain rather than
+    to the entry, so the lookup has to be scoped to the entry being migrated.
+    """
+    entry = _version_8_entry(hass, title="Haus")
+    other = _version_8_entry(hass, title="Werkstatt")
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Haus")}
+    )
+    untouched = device_registry.async_get_or_create(
+        config_entry_id=other.entry_id, identifiers={(DOMAIN, "Werkstatt")}
+    )
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert device_registry.async_get(untouched.id).identifiers == {
+        (DOMAIN, "Werkstatt")
+    }
+
+
+async def test_a_renamed_entry_keeps_its_device(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """What the whole migration is for.
+
+    Renaming an entry used to leave its device behind and build a second one
+    under the new title, taking every entity with it.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    before = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    assert len(before) == 1
+
+    hass.config_entries.async_update_entry(entry, title="Heizung Keller")
+    await hass.async_block_till_done()
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    after = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    assert len(after) == 1
+    assert after[0].id == before[0].id

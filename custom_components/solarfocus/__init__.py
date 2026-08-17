@@ -16,7 +16,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 
 from .const import (
     CONF_BIOMASS_BOILER,
@@ -180,6 +180,34 @@ def _async_report_duplicate_entry(
 def _duplicate_issue_id(entry: SolarfocusConfigEntry) -> str:
     """Return the issue id naming this entry as one of a duplicate pair."""
     return f"duplicate_entry_{entry.entry_id}"
+
+
+@callback
+def _async_identify_device_by_entry_id(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Re-identify the device of this entry by the entry id.
+
+    The identifier is changed on the device that is there rather than a new one
+    being created: the device keeps its id, and with it the area it is in, the
+    name the user gave it, and every automation and dashboard that points at it
+    by device.
+
+    An entry that has never been set up has no device yet, and one that has
+    already been through this has no old identifier left. Both are left alone.
+    """
+    registry = dr.async_get(hass)
+    old_identifier = (DOMAIN, entry.title)
+
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if old_identifier not in device.identifiers:
+            continue
+
+        registry.async_update_device(
+            device.id,
+            new_identifiers=(device.identifiers - {old_identifier})
+            | {(DOMAIN, entry.entry_id)},
+        )
 
 
 async def async_update_options(
@@ -351,6 +379,14 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=8
         )
+
+    if config_entry.version == 8:
+        # The device was identified by the title of the entry, so renaming an
+        # entry left its device behind and built a second one next to it. The
+        # entry id is the one name an entry has that a user cannot change.
+        _async_identify_device_by_entry_id(hass, config_entry)
+
+        hass.config_entries.async_update_entry(config_entry, version=9)
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(
