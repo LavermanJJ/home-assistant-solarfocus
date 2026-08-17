@@ -33,6 +33,7 @@ from custom_components.solarfocus.const import (
     BIOMASS_BOILER_PREFIX,
     BOILER_PREFIX,
     BUFFER_PREFIX,
+    COMPONENT_DEVICES,
     DOMAIN,
     FRESH_WATER_MODULE_PREFIX,
     HEAT_PUMP_PREFIX,
@@ -410,30 +411,60 @@ async def test_every_entity_has_a_translated_name(hass: HomeAssistant) -> None:
     assert not missing
 
 
-async def test_no_entity_name_changed(hass: HomeAssistant) -> None:
-    """The names are the ones the integration has always shown.
+async def test_an_entity_name_is_the_words_of_its_key(hass: HomeAssistant) -> None:
+    """The component is the device now, so it is not in the name any more.
 
-    Moving them into the translations is not meant to rename anything: every
-    name is still its component, its index and the words of its key, which is
-    what `create_description` built. A user's dashboards keep working and the
-    friendly names in their history stay continuous.
+    A name used to be its component, its index and the words of its key -
+    `Buffer 1 top temperature` on a device called `Solarfocus`. The component
+    is a device of its own now and the index is in its name, so what is left
+    for the entity is the words of its key: `Top temperature` on `Buffer 1`.
+    Home Assistant puts the two back together wherever the device is not
+    already the context.
+
+    English only. The German names are the register documentation's wording and
+    were never the words of a key.
     """
     entity = _load("strings.json")["entity"]
 
-    renamed = []
+    wrong = []
     async for domain, description in _descriptions(hass):
-        placeholders = description.translation_placeholders
         name = entity[domain][description.translation_key]["name"]
-        expected = " ".join(
-            (
-                f"{COMPONENT_PREFIXES[description.component_prefix]}"
-                f"{placeholders['idx']} {description.item.replace('_', ' ')}"
-            ).split()
-        )
-        if name.format(**placeholders) != expected:
-            renamed.append((domain, description.translation_key, name, expected))
+        expected = description.item.replace("_", " ")
+        if name.lower() != expected.lower():
+            wrong.append((domain, description.translation_key, name, expected))
 
-    assert not renamed
+    assert not wrong
+
+
+@pytest.mark.parametrize("filename", FILENAMES)
+async def test_no_entity_name_repeats_its_component(
+    hass: HomeAssistant, filename: str
+) -> None:
+    """The name a user reads would say the component twice otherwise.
+
+    The device is `Heating circuit 2` and the entity on it is `Supply
+    temperature`; a name that still began with its component would show as
+    `Heating circuit 2 Heating circuit 2 supply temperature`. This is what
+    fails when a new entity is added with the old habit, in any of the files.
+    """
+    data = _load(filename)
+    # The name of the device this entity's own component is on, in the language
+    # of the file being read, so the German names are held to the German words.
+    component_of = {
+        prefix: data["device"][device_key]["name"].replace("{idx}", "").strip()
+        for prefix, (device_key, _) in COMPONENT_DEVICES.items()
+    }
+
+    repeated = [
+        (platform, key, block["name"])
+        for platform, keys in data["entity"].items()
+        for key, block in keys.items()
+        if block["name"]
+        .lower()
+        .startswith(component_of[key.split("_")[0]].lower() + " ")
+    ]
+
+    assert not repeated
 
 
 async def test_home_assistant_shows_the_translated_name(
@@ -453,31 +484,33 @@ async def test_home_assistant_shows_the_translated_name(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    second = hass.states.get("sensor.solarfocus_heating_circuit_2_room_temperature")
-    solar = hass.states.get("sensor.solarfocus_solar_collector_temperature_1")
+    second = hass.states.get("sensor.heating_circuit_2_room_temperature")
+    solar = hass.states.get("sensor.solar_collector_temperature_1")
 
     assert second.attributes["friendly_name"] == (
-        "Solarfocus Heating circuit 2 room temperature"
+        "Heating circuit 2 Room temperature"
     )
     # One solar circuit keeps the unnumbered name it had before there could be
     # four; the trailing 1 is the collector sensor, part of the register name
     assert solar.attributes["friendly_name"] == (
-        "Solarfocus Solar collector temperature 1"
+        "Solar Collector temperature 1"
     )
 
 
 async def test_a_german_installation_keeps_the_english_entity_ids(
     hass: HomeAssistant, enable_custom_integrations, mock_api, api
 ) -> None:
-    """The name is translated, the entity id is not.
+    """The reading an entity id names stays English in every language.
 
-    Home Assistant builds an entity id from the name in the user's own language
-    for the languages it generates native ids for, German among them. Left to
-    it, a German installation would name its entities
-    `sensor.solarfocus_heizkreis_1_vorlauftemperatur` - and only the ones added
-    from then on, because the entities already in the registry keep the id they
-    were given. Every id ever written into a dashboard, an automation or an
-    answer in an issue is the English one.
+    Home Assistant composes an entity id out of the name of the device and the
+    entity half the integration suggests. The device half is translated like
+    any device name, so a German installation reads `heizkreis_1`; the entity
+    half is the words of the key rather than the translated name, so it is
+    `supply_temperature` and never `vorlauftemperatur`.
+
+    Entities already in the registry keep the id they were given, so an
+    installation upgrading from 5.1.0 keeps its `sensor.solarfocus_*` ids
+    whatever this produces for the ones added from now on.
     """
     await hass.config.async_update(language="de")
 
@@ -489,18 +522,19 @@ async def test_a_german_installation_keeps_the_english_entity_ids(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.solarfocus_heating_circuit_1_room_temperature")
+    state = hass.states.get("sensor.heizkreis_1_room_temperature")
 
     assert state is not None
-    assert state.attributes["friendly_name"] == "Solarfocus Heizkreis 1 Raumtemperatur"
+    assert state.attributes["friendly_name"] == "Heizkreis 1 Raumtemperatur"
 
-    german = [
+    # The device half follows the language, the reading never does
+    translated = [
         entry.entity_id
         for entry in er.async_get(hass).entities.values()
-        if "heizkreis" in entry.entity_id or "vorlauf" in entry.entity_id
+        if "vorlauf" in entry.entity_id or "raumtemperatur" in entry.entity_id
     ]
 
-    assert not german
+    assert not translated
 
 
 def _unreadable(text: str) -> list[str]:

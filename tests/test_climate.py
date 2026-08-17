@@ -484,7 +484,7 @@ async def test_the_thermostat_restores_its_setpoint_from_storage(
         hass,
         (
             (
-                State("climate.solarfocus_heating_circuit_1_thermostat", HVACMode.OFF),
+                State("climate.heating_circuit_1_thermostat", HVACMode.OFF),
                 {"target_temperatures": {"heat": 41.5}, "active_mode": "heat"},
             ),
         ),

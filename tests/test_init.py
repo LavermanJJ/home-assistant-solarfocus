@@ -6,7 +6,11 @@ from pysolarfocus import ApiVersions, Systems
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.solarfocus import async_migrate_entry, async_reload_entry
+from custom_components.solarfocus import (
+    async_migrate_entry,
+    async_reload_entry,
+    async_remove_config_entry_device,
+)
 from custom_components.solarfocus.const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
@@ -761,8 +765,9 @@ async def test_a_renamed_entry_keeps_its_device(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
     before = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
-    assert len(before) == 1
+    assert hub is not None
 
     hass.config_entries.async_update_entry(entry, title="Heizung Keller")
     await hass.async_block_till_done()
@@ -770,8 +775,10 @@ async def test_a_renamed_entry_keeps_its_device(
     await hass.async_block_till_done()
 
     after = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
-    assert len(after) == 1
-    assert after[0].id == before[0].id
+
+    # The same hub, and the same components under it - a rename adds nothing
+    assert device_registry.async_get_device({(DOMAIN, entry.entry_id)}).id == hub.id
+    assert {device.id for device in after} == {device.id for device in before}
 
 
 async def test_a_renamed_entry_still_duplicates_its_entities(
@@ -804,3 +811,210 @@ async def test_a_renamed_entry_still_duplicates_its_entities(
 
     assert len(after) == 2 * len(before)
     assert any(registered.entity_id.endswith("_2") for registered in after)
+
+
+async def test_every_component_is_its_own_device_under_the_hub(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """The layout a user sees: a controller, and the components of it.
+
+    Two heating circuits, one buffer and a heat pump is five devices - not one
+    page holding every entity of a heating system.
+    """
+    entry = build_config_entry(
+        Systems.VAMPAIR, heating_circuit=2, buffer=1, heatpump=True
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    devices = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+    identifiers = {next(iter(device.identifiers))[1] for device in devices}
+
+    assert identifiers == {
+        entry.entry_id,
+        f"{entry.entry_id}_hc1",
+        f"{entry.entry_id}_hc2",
+        f"{entry.entry_id}_bu1",
+        f"{entry.entry_id}_hp",
+    }
+
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    components = [device for device in devices if device.id != hub.id]
+
+    assert components
+    assert all(device.via_device_id == hub.id for device in components)
+    assert hub.via_device_id is None
+
+
+async def test_every_entity_sits_on_the_component_it_reads(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    entity_registry,
+) -> None:
+    """An entity of heating circuit 2 belongs to the device of heating circuit 2."""
+    entry = build_config_entry(
+        Systems.VAMPAIR, heating_circuit=2, boiler=1, heatpump=True
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    misplaced = []
+    for registered in er.async_entries_for_config_entry(entity_registry, entry.entry_id):
+        device = device_registry.async_get(registered.device_id)
+        identifier = next(iter(device.identifiers))[1]
+        component = registered.unique_id.split("_")[1]
+        if not identifier.endswith(f"_{component}"):
+            misplaced.append((registered.entity_id, identifier))
+
+    assert not misplaced
+
+
+async def test_the_entity_id_is_the_device_and_the_english_key(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+) -> None:
+    """Home Assistant composes the id; the integration only supplies half of it.
+
+    The device half follows the language of the installation, because a device
+    name is translated like any other. The entity half is the words of the key,
+    which `create_description` keeps English on purpose - so a German
+    installation reads `sensor.heizkreis_1_supply_temperature`, not
+    `sensor.heizkreis_1_vorlauftemperatur`.
+
+    Entities already in the registry keep the ids they were given, so an
+    installation upgrading from 5.1.0 keeps its `sensor.solarfocus_*` ids and
+    only newly added components get these.
+    """
+    await hass.config.async_update(language="de")
+
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, solar=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    ids = {
+        registered.entity_id
+        for registered in er.async_entries_for_config_entry(
+            entity_registry, entry.entry_id
+        )
+    }
+
+    assert "sensor.heizkreis_1_supply_temperature" in ids
+    # One solar circuit is not numbered, in the device name and so in the id
+    assert "sensor.solar_collector_temperature_1" in ids
+    # The words of a key are never translated
+    assert not [entity_id for entity_id in ids if "vorlauf" in entity_id]
+
+
+async def test_lowering_a_count_removes_the_device_and_its_entities(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    entity_registry,
+) -> None:
+    """A component a user takes away must not leave anything behind.
+
+    The device of a component that is gone still names a config entry that
+    exists, so nothing removes it on its own - and its entities sit there
+    holding the value they had when the component was last polled.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=3)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    third = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc3")})
+    assert third is not None
+    assert er.async_entries_for_device(entity_registry, third.id)
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_HEATING_CIRCUIT: 2}
+    )
+    await hass.async_block_till_done()
+
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc3")}) is None
+    assert not er.async_entries_for_device(
+        entity_registry, third.id, include_disabled_entities=True
+    )
+    # The ones that are left are untouched
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+
+
+async def test_switching_a_component_off_removes_its_device(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """The same for the components that are a switch rather than a count."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, photovoltaic=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_pv")})
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_PHOTOVOLTAIC: False}
+    )
+    await hass.async_block_till_done()
+
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_pv")}) is None
+
+
+async def test_raising_a_count_adds_a_device(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """The other direction, and the hub keeps every one of them."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_HEATING_CIRCUIT: 2}
+    )
+    await hass.async_block_till_done()
+
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    second = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+
+    assert second is not None
+    assert second.via_device_id == hub.id
+
+
+async def test_removing_the_entry_removes_every_device(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """The components go with the controller they hang off."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=2, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+
+    assert await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+
+
+async def test_a_device_can_only_be_deleted_once_its_component_is_gone(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """Deleting a configured device by hand would only have it built again.
+
+    A stale one is the user's to remove, which is what the delete button on a
+    device page asks this.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    live = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    stale = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, f"{entry.entry_id}_bu4")},
+    )
+
+    assert await async_remove_config_entry_device(hass, entry, live) is False
+    assert await async_remove_config_entry_device(hass, entry, hub) is False
+    assert await async_remove_config_entry_device(hass, entry, stale) is True

@@ -34,7 +34,9 @@ from .const import (
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
     DOMAIN,
+    MANUFACTURER,
     build_unique_id,
+    expected_device_identifiers,
     solar_count,
 )
 from .coordinator import (
@@ -99,9 +101,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
             translation_placeholders={"address": address},
         ) from coordinator.last_exception
 
+    coordinator.hub_device_id = _async_hub_device(hass, entry, api).id
     entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    _async_remove_gone_components(hass, entry)
 
     # Registers update listener to update config entry when options are updated.
     entry.async_on_unload(entry.add_update_listener(async_update_options))
@@ -185,6 +190,70 @@ def _async_report_duplicate_entry(
 def _duplicate_issue_id(entry: SolarfocusConfigEntry) -> str:
     """Return the issue id naming this entry as one of a duplicate pair."""
     return f"duplicate_entry_{entry.entry_id}"
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """Let the user delete a device of a component their system does not have.
+
+    A component that is still configured is refused: deleting it would only
+    have it built again on the next load, with a new device the user has to
+    put back in its area.
+    """
+    return device.identifiers.isdisjoint(expected_device_identifiers(entry))
+
+
+@callback
+def _async_remove_gone_components(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Remove the devices of components this entry no longer has.
+
+    Lowering a count from four to two leaves two devices behind. Nothing takes
+    them away on their own: they still name a config entry that exists, so the
+    registry keeps them, and with them every entity that was on them - reading
+    the value it held when the component was last polled.
+
+    Removing the device is what removes those entities; the entity registry
+    takes them with it.
+    """
+    registry = dr.async_get(hass)
+    expected = expected_device_identifiers(entry)
+
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if not device.identifiers.isdisjoint(expected):
+            continue
+
+        _LOGGER.debug(
+            "Removing device %s, its component is not configured any more",
+            device.name,
+        )
+        registry.async_remove_device(device.id)
+
+
+@callback
+def _async_hub_device(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry, api: SolarfocusAPI
+) -> dr.DeviceEntry:
+    """Register the controller every component of this entry hangs off.
+
+    This is the device the entry has had all along - same identifier, so an
+    existing installation keeps the one it has, with the area it is in and the
+    name the user gave it, and the components appear underneath it rather than
+    beside it.
+
+    It is registered here rather than left to an entity, because a component
+    device points at it by device id, which is only known once it exists.
+    """
+    return dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.entry_id)},
+        name="Solarfocus",
+        model=api.system.value,
+        sw_version=api.api_version.value,
+        manufacturer=MANUFACTURER,
+    )
 
 
 @callback

@@ -48,6 +48,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         self._entry = entry
         self.hass = hass
         self._failed_components: set[str] = set()
+        # The controller every component device of this entry hangs off, set by
+        # `async_setup_entry` once the device is registered. A component device
+        # points at it by id rather than by identifier, which Home Assistant
+        # deprecates.
+        self.hub_device_id: str | None = None
 
         super().__init__(
             hass,

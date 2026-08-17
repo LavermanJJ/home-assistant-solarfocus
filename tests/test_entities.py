@@ -7,7 +7,6 @@ These tests pin the mapping down for one entity of every platform.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from pysolarfocus import ApiVersions, Systems
 import pytest
 
 from custom_components.solarfocus.binary_sensor import (
@@ -22,6 +21,7 @@ from custom_components.solarfocus.const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
     BOILER_PREFIX,
+    CONF_BOILER,
     DOMAIN,
     HEAT_PUMP_COMPONENT,
     HEAT_PUMP_COMPONENT_PREFIX,
@@ -29,6 +29,7 @@ from custom_components.solarfocus.const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     HEATING_CIRCUIT_PREFIX,
+    MANUFACTURER,
 )
 from custom_components.solarfocus.entity import create_description
 from custom_components.solarfocus.number import (
@@ -103,31 +104,54 @@ def test_unique_id_combines_the_device_name_and_the_key() -> None:
     assert entity.translation_key == f"bo_{BOILER_SENSOR_TYPES[0].key}"
 
 
-def test_device_info_describes_the_heating_system() -> None:
-    """All entities belong to a single device, identified by the entry id.
+def test_device_info_puts_the_entity_on_its_own_component() -> None:
+    """A boiler entity belongs to a boiler, not to the whole heating system.
 
-    The title of the entry identified it until version 9, which is why renaming
-    an entry built a second device beside the first.
+    The identifier is always indexed, `..._bo1`, even where the name of the
+    device drops the index - so raising the count of a component renames its
+    first device rather than orphaning it.
     """
     entry = build_config_entry()
+    coordinator = build_coordinator(entry)
+    coordinator.hub_device_id = "hub"
     entity = SolarfocusSensor(
-        build_coordinator(entry),
+        coordinator,
         create_description(
             BOILER_PREFIX,
             BOILER_COMPONENT,
             BOILER_COMPONENT_PREFIX,
-            "1",
+            "2",
             BOILER_SENSOR_TYPES[0],
         ),
     )
 
     device_info = entity.device_info
 
-    assert device_info["identifiers"] == {(DOMAIN, entry.entry_id)}
-    assert entry.entry_id != entry.title
-    assert device_info["manufacturer"] == "Solarfocus"
-    assert device_info["model"] == Systems.VAMPAIR.value
-    assert device_info["sw_version"] == ApiVersions.V_23_020.value
+    assert device_info["identifiers"] == {(DOMAIN, f"{entry.entry_id}_bo2")}
+    assert device_info["translation_key"] == CONF_BOILER
+    assert device_info["translation_placeholders"] == {"idx": " 2"}
+    assert device_info["model"] == BOILER_PREFIX
+    assert device_info["manufacturer"] == MANUFACTURER
+    # Every component hangs off the controller
+    assert device_info["via_device_id"] == "hub"
+
+
+def test_a_component_that_exists_once_is_not_numbered() -> None:
+    """There is one heat pump, so its device is `Heat pump`, not `Heat pump 1`."""
+    coordinator = build_coordinator(build_config_entry())
+    coordinator.hub_device_id = "hub"
+    entity = SolarfocusSwitchEntity(
+        coordinator,
+        create_description(
+            HEAT_PUMP_PREFIX,
+            HEAT_PUMP_COMPONENT,
+            HEAT_PUMP_COMPONENT_PREFIX,
+            "",
+            HEATPUMP_SWITCH_TYPES[0],
+        ),
+    )
+
+    assert entity.device_info["translation_placeholders"] == {"idx": ""}
 
 
 def test_device_info_values_are_strings() -> None:
@@ -147,7 +171,7 @@ def test_device_info_values_are_strings() -> None:
 
     device_info = entity.device_info
 
-    for field in ("name", "model", "sw_version", "manufacturer"):
+    for field in ("model", "manufacturer"):
         assert isinstance(device_info[field], str), (
             f"{field} is {type(device_info[field]).__name__}, not str"
         )

@@ -141,7 +141,7 @@ async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.solarfocus_heat_pump_vampair_state")
+    state = hass.states.get("sensor.heat_pump_vampair_state")
 
     assert state.state == "3"
     assert state.state in state.attributes["options"]
@@ -164,7 +164,7 @@ async def test_an_enum_sensor_survives_a_register_holding_a_bool(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.solarfocus_boiler_1_single_charge")
+    state = hass.states.get("sensor.boiler_1_single_charge")
 
     assert state.state == "1"
     assert state.state in state.attributes["options"]

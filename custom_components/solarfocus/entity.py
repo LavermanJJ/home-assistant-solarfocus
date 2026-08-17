@@ -13,7 +13,7 @@ from homeassistant.const import CONF_API_VERSION
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
-from .const import CONF_SOLARFOCUS_SYSTEM, DOMAIN
+from .const import COMPONENT_DEVICES, CONF_SOLARFOCUS_SYSTEM, DOMAIN, MANUFACTURER
 from .coordinator import SolarfocusDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +28,8 @@ class SolarfocusEntityDescription(EntityDescription):
     component_prefix: str | None = None
     component_idx: str | None = None
     object_id_name: str | None = None
+    # The index as a device name shows it, " 1" or blank - see `create_description`
+    device_idx: str = ""
     min_required_version: str = "21.140"
     unsupported_systems: list[Systems] | None = None
 
@@ -50,21 +52,20 @@ def create_description(
     # The name the user reads is not built here any more. `has_entity_name` makes
     # it the name of the entity, and a name built from the key is English
     # whatever language Home Assistant is in, so it comes from the translation of
-    # `translation_key` instead. The index is the one part of it that is not in
-    # the key - `hc_supply_temperature` is the same for every heating circuit -
-    # so it is passed as a placeholder for the translation to put back.
-    # The space belongs to the placeholder: a single solar circuit keeps the
-    # unnumbered name it has always had, and `format` does not tidy up after
-    # an empty one.
-    _description.translation_placeholders = {"idx": f" {idx}" if idx else ""}
+    # `translation_key` instead.
+    #
+    # The index is not in the entity name either. It belongs to the device the
+    # entity is on - `Supply temperature` on `Heating circuit 2` - so it is
+    # carried here for the device name to put back. The space belongs to it: a
+    # single solar circuit keeps the unnumbered name it has always had, and
+    # `format` does not tidy up after an empty placeholder.
+    _description.device_idx = f" {idx}" if idx else ""
 
-    # The entity id is still built from it, though. Home Assistant derives one
-    # from the name in the user's own language where that language is written in
-    # latin script, German among them, so translating the name alone would have
-    # renamed every entity of a German installation - and only the ones added
-    # from then on, since the ones in the registry keep the id they were given.
-    _name = name_prefix + " " + idx + " " + description.key.replace("_", " ")
-    _description.object_id_name = " ".join(_name.split())
+    # What the entity id is built from. Home Assistant composes it out of the
+    # name of the device and this, so the component and the index are not in it
+    # either - the device supplies both. The words of the key rather than the
+    # translated name, so this half of the id stays English in every language.
+    _description.object_id_name = description.key.replace("_", " ")
 
     _description.key = "".join(
         filter(
@@ -120,6 +121,7 @@ class SolarfocusEntity(Entity):
     _attr_should_poll = True
     has_entity_name = True
 
+
     def __init__(
         self,
         coordinator: SolarfocusDataUpdateCoordinator,
@@ -132,24 +134,43 @@ class SolarfocusEntity(Entity):
         self._state = None
         self.entity_description = description
 
+
     @property
     def device_info(self) -> DeviceInfo:
-        """Return info for device registry.
+        """Return the component this entity belongs to, as its own device.
 
-        The entry id identifies the device, not the title of the entry. A title
-        is something a user renames, and renaming one used to leave the device
-        behind and build a second one next to it, with the area, the name and
-        every automation pointing at the one that was left.
+        Every heating circuit, buffer, boiler, fresh water module and solar
+        circuit is a device, as are the heat pump, the photovoltaic and the
+        biomass boiler, and all of them hang off the controller. What that buys
+        is an area per component, a page per component instead of one page
+        holding every entity of a heating system, and a name the index has been
+        lifted out of - `Top temperature` on `Buffer 1`, rather than
+        `Buffer 1 Top temperature` on `Solarfocus`.
 
-        The entity `unique_id` below is still built from the title. That is the
-        other half of the same problem and a migration of its own, see #208.
+        The identifier of a component is always indexed, `..._so1` even where
+        the name says only `Solar`, so raising the count of a component renames
+        its first device rather than orphaning it.
+
+        The entity `unique_id` is still built from the title of the entry. That
+        is the other half of the rename problem and a migration of its own, see
+        #212.
         """
+        description = self.entity_description
+        translation_key, model = COMPONENT_DEVICES[description.component_prefix]
+
         return DeviceInfo(
-            identifiers={(DOMAIN, self._entry_id)},
-            name="Solarfocus",
-            model=self.coordinator.api.system.value,
-            sw_version=self.coordinator.api.api_version.value,
-            manufacturer="Solarfocus",
+            identifiers={
+                (DOMAIN, f"{self._entry_id}_{description.component_prefix}"
+                 f"{description.component_idx or ''}")
+            },
+            translation_key=translation_key,
+            # Blank for the components that exist once, and for the single
+            # solar circuit that keeps the unnumbered name it had before there
+            # could be four of them.
+            translation_placeholders={"idx": description.device_idx},
+            model=model,
+            manufacturer=MANUFACTURER,
+            via_device_id=self.coordinator.hub_device_id,
         )
 
     @property
@@ -171,13 +192,14 @@ class SolarfocusEntity(Entity):
 
     @property
     def suggested_object_id(self) -> str | None:
-        """Return the name the entity id is built from.
+        """Return the entity half of the entity id.
 
-        Home Assistant builds it from the translated name otherwise, in every
-        language it generates native entity ids for. The name is what the
-        translations are for; the id is what dashboards, automations and every
-        answer ever given in an issue are written against, so it stays the
-        English one it has always been.
+        Home Assistant composes an id out of the name of the device and this,
+        honouring whatever the installation has configured an id to be made of.
+        The device half is translated like any device name; this half is the
+        words of the key, so the part that names the reading stays English in
+        every language - `sensor.heizkreis_1_supply_temperature`, never
+        `..._vorlauftemperatur`.
         """
         return self.entity_description.object_id_name
 

@@ -58,6 +58,26 @@ FRESH_WATER_MODULE_PREFIX = "Fresh water module"
 FRESH_WATER_MODULE_COMPONENT = "fresh_water_modules"
 FRESH_WATER_MODULE_COMPONENT_PREFIX = "fm"
 
+MANUFACTURER = "Solarfocus"
+
+# The device the entities of a component belong to, keyed by the prefix every
+# entity description already carries: the key its name is translated under, and
+# the model shown on its device page - a heating circuit has no model of its own
+# to report, and a device page with nothing on it says less than the word.
+COMPONENT_DEVICES: dict[str, tuple[str, str]] = {
+    HEATING_CIRCUIT_COMPONENT_PREFIX: (CONF_HEATING_CIRCUIT, HEATING_CIRCUIT_PREFIX),
+    BUFFER_COMPONENT_PREFIX: (CONF_BUFFER, BUFFER_PREFIX),
+    BOILER_COMPONENT_PREFIX: (CONF_BOILER, BOILER_PREFIX),
+    FRESH_WATER_MODULE_COMPONENT_PREFIX: (
+        CONF_FRESH_WATER_MODULE,
+        FRESH_WATER_MODULE_PREFIX,
+    ),
+    SOLAR_COMPONENT_PREFIX: (CONF_SOLAR, SOLAR_PREFIX),
+    HEAT_PUMP_COMPONENT_PREFIX: (CONF_HEATPUMP, HEAT_PUMP_PREFIX),
+    PHOTOVOLTAIC_COMPONENT_PREFIX: (CONF_PHOTOVOLTAIC, PHOTOVOLTAIC_PREFIX),
+    BIOMASS_BOILER_COMPONENT_PREFIX: (CONF_BIOMASS_BOILER, BIOMASS_BOILER_PREFIX),
+}
+
 """Version from which several solar circuits exist"""
 MULTI_SOLAR_MIN_VERSION = "25.030"
 
@@ -91,3 +111,39 @@ def build_unique_id(host: str, port: int) -> str:
     it is reached at is the only thing telling two installations apart.
     """
     return f"{host}:{port}"
+
+
+def expected_device_identifiers(entry: ConfigEntry) -> set[tuple[str, str]]:
+    """Return the devices this entry should have, the controller included.
+
+    What a user configures is how many of each component their heating system
+    has, so lowering a count is what makes a device stale. There is nothing in
+    the registry that says which those are - a device of a component that is
+    gone looks exactly like one of a component that is there - so the set is
+    built from the configuration and everything outside it is stale.
+    """
+    counted = {
+        HEATING_CIRCUIT_COMPONENT_PREFIX: entry.options[CONF_HEATING_CIRCUIT],
+        BUFFER_COMPONENT_PREFIX: entry.options[CONF_BUFFER],
+        BOILER_COMPONENT_PREFIX: entry.options[CONF_BOILER],
+        FRESH_WATER_MODULE_COMPONENT_PREFIX: entry.options[CONF_FRESH_WATER_MODULE],
+        # The count the library was built with, not the one the options hold
+        SOLAR_COMPONENT_PREFIX: solar_count(entry),
+    }
+    once = {
+        HEAT_PUMP_COMPONENT_PREFIX: entry.options[CONF_HEATPUMP],
+        PHOTOVOLTAIC_COMPONENT_PREFIX: entry.options[CONF_PHOTOVOLTAIC],
+        BIOMASS_BOILER_COMPONENT_PREFIX: entry.options[CONF_BIOMASS_BOILER],
+    }
+
+    identifiers = {(DOMAIN, entry.entry_id)}
+    for prefix, count in counted.items():
+        identifiers |= {
+            (DOMAIN, f"{entry.entry_id}_{prefix}{index + 1}")
+            for index in range(int(count))
+        }
+    identifiers |= {
+        (DOMAIN, f"{entry.entry_id}_{prefix}") for prefix, on in once.items() if on
+    }
+
+    return identifiers
