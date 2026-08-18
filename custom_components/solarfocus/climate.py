@@ -101,7 +101,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in CLIMATE_TYPES:
             _description = create_description(
-                                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT,
                 HEATING_CIRCUIT_COMPONENT_PREFIX,
                 str(i + 1),
                 description,

@@ -51,7 +51,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SELECT_TYPES:
             _description = create_description(
-                                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT,
                 HEATING_CIRCUIT_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -63,7 +63,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_BOILER]):
         for description in BOILER_SELECT_TYPES:
             _description = create_description(
-                                BOILER_COMPONENT,
+                BOILER_COMPONENT,
                 BOILER_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -75,7 +75,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SELECT_TYPES:
             _description = create_description(
-                                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
                 "",
                 description,

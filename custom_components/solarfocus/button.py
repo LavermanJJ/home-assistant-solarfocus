@@ -43,7 +43,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_BOILER]):
         for description in BOILER_BUTTON_TYPES:
             _description = create_description(
-                                BOILER_COMPONENT,
+                BOILER_COMPONENT,
                 BOILER_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
