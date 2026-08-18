@@ -61,7 +61,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                HEATING_CIRCUIT_COMPONENT,
+                HEATING_CIRCUIT_COMPONENT,
                 HEATING_CIRCUIT_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -73,7 +73,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_BUFFER]):
         for description in BUFFER_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                BUFFER_COMPONENT,
+                BUFFER_COMPONENT,
                 BUFFER_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -85,7 +85,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
                 "",
                 description,
@@ -97,7 +97,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_BIOMASS_BOILER]:
         for description in BIOMASS_BOILER_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                BIOMASS_BOILER_COMPONENT,
+                BIOMASS_BOILER_COMPONENT,
                 BIOMASS_BOILER_COMPONENT_PREFIX,
                 "",
                 description,
@@ -109,7 +109,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_PHOTOVOLTAIC]:
         for description in PHOTOVOLTAIC_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                PHOTOVOLTAIC_COMPONENT,
+                PHOTOVOLTAIC_COMPONENT,
                 PHOTOVOLTAIC_COMPONENT_PREFIX,
                 "",
                 description,
@@ -121,7 +121,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_FRESH_WATER_MODULE]):
         for description in FRESH_WATER_MODULE_BINARY_SENSOR_TYPES:
             _description = create_description(
-                                FRESH_WATER_MODULE_COMPONENT,
+                FRESH_WATER_MODULE_COMPONENT,
                 FRESH_WATER_MODULE_COMPONENT_PREFIX,
                 str(i + 1),
                 description,

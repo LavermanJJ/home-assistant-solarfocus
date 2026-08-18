@@ -45,7 +45,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SWITCH_TYPES:
             _description = create_description(
-                                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
                 "",
                 description,
