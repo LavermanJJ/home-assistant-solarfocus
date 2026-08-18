@@ -403,7 +403,8 @@ These are properties of the integration or the Modbus interface, not bugs:
   deleting the entry and setting it up again.
 - **The name of an entry is part of the identity of its entities.** Renaming the config entry
   after setup gives the entities new unique ids: the old ones are orphaned and a duplicate set
-  appears with a `_2` suffix. Rename the entities or the device instead, both of which are safe.
+  appears with a `_2` suffix. Rename the entities or one of the devices instead, both of which
+  are safe.
   For the same reason two entries cannot share a name, and the setup rejects one that is taken.
 - **Register coverage follows the specification of the selected version.** Features the
   eco<sup>manager-touch</sup> only offers on its display, and registers added after `26.020`,
@@ -448,6 +449,12 @@ Either the component is set to 0 in the options, or the entity needs a newer API
 the one configured, or it does not exist for your system. Check the version selected under
 [Changing the Connection](#changing-the-connection) against the version shown on your display,
 and note that some entities are created disabled and have to be enabled on the device page.
+
+**A device trigger or a device action in an automation stopped working.**
+The entities moved from the one device an entry used to have onto the device of their component,
+so an automation built in the UI against the old device no longer finds them. Open the automation
+and pick the entity again - it will now be under `Heating circuit 1`, `Buffer 2` and so on. This
+only affects automations that reference a **device**; anything naming an `entity_id` is unaffected.
 
 **More than one solar circuit does not show up.**
 Multiple solar circuits require API version `25.030` or newer. Below that the count is capped
