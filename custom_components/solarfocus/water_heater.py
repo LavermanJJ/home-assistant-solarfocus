@@ -18,7 +18,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, BOILER_PREFIX, CONF_BOILER
+from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, CONF_BOILER
 from .coordinator import SolarfocusConfigEntry
 from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
@@ -70,8 +70,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_BOILER]):
         for description in WATER_HEATER_TYPES:
             _description = create_description(
-                BOILER_PREFIX,
-                BOILER_COMPONENT,
+                                BOILER_COMPONENT,
                 BOILER_COMPONENT_PREFIX,
                 str(i + 1),
                 description,

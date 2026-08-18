@@ -35,13 +35,16 @@ class SolarfocusEntityDescription(EntityDescription):
 
 
 def create_description(
-    name_prefix: str,
     component: str,
     prefix: str,
     idx: str,
     description: SolarfocusEntityDescription,
 ) -> SolarfocusEntityDescription:
-    """Create Description."""
+    """Return a copy of a description, bound to one instance of a component.
+
+    The display name of the component is not needed here any more: the device
+    an entity sits on carries it, and the name of the device is translated.
+    """
     _description = copy.copy(description)
 
     _description.item = description.key

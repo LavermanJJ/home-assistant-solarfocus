@@ -1018,3 +1018,110 @@ async def test_a_device_can_only_be_deleted_once_its_component_is_gone(
     assert await async_remove_config_entry_device(hass, entry, live) is False
     assert await async_remove_config_entry_device(hass, entry, hub) is False
     assert await async_remove_config_entry_device(hass, entry, stale) is True
+
+
+async def test_a_new_component_device_lands_in_the_area_of_its_controller(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    area_registry,
+) -> None:
+    """Splitting the components off must not take them out of their room.
+
+    Everything of an entry used to sit on one device, so a user who put that
+    device in a room put every entity of their heating system in it. A new
+    device is in no area, and an automation or a voice command scoped to a room
+    stops matching what is in none.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    heizraum = area_registry.async_get_or_create("Heizraum")
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    device_registry.async_update_device(hub.id, area_id=heizraum.id)
+
+    # A component that appears afterwards, as all of them did on the upgrade
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_HEATING_CIRCUIT: 2}
+    )
+    await hass.async_block_till_done()
+
+    second = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+
+    assert second.area_id == heizraum.id
+
+
+async def test_a_component_the_user_moved_stays_where_they_put_it(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    area_registry,
+) -> None:
+    """Inheriting the area is for devices that are new, and only then."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    heizraum = area_registry.async_get_or_create("Heizraum")
+    wohnzimmer = area_registry.async_get_or_create("Wohnzimmer")
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    circuit = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
+    device_registry.async_update_device(hub.id, area_id=heizraum.id)
+    device_registry.async_update_device(circuit.id, area_id=wohnzimmer.id)
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert (
+        device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")}).area_id
+        == wohnzimmer.id
+    )
+
+
+async def test_the_solar_entities_follow_the_key_the_count_uses(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+) -> None:
+    """One solar circuit is keyed without its index, several are keyed with it.
+
+    Crossing that line renames every entity of the first circuit. Left alone,
+    the set under the other key stays in the registry for good - on a device
+    that is still configured, so it is never removed with it - reading the
+    value it had when the count changed.
+    """
+    entry = build_config_entry(
+        Systems.VAMPAIR, api_version=ApiVersions.V_25_030.value, solar=1
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    def _solar_keys() -> set[str]:
+        return {
+            registered.unique_id.removeprefix(f"{DEFAULT_NAME}_")
+            for registered in er.async_entries_for_config_entry(
+                entity_registry, entry.entry_id
+            )
+            if "_so" in registered.unique_id
+        }
+
+    unnumbered = _solar_keys()
+    assert unnumbered
+    assert all(key.startswith("so_") for key in unnumbered)
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_SOLAR: 2}
+    )
+    await hass.async_block_till_done()
+
+    # The first circuit was renamed rather than left behind and built again
+    numbered = _solar_keys()
+    assert all(key.startswith(("so1_", "so2_")) for key in numbered)
+    assert {key.replace("so1_", "so_") for key in numbered if key.startswith("so1_")} == (
+        unnumbered
+    )
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_SOLAR: 1}
+    )
+    await hass.async_block_till_done()
+
+    assert _solar_keys() == unnumbered

@@ -101,11 +101,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
             translation_placeholders={"address": address},
         ) from coordinator.last_exception
 
-    coordinator.hub_device_id = _async_hub_device(hass, entry, api).id
+    hub = _async_hub_device(hass, entry, api)
+    coordinator.hub_device_id = hub.id
     entry.runtime_data = coordinator
+
+    await _async_align_solar_unique_ids(hass, entry)
+
+    known = {
+        device.id
+        for device in dr.async_entries_for_config_entry(
+            dr.async_get(hass), entry.entry_id
+        )
+    }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    _async_inherit_the_hub_area(hass, entry, hub, known)
     _async_remove_gone_components(hass, entry)
 
     # Registers update listener to update config entry when options are updated.
@@ -202,6 +213,80 @@ async def async_remove_config_entry_device(
     put back in its area.
     """
     return device.identifiers.isdisjoint(expected_device_identifiers(entry))
+
+
+async def _async_align_solar_unique_ids(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Follow the one solar circuit that is keyed without its index.
+
+    A single solar circuit keeps the unnumbered key it had before there could
+    be four of them - `so_collector_temperature_1`, not `so1_...` - so raising
+    the count to two renames every one of its entities, and lowering it back
+    renames them again. Left alone, the set under the other key stays in the
+    registry as entities that will never be written to again, on a device that
+    is still configured and so is never removed with them.
+
+    Renaming rather than removing: it is the same reading of the same circuit,
+    and the entity keeps its id, its history and anything the user set on it.
+    """
+    count = solar_count(entry)
+    if not count:
+        # No solar at all: the device is not expected, and it takes its
+        # entities with it when it goes.
+        return
+
+    old, new = ("so_", "so1_") if count > 1 else ("so1_", "so_")
+    prefix = f"{entry.title}_"
+    registry = er.async_get(hass)
+    taken = {registered.unique_id for registered in registry.entities.values()}
+
+    @callback
+    def _renamed(registered: er.RegistryEntry) -> dict[str, str] | None:
+        if not registered.unique_id.startswith(prefix + old):
+            return None
+
+        renamed = prefix + new + registered.unique_id[len(prefix + old) :]
+        if renamed in taken:
+            # Both sets exist, which takes a migration that stopped halfway.
+            # The one under the key in use is the one being written to.
+            return None
+
+        return {"new_unique_id": renamed}
+
+    await er.async_migrate_entries(hass, entry.entry_id, _renamed)
+
+
+@callback
+def _async_inherit_the_hub_area(
+    hass: HomeAssistant,
+    entry: SolarfocusConfigEntry,
+    hub: dr.DeviceEntry,
+    known: set[str],
+) -> None:
+    """Put a component device in the area its controller is in.
+
+    Everything of an entry used to be on one device, so a user who put that
+    device in a room put every entity of their heating system in it. Splitting
+    the components off would have taken all of them out again: a new device is
+    in no area, and an automation or a voice command scoped to a room stops
+    matching entities that are in none.
+
+    Only devices that were not there before this load, which on the first load
+    after the split is all of them. A device the user has since moved somewhere
+    else, or deliberately taken out of an area, is not one of those and is left
+    alone.
+    """
+    if hub.area_id is None:
+        return
+
+    registry = dr.async_get(hass)
+
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if device.id in known or device.area_id is not None:
+            continue
+
+        registry.async_update_device(device.id, area_id=hub.area_id)
 
 
 @callback

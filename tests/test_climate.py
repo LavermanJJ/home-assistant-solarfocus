@@ -82,8 +82,7 @@ def build_climate(
     entity = SolarfocusClimateEntity(
         build_coordinator(build_config_entry(), api),
         create_description(
-            HEATING_CIRCUIT_PREFIX,
-            HEATING_CIRCUIT_COMPONENT,
+                        HEATING_CIRCUIT_COMPONENT,
             HEATING_CIRCUIT_COMPONENT_PREFIX,
             "1",
             CLIMATE_TYPES[0],

@@ -281,8 +281,12 @@ numbered in the name of the device (`Heating circuit 2`), which is why the entit
 called `Supply temperature` rather than `Heating circuit 2 supply temperature`.
 
 A device is what Home Assistant assigns an area to, so a heating circuit can sit in the room it
-heats. Lowering a count or switching a component off removes its device and every entity on it,
-so nothing is left behind holding the value it had when it was last polled.
+heats. **If your Solarfocus device was in an area, every component device starts out in that same
+area**, so nothing drops out of a room-scoped automation or voice command on the upgrade; move
+the ones that belong elsewhere and they stay where you put them.
+
+Lowering a count or switching a component off removes its device and every entity on it, so
+nothing is left behind holding the value it had when it was last polled.
 
 **Your existing entity ids do not change.** Entities already in the registry keep the ids they
 were given, so an installation upgrading from 5.1.0 keeps its `sensor.solarfocus_...` ids.
