@@ -34,7 +34,9 @@ from .const import (
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
     DOMAIN,
+    MANUFACTURER,
     build_unique_id,
+    expected_device_identifiers,
     solar_count,
 )
 from .coordinator import (
@@ -99,9 +101,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
             translation_placeholders={"address": address},
         ) from coordinator.last_exception
 
+    hub = _async_hub_device(hass, entry, api)
+    coordinator.hub_device_id = hub.id
     entry.runtime_data = coordinator
 
+    await _async_align_solar_unique_ids(hass, entry)
+
+    known = {
+        device.id
+        for device in dr.async_entries_for_config_entry(
+            dr.async_get(hass), entry.entry_id
+        )
+    }
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    _async_inherit_the_hub_area(hass, entry, hub, known)
+    _async_remove_gone_components(hass, entry)
 
     # Registers update listener to update config entry when options are updated.
     entry.async_on_unload(entry.add_update_listener(async_update_options))
@@ -185,6 +201,144 @@ def _async_report_duplicate_entry(
 def _duplicate_issue_id(entry: SolarfocusConfigEntry) -> str:
     """Return the issue id naming this entry as one of a duplicate pair."""
     return f"duplicate_entry_{entry.entry_id}"
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """Let the user delete a device of a component their system does not have.
+
+    A component that is still configured is refused: deleting it would only
+    have it built again on the next load, with a new device the user has to
+    put back in its area.
+    """
+    return device.identifiers.isdisjoint(expected_device_identifiers(entry))
+
+
+async def _async_align_solar_unique_ids(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Follow the one solar circuit that is keyed without its index.
+
+    A single solar circuit keeps the unnumbered key it had before there could
+    be four of them - `so_collector_temperature_1`, not `so1_...` - so raising
+    the count to two renames every one of its entities, and lowering it back
+    renames them again. Left alone, the set under the other key stays in the
+    registry as entities that will never be written to again, on a device that
+    is still configured and so is never removed with them.
+
+    Renaming rather than removing: it is the same reading of the same circuit,
+    and the entity keeps its id, its history and anything the user set on it.
+    """
+    count = solar_count(entry)
+    if not count:
+        # No solar at all: the device is not expected, and it takes its
+        # entities with it when it goes.
+        return
+
+    old, new = ("so_", "so1_") if count > 1 else ("so1_", "so_")
+    prefix = f"{entry.title}_"
+    registry = er.async_get(hass)
+    taken = {registered.unique_id for registered in registry.entities.values()}
+
+    @callback
+    def _renamed(registered: er.RegistryEntry) -> dict[str, str] | None:
+        if not registered.unique_id.startswith(prefix + old):
+            return None
+
+        renamed = prefix + new + registered.unique_id[len(prefix + old) :]
+        if renamed in taken:
+            # Both sets exist, which takes a migration that stopped halfway.
+            # The one under the key in use is the one being written to.
+            return None
+
+        return {"new_unique_id": renamed}
+
+    await er.async_migrate_entries(hass, entry.entry_id, _renamed)
+
+
+@callback
+def _async_inherit_the_hub_area(
+    hass: HomeAssistant,
+    entry: SolarfocusConfigEntry,
+    hub: dr.DeviceEntry,
+    known: set[str],
+) -> None:
+    """Put a component device in the area its controller is in.
+
+    Everything of an entry used to be on one device, so a user who put that
+    device in a room put every entity of their heating system in it. Splitting
+    the components off would have taken all of them out again: a new device is
+    in no area, and an automation or a voice command scoped to a room stops
+    matching entities that are in none.
+
+    Only devices that were not there before this load, which on the first load
+    after the split is all of them. A device the user has since moved somewhere
+    else, or deliberately taken out of an area, is not one of those and is left
+    alone.
+    """
+    if hub.area_id is None:
+        return
+
+    registry = dr.async_get(hass)
+
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if device.id in known or device.area_id is not None:
+            continue
+
+        registry.async_update_device(device.id, area_id=hub.area_id)
+
+
+@callback
+def _async_remove_gone_components(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Remove the devices of components this entry no longer has.
+
+    Lowering a count from four to two leaves two devices behind. Nothing takes
+    them away on their own: they still name a config entry that exists, so the
+    registry keeps them, and with them every entity that was on them - reading
+    the value it held when the component was last polled.
+
+    Removing the device is what removes those entities; the entity registry
+    takes them with it.
+    """
+    registry = dr.async_get(hass)
+    expected = expected_device_identifiers(entry)
+
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if not device.identifiers.isdisjoint(expected):
+            continue
+
+        _LOGGER.debug(
+            "Removing device %s, its component is not configured any more",
+            device.name,
+        )
+        registry.async_remove_device(device.id)
+
+
+@callback
+def _async_hub_device(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry, api: SolarfocusAPI
+) -> dr.DeviceEntry:
+    """Register the controller every component of this entry hangs off.
+
+    This is the device the entry has had all along - same identifier, so an
+    existing installation keeps the one it has, with the area it is in and the
+    name the user gave it, and the components appear underneath it rather than
+    beside it.
+
+    It is registered here rather than left to an entity, because a component
+    device points at it by device id, which is only known once it exists.
+    """
+    return dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.entry_id)},
+        name="Solarfocus",
+        model=api.system.value,
+        sw_version=api.api_version.value,
+        manufacturer=MANUFACTURER,
+    )
 
 
 @callback

@@ -130,47 +130,47 @@
   "entity": {
     "binary_sensor": {
       "bb_door_contact": {
-        "name": "Biomass boiler door contact"
+        "name": "Door contact"
       },
       "bu_pump": {
-        "name": "Buffer{idx} pump"
+        "name": "Pump"
       },
       "fm_valve": {
-        "name": "Fresh water module{idx} valve"
+        "name": "Valve"
       },
       "hc_circulator_pump": {
-        "name": "Heating circuit{idx} circulator pump"
+        "name": "Circulator pump"
       },
       "hc_limit_thermostat": {
-        "name": "Heating circuit{idx} limit thermostat"
+        "name": "Limit thermostat"
       },
       "hp_boiler_charge": {
-        "name": "Heat pump boiler charge"
+        "name": "Boiler charge"
       },
       "hp_defrost_active": {
-        "name": "Heat pump defrost active"
+        "name": "Defrost active"
       },
       "hp_evu_lock_active": {
-        "name": "Heat pump evu lock active"
+        "name": "Evu lock active"
       },
       "pv_overcharge_active": {
-        "name": "Photovoltaic overcharge active"
+        "name": "Overcharge active"
       },
       "pv_overcharge_possible": {
-        "name": "Photovoltaic overcharge possible"
+        "name": "Overcharge possible"
       }
     },
     "button": {
       "bo_circulation": {
-        "name": "Boiler{idx} circulation"
+        "name": "Circulation"
       },
       "bo_single_charge": {
-        "name": "Boiler{idx} single charge"
+        "name": "Single charge"
       }
     },
     "climate": {
       "hc_thermostat": {
-        "name": "Heating circuit{idx} thermostat",
+        "name": "Thermostat",
         "state_attributes": {
           "preset_mode": {
             "state": {
@@ -185,36 +185,36 @@
     },
     "number": {
       "bo_target_temperature": {
-        "name": "Boiler{idx} target temperature"
+        "name": "Target temperature"
       },
       "hc_indoor_humidity_external": {
-        "name": "Heating circuit{idx} indoor humidity external"
+        "name": "Indoor humidity external"
       },
       "hc_indoor_temperature_external": {
-        "name": "Heating circuit{idx} indoor temperature external"
+        "name": "Indoor temperature external"
       },
       "hc_target_room_temperature": {
-        "name": "Heating circuit{idx} target room temperature"
+        "name": "Target room temperature"
       },
       "hc_target_supply_temperature": {
-        "name": "Heating circuit{idx} target supply temperature"
+        "name": "Target supply temperature"
       },
       "pv_grid_im_export": {
-        "name": "Photovoltaic grid im export"
+        "name": "Grid im export"
       },
       "pv_hems_target_electrical_power": {
-        "name": "Photovoltaic hems target electrical power"
+        "name": "Hems target electrical power"
       },
       "pv_photovoltaic": {
-        "name": "Photovoltaic photovoltaic"
+        "name": "Photovoltaic"
       },
       "pv_smart_meter": {
-        "name": "Photovoltaic smart meter"
+        "name": "Smart meter"
       }
     },
     "select": {
       "bo_holding_mode": {
-        "name": "Boiler{idx} holding mode",
+        "name": "Holding mode",
         "state": {
           "0": "Always off",
           "1": "Always on",
@@ -224,14 +224,14 @@
         }
       },
       "hc_cooling": {
-        "name": "Heating circuit{idx} cooling",
+        "name": "Cooling",
         "state": {
           "0": "Heating",
           "1": "Cooling"
         }
       },
       "hc_heating_mode": {
-        "name": "Heating circuit{idx} heating mode",
+        "name": "Heating mode",
         "state": {
           "0": "Heating",
           "1": "Cooling",
@@ -239,7 +239,7 @@
         }
       },
       "hc_mode": {
-        "name": "Heating circuit{idx} mode",
+        "name": "Mode",
         "state": {
           "0": "Continuous operation",
           "1": "Reduced operation",
@@ -248,7 +248,7 @@
         }
       },
       "hp_smart_grid": {
-        "name": "Heat pump smart grid",
+        "name": "Smart grid",
         "state": {
           "0": "Deactivated",
           "1": "No operation",
@@ -260,10 +260,10 @@
     },
     "sensor": {
       "bb_ash_container": {
-        "name": "Biomass boiler ash container"
+        "name": "Ash container"
       },
       "bb_boiler_operating_mode": {
-        "name": "Biomass boiler boiler operating mode",
+        "name": "Boiler operating mode",
         "state": {
           "0": "Log wood",
           "1": "Log wood automatic",
@@ -274,20 +274,20 @@
         }
       },
       "bb_cleaning": {
-        "name": "Biomass boiler cleaning"
+        "name": "Cleaning"
       },
       "bb_heat_energy_total": {
-        "name": "Biomass boiler heat energy total"
+        "name": "Heat energy total"
       },
       "bb_log_wood": {
-        "name": "Biomass boiler log wood",
+        "name": "Log wood",
         "state": {
           "0": "Begin to heat log wood / putting more wood not required / possible",
           "1": "More Log wood can be put on the fire"
         }
       },
       "bb_message_number": {
-        "name": "Biomass boiler message number",
+        "name": "Message number",
         "state": {
           "0": "No Message",
           "1": "Internal memory is invalid",
@@ -413,22 +413,22 @@
         }
       },
       "bb_octoplus_buffer_temperature_bottom": {
-        "name": "Biomass boiler octoplus buffer temperature bottom"
+        "name": "Octoplus buffer temperature bottom"
       },
       "bb_octoplus_buffer_temperature_top": {
-        "name": "Biomass boiler octoplus buffer temperature top"
+        "name": "Octoplus buffer temperature top"
       },
       "bb_outdoor_temperature": {
-        "name": "Biomass boiler outdoor temperature"
+        "name": "Outdoor temperature"
       },
       "bb_pellet_usage_last_fill": {
-        "name": "Biomass boiler pellet usage last fill"
+        "name": "Pellet usage last fill"
       },
       "bb_pellet_usage_total": {
-        "name": "Biomass boiler pellet usage total"
+        "name": "Pellet usage total"
       },
       "bb_status": {
-        "name": "Biomass boiler status",
+        "name": "Status",
         "state": {
           "0": "Standby",
           "1": "Ignition phase",
@@ -577,10 +577,10 @@
         }
       },
       "bb_temperature": {
-        "name": "Biomass boiler temperature"
+        "name": "Temperature"
       },
       "bo_circulation": {
-        "name": "Boiler{idx} circulation",
+        "name": "Circulation",
         "state": {
           "-1": "Locked",
           "0": "Off",
@@ -588,7 +588,7 @@
         }
       },
       "bo_mode": {
-        "name": "Boiler{idx} mode",
+        "name": "Mode",
         "state": {
           "0": "Always Off",
           "1": "Always On",
@@ -598,7 +598,7 @@
         }
       },
       "bo_single_charge": {
-        "name": "Boiler{idx} single charge",
+        "name": "Single charge",
         "state": {
           "-1": "Locked",
           "0": "Off",
@@ -606,7 +606,7 @@
         }
       },
       "bo_state": {
-        "name": "Boiler{idx} state",
+        "name": "State",
         "state": {
           "0": "Boiler state unavailable",
           "1": "Standby",
@@ -638,22 +638,22 @@
         }
       },
       "bo_temperature": {
-        "name": "Boiler{idx} temperature"
+        "name": "Temperature"
       },
       "bu_bottom_temperature": {
-        "name": "Buffer{idx} bottom temperature"
+        "name": "Bottom temperature"
       },
       "bu_external_bottom_temperature_x35": {
-        "name": "Buffer{idx} external bottom temperature x35"
+        "name": "External bottom temperature x35"
       },
       "bu_external_middle_temperature_x36": {
-        "name": "Buffer{idx} external middle temperature x36"
+        "name": "External middle temperature x36"
       },
       "bu_external_top_temperature_x44": {
-        "name": "Buffer{idx} external top temperature x44"
+        "name": "External top temperature x44"
       },
       "bu_mode": {
-        "name": "Buffer{idx} mode",
+        "name": "Mode",
         "state": {
           "0": "Always Off",
           "1": "Always On",
@@ -661,7 +661,7 @@
         }
       },
       "bu_state": {
-        "name": "Buffer{idx} state",
+        "name": "State",
         "state": {
           "0": "State unavailable",
           "1": "Standby",
@@ -683,16 +683,16 @@
         }
       },
       "bu_top_temperature": {
-        "name": "Buffer{idx} top temperature"
+        "name": "Top temperature"
       },
       "bu_x35_temperature": {
-        "name": "Buffer{idx} x35 temperature"
+        "name": "X35 temperature"
       },
       "fm_flow_rate": {
-        "name": "Fresh water module{idx} flow rate"
+        "name": "Flow rate"
       },
       "fm_state": {
-        "name": "Fresh water module{idx} state",
+        "name": "State",
         "state": {
           "0": "Flow sensor not connected",
           "1": "Pump turned off",
@@ -702,22 +702,22 @@
         }
       },
       "fm_supply_temperature": {
-        "name": "Fresh water module{idx} supply temperature"
+        "name": "Supply temperature"
       },
       "fm_target_temperature": {
-        "name": "Fresh water module{idx} target temperature"
+        "name": "Target temperature"
       },
       "hc_humidity": {
-        "name": "Heating circuit{idx} humidity"
+        "name": "Humidity"
       },
       "hc_mixer_valve": {
-        "name": "Heating circuit{idx} mixer valve"
+        "name": "Mixer valve"
       },
       "hc_room_temperature": {
-        "name": "Heating circuit{idx} room temperature"
+        "name": "Room temperature"
       },
       "hc_state": {
-        "name": "Heating circuit{idx} state",
+        "name": "State",
         "state": {
           "0": "Heating is off",
           "1": "Reduced mode",
@@ -782,73 +782,73 @@
         }
       },
       "hc_supply_temperature": {
-        "name": "Heating circuit{idx} supply temperature"
+        "name": "Supply temperature"
       },
       "hp_compressor_speed": {
-        "name": "Heat pump compressor speed"
+        "name": "Compressor speed"
       },
       "hp_cop_cooling": {
-        "name": "Heat pump cop cooling"
+        "name": "Cop cooling"
       },
       "hp_cop_heating": {
-        "name": "Heat pump cop heating"
+        "name": "Cop heating"
       },
       "hp_electrical_energy_cooling": {
-        "name": "Heat pump electrical energy cooling"
+        "name": "Electrical energy cooling"
       },
       "hp_electrical_energy_drinking_water": {
-        "name": "Heat pump electrical energy drinking water"
+        "name": "Electrical energy drinking water"
       },
       "hp_electrical_energy_heating": {
-        "name": "Heat pump electrical energy heating"
+        "name": "Electrical energy heating"
       },
       "hp_electrical_energy_total": {
-        "name": "Heat pump electrical energy total"
+        "name": "Electrical energy total"
       },
       "hp_electrical_power": {
-        "name": "Heat pump electrical power"
+        "name": "Electrical power"
       },
       "hp_flow_rate": {
-        "name": "Heat pump flow rate"
+        "name": "Flow rate"
       },
       "hp_outdoor_temperature": {
-        "name": "Heat pump outdoor temperature"
+        "name": "Outdoor temperature"
       },
       "hp_performance_overall": {
-        "name": "Heat pump performance overall"
+        "name": "Performance overall"
       },
       "hp_performance_overall_drinking_water": {
-        "name": "Heat pump performance overall drinking water"
+        "name": "Performance overall drinking water"
       },
       "hp_performance_overall_heating": {
-        "name": "Heat pump performance overall heating"
+        "name": "Performance overall heating"
       },
       "hp_return_temperature": {
-        "name": "Heat pump return temperature"
+        "name": "Return temperature"
       },
       "hp_supply_temperature": {
-        "name": "Heat pump supply temperature"
+        "name": "Supply temperature"
       },
       "hp_thermal_energy_cooling": {
-        "name": "Heat pump thermal energy cooling"
+        "name": "Thermal energy cooling"
       },
       "hp_thermal_energy_drinking_water": {
-        "name": "Heat pump thermal energy drinking water"
+        "name": "Thermal energy drinking water"
       },
       "hp_thermal_energy_heating": {
-        "name": "Heat pump thermal energy heating"
+        "name": "Thermal energy heating"
       },
       "hp_thermal_energy_total": {
-        "name": "Heat pump thermal energy total"
+        "name": "Thermal energy total"
       },
       "hp_thermal_power_cooling": {
-        "name": "Heat pump thermal power cooling"
+        "name": "Thermal power cooling"
       },
       "hp_thermal_power_heating": {
-        "name": "Heat pump thermal power heating"
+        "name": "Thermal power heating"
       },
       "hp_vampair_state": {
-        "name": "Heat pump vampair state",
+        "name": "Vampair state",
         "state": {
           "0": "Standby",
           "1": "Heating",
@@ -866,52 +866,52 @@
         }
       },
       "pv_grid_export": {
-        "name": "Photovoltaic grid export"
+        "name": "Grid export"
       },
       "pv_grid_import": {
-        "name": "Photovoltaic grid import"
+        "name": "Grid import"
       },
       "pv_heatpump_consumption": {
-        "name": "Photovoltaic heatpump consumption"
+        "name": "Heatpump consumption"
       },
       "pv_house_consumption": {
-        "name": "Photovoltaic house consumption"
+        "name": "House consumption"
       },
       "pv_power": {
-        "name": "Photovoltaic power"
+        "name": "Power"
       },
       "so_buffer_sensor_1": {
-        "name": "Solar{idx} buffer sensor 1"
+        "name": "Buffer sensor 1"
       },
       "so_buffer_sensor_2": {
-        "name": "Solar{idx} buffer sensor 2"
+        "name": "Buffer sensor 2"
       },
       "so_buffer_sensor_3": {
-        "name": "Solar{idx} buffer sensor 3"
+        "name": "Buffer sensor 3"
       },
       "so_collector_return_temperature": {
-        "name": "Solar{idx} collector return temperature"
+        "name": "Collector return temperature"
       },
       "so_collector_supply_temperature": {
-        "name": "Solar{idx} collector supply temperature"
+        "name": "Collector supply temperature"
       },
       "so_collector_temperature_1": {
-        "name": "Solar{idx} collector temperature 1"
+        "name": "Collector temperature 1"
       },
       "so_collector_temperature_2": {
-        "name": "Solar{idx} collector temperature 2"
+        "name": "Collector temperature 2"
       },
       "so_current_power": {
-        "name": "Solar{idx} current power"
+        "name": "Current power"
       },
       "so_current_yield_heat_meter": {
-        "name": "Solar{idx} current yield heat meter"
+        "name": "Current yield heat meter"
       },
       "so_flow_heat_meter": {
-        "name": "Solar{idx} flow heat meter"
+        "name": "Flow heat meter"
       },
       "so_state": {
-        "name": "Solar{idx} state",
+        "name": "State",
         "state": {
           "0": "Solar circuit in operation",
           "1": "Collector sensor short circuit",
@@ -956,18 +956,44 @@
         }
       },
       "so_today_yield": {
-        "name": "Solar{idx} today yield"
+        "name": "Today yield"
       }
     },
     "switch": {
       "hp_evu_lock": {
-        "name": "Heat pump evu lock"
+        "name": "Evu lock"
       }
     },
     "water_heater": {
       "bo_domestic_hot_water": {
-        "name": "Boiler{idx} domestic hot water"
+        "name": "Domestic hot water"
       }
+    }
+  },
+  "device": {
+    "heating_circuit": {
+      "name": "Heating circuit{idx}"
+    },
+    "buffer": {
+      "name": "Buffer{idx}"
+    },
+    "boiler": {
+      "name": "Boiler{idx}"
+    },
+    "fresh_water_module": {
+      "name": "Fresh water module{idx}"
+    },
+    "solar": {
+      "name": "Solar{idx}"
+    },
+    "heatpump": {
+      "name": "Heat pump"
+    },
+    "photovoltaic": {
+      "name": "Photovoltaic"
+    },
+    "biomassboiler": {
+      "name": "Biomass boiler"
     }
   }
 }

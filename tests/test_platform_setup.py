@@ -228,7 +228,7 @@ async def test_single_solar_instance_keeps_the_unnumbered_key(
     for entity in entities:
         assert entity.entity_description.key.startswith(f"{SOLAR_COMPONENT_PREFIX}_")
         # An empty index is what keeps the number out of the translated name
-        assert entity.entity_description.translation_placeholders == {"idx": ""}
+        assert entity.entity_description.device_idx == ""
         # The index is still needed to address the component in the library
         assert entity.entity_description.component_idx == "1"
 

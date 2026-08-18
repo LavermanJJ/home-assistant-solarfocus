@@ -77,11 +77,7 @@ rules:
   docs-supported-functions: done
   docs-troubleshooting: done
   docs-use-cases: done
-  dynamic-devices:
-    status: exempt
-    comment: |
-      One device per config entry, and its components are chosen by the user
-      rather than found, so nothing appears after setup.
+  dynamic-devices: done
   entity-category: done
   entity-device-class: done
   entity-disabled-by-default: done
@@ -90,10 +86,7 @@ rules:
   icon-translations: done
   reconfiguration-flow: done
   repair-issues: done
-  stale-devices:
-    status: exempt
-    comment: |
-      The one device of an entry is removed with the entry.
+  stale-devices: done
 
   # Platinum
   async-dependency:

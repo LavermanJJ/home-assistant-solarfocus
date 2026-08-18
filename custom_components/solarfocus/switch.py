@@ -12,12 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import (
-    CONF_HEATPUMP,
-    HEAT_PUMP_COMPONENT,
-    HEAT_PUMP_COMPONENT_PREFIX,
-    HEAT_PUMP_PREFIX,
-)
+from .const import CONF_HEATPUMP, HEAT_PUMP_COMPONENT, HEAT_PUMP_COMPONENT_PREFIX
 from .coordinator import SolarfocusConfigEntry
 from .entity import (
     SolarfocusEntity,
@@ -50,8 +45,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SWITCH_TYPES:
             _description = create_description(
-                HEAT_PUMP_PREFIX,
-                HEAT_PUMP_COMPONENT,
+                                HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
                 "",
                 description,

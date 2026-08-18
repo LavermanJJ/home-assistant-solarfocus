@@ -14,16 +14,13 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
-    BOILER_PREFIX,
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     HEAT_PUMP_COMPONENT,
     HEAT_PUMP_COMPONENT_PREFIX,
-    HEAT_PUMP_PREFIX,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
-    HEATING_CIRCUIT_PREFIX,
 )
 from .coordinator import SolarfocusConfigEntry
 from .entity import (
@@ -54,8 +51,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_SELECT_TYPES:
             _description = create_description(
-                HEATING_CIRCUIT_PREFIX,
-                HEATING_CIRCUIT_COMPONENT,
+                                HEATING_CIRCUIT_COMPONENT,
                 HEATING_CIRCUIT_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -67,8 +63,7 @@ async def async_setup_entry(
     for i in range(config_entry.options[CONF_BOILER]):
         for description in BOILER_SELECT_TYPES:
             _description = create_description(
-                BOILER_PREFIX,
-                BOILER_COMPONENT,
+                                BOILER_COMPONENT,
                 BOILER_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
@@ -80,8 +75,7 @@ async def async_setup_entry(
     if config_entry.options[CONF_HEATPUMP]:
         for description in HEATPUMP_SELECT_TYPES:
             _description = create_description(
-                HEAT_PUMP_PREFIX,
-                HEAT_PUMP_COMPONENT,
+                                HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
                 "",
                 description,

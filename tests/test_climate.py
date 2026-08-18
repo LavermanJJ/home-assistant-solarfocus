@@ -82,8 +82,7 @@ def build_climate(
     entity = SolarfocusClimateEntity(
         build_coordinator(build_config_entry(), api),
         create_description(
-            HEATING_CIRCUIT_PREFIX,
-            HEATING_CIRCUIT_COMPONENT,
+                        HEATING_CIRCUIT_COMPONENT,
             HEATING_CIRCUIT_COMPONENT_PREFIX,
             "1",
             CLIMATE_TYPES[0],
@@ -484,7 +483,7 @@ async def test_the_thermostat_restores_its_setpoint_from_storage(
         hass,
         (
             (
-                State("climate.solarfocus_heating_circuit_1_thermostat", HVACMode.OFF),
+                State("climate.heating_circuit_1_thermostat", HVACMode.OFF),
                 {"target_temperatures": {"heat": 41.5}, "active_mode": "heat"},
             ),
         ),

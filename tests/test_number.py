@@ -31,8 +31,7 @@ def _entities(api_version: str):
     entities = [
         SimpleNamespace(
             entity_description=create_description(
-                PHOTOVOLTAIC_PREFIX,
-                PHOTOVOLTAIC_COMPONENT,
+                                PHOTOVOLTAIC_COMPONENT,
                 PHOTOVOLTAIC_COMPONENT_PREFIX,
                 "",
                 description,
@@ -57,8 +56,7 @@ def test_photovoltaic_numbers_match_library_holding_registers():
 def test_photovoltaic_number_keys_and_names():
     """Entity keys and translation keys are prefixed with the component."""
     description = create_description(
-        PHOTOVOLTAIC_PREFIX,
-        PHOTOVOLTAIC_COMPONENT,
+                PHOTOVOLTAIC_COMPONENT,
         PHOTOVOLTAIC_COMPONENT_PREFIX,
         "",
         PHOTOVOLTAIC_NUMBER_TYPES[0],
@@ -69,7 +67,7 @@ def test_photovoltaic_number_keys_and_names():
     assert description.translation_key == "pv_smart_meter"
     # The name comes from the translation of the key now, and the photovoltaic
     # component exists once, so there is no index to substitute into it
-    assert description.translation_placeholders == {"idx": ""}
+    assert description.device_idx == ""
     assert description.component == PHOTOVOLTAIC_COMPONENT
 
 

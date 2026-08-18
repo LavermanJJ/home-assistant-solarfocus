@@ -260,7 +260,7 @@ asks for the connection on its own and leaves your component layout untouched.
 ### Removing the Integration
 
 Go to **Settings → Devices & Services → Solarfocus**, open the three-dot menu of the entry
-and choose **Delete**. This removes the config entry, the device and all of its entities, and
+and choose **Delete**. This removes the config entry, its devices and all of their entities, and
 stops the polling. Nothing is left behind on the heating system - the integration only reads
 registers and writes the ones you changed from Home Assistant.
 
@@ -274,8 +274,28 @@ eco<sup>manager-touch</sup> if you do not want to keep them.
 
 ## Supported Functionality
 
-The integration creates a single device per config entry, with the entities of every
-configured component. Multi-instance components are numbered (`Heating circuit 2 ...`).
+The integration creates **one device per component**: every heating circuit, buffer, boiler,
+fresh water module and solar circuit, plus the heat pump, photovoltaic and biomass boiler, all
+of them attached to the eco<sup>manager-touch</sup> as their hub. Multi-instance components are
+numbered in the name of the device (`Heating circuit 2`), which is why the entities on them are
+called `Supply temperature` rather than `Heating circuit 2 supply temperature`.
+
+A device is what Home Assistant assigns an area to, so a heating circuit can sit in the room it
+heats. **If your Solarfocus device was in an area, every component device starts out in that same
+area**, so nothing drops out of a room-scoped automation or voice command on the upgrade; move
+the ones that belong elsewhere and they stay where you put them.
+
+Lowering a count or switching a component off removes its device and every entity on it, so
+nothing is left behind holding the value it had when it was last polled.
+
+**Your existing entity ids do not change.** Entities already in the registry keep the ids they
+were given, so an installation upgrading from 5.1.0 keeps its `sensor.solarfocus_...` ids.
+
+Entities added **after** the upgrade - a component whose count you raise, or a fresh installation -
+are named the way Home Assistant composes an id from the device and the entity:
+`sensor.heating_circuit_1_supply_temperature`. The device half follows the language of your
+installation (`sensor.heizkreis_1_supply_temperature` on a German one); the half that names the
+reading is always English.
 
 | Platform | Component | Entities |
 |---|---|---|
@@ -387,13 +407,19 @@ These are properties of the integration or the Modbus interface, not bugs:
   deleting the entry and setting it up again.
 - **The name of an entry is part of the identity of its entities.** Renaming the config entry
   after setup gives the entities new unique ids: the old ones are orphaned and a duplicate set
-  appears with a `_2` suffix. Rename the entities or the device instead, both of which are safe.
+  appears with a `_2` suffix. Rename the entities or one of the devices instead, both of which
+  are safe.
   For the same reason two entries cannot share a name, and the setup rejects one that is taken.
 - **Register coverage follows the specification of the selected version.** Features the
   eco<sup>manager-touch</sup> only offers on its display, and registers added after `26.020`,
   are not available.
-- **Entity names are English.** Entity states, the config flow and the fault texts are
-  translated (English and German), the entity names themselves are not.
+- **Entity ids added before and after 6.0.0 look different.** Entities in the registry keep the
+  id they were given, so an upgraded installation has `sensor.solarfocus_...` ids while anything
+  added afterwards is `sensor.heating_circuit_1_...`, composed by Home Assistant from the device
+  and the entity. Nothing existing moves; the two styles simply coexist.
+- **The device half of an entity id follows the language of the installation.** A German
+  installation names new entities `sensor.heizkreis_1_supply_temperature`. The half that names
+  the reading is always English.
 - **Writes can be ignored by the controller.** The photovoltaic registers only take effect once
   the display is configured for it, see [Photovoltaic](#photovoltaic), and the heating system
   keeps enforcing its own limits (for example the outdoor shutdown temperature) regardless of
@@ -427,6 +453,12 @@ Either the component is set to 0 in the options, or the entity needs a newer API
 the one configured, or it does not exist for your system. Check the version selected under
 [Changing the Connection](#changing-the-connection) against the version shown on your display,
 and note that some entities are created disabled and have to be enabled on the device page.
+
+**A device trigger or a device action in an automation stopped working.**
+The entities moved from the one device an entry used to have onto the device of their component,
+so an automation built in the UI against the old device no longer finds them. Open the automation
+and pick the entity again - it will now be under `Heating circuit 1`, `Buffer 2` and so on. This
+only affects automations that reference a **device**; anything naming an `entity_id` is unaffected.
 
 **More than one solar circuit does not show up.**
 Multiple solar circuits require API version `25.030` or newer. Below that the count is capped

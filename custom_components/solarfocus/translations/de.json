@@ -129,47 +129,47 @@
   "entity": {
     "binary_sensor": {
       "bb_door_contact": {
-        "name": "Kessel Türkontakt offen/geschlossen"
+        "name": "Türkontakt offen/geschlossen"
       },
       "bu_pump": {
-        "name": "Pufferspeicher{idx} Ladepumpe"
+        "name": "Ladepumpe"
       },
       "fm_valve": {
-        "name": "Frischwassermodul{idx} Ventilstellung"
+        "name": "Ventilstellung"
       },
       "hc_circulator_pump": {
-        "name": "Heizkreis{idx} Pumpe Ein/Aus"
+        "name": "Pumpe Ein/Aus"
       },
       "hc_limit_thermostat": {
-        "name": "Heizkreis{idx} Begrenzungsthermostat offen/geschlossen"
+        "name": "Begrenzungsthermostat offen/geschlossen"
       },
       "hp_boiler_charge": {
-        "name": "Wärmepumpe Boilerladung"
+        "name": "Boilerladung"
       },
       "hp_defrost_active": {
-        "name": "Wärmepumpe Defrost aktiv"
+        "name": "Defrost aktiv"
       },
       "hp_evu_lock_active": {
-        "name": "Wärmepumpe EVU - Lock aktiv"
+        "name": "EVU - Lock aktiv"
       },
       "pv_overcharge_active": {
-        "name": "Photovoltaik PV-Überladung aktiv"
+        "name": "PV-Überladung aktiv"
       },
       "pv_overcharge_possible": {
-        "name": "Photovoltaik PV Überladung möglich"
+        "name": "PV Überladung möglich"
       }
     },
     "button": {
       "bo_circulation": {
-        "name": "Boiler{idx} Zirkulation anfordern"
+        "name": "Zirkulation anfordern"
       },
       "bo_single_charge": {
-        "name": "Boiler{idx} Einmalladung"
+        "name": "Einmalladung"
       }
     },
     "climate": {
       "hc_thermostat": {
-        "name": "Heizkreis{idx} Thermostat",
+        "name": "Thermostat",
         "state": {
           "off": "Aus",
           "heat": "Heizen",
@@ -204,36 +204,36 @@
     },
     "number": {
       "bo_target_temperature": {
-        "name": "Boiler{idx} Solltemperatur"
+        "name": "Solltemperatur"
       },
       "hc_indoor_humidity_external": {
-        "name": "Heizkreis{idx} Raumfeuchte ist extern"
+        "name": "Raumfeuchte ist extern"
       },
       "hc_indoor_temperature_external": {
-        "name": "Heizkreis{idx} Raumtemperatur Ist extern"
+        "name": "Raumtemperatur Ist extern"
       },
       "hc_target_room_temperature": {
-        "name": "Heizkreis{idx} Raumtemperatur Soll"
+        "name": "Raumtemperatur Soll"
       },
       "hc_target_supply_temperature": {
-        "name": "Heizkreis{idx} Vorlaufsolltemperatur Heizen"
+        "name": "Vorlaufsolltemperatur Heizen"
       },
       "pv_grid_im_export": {
-        "name": "Photovoltaik Netzbezug / Einspeisung"
+        "name": "Netzbezug / Einspeisung"
       },
       "pv_hems_target_electrical_power": {
-        "name": "Photovoltaik Elektrische Sollleistung HEMS"
+        "name": "Elektrische Sollleistung HEMS"
       },
       "pv_photovoltaic": {
-        "name": "Photovoltaik Erzeugte Leistung der PV-Anlage"
+        "name": "Erzeugte Leistung der PV-Anlage"
       },
       "pv_smart_meter": {
-        "name": "Photovoltaik Smart Meter"
+        "name": "Smart Meter"
       }
     },
     "select": {
       "bo_holding_mode": {
-        "name": "Boiler{idx} Freigabeart",
+        "name": "Freigabeart",
         "state": {
           "0": "Immer Aus",
           "1": "Immer Ein",
@@ -243,14 +243,14 @@
         }
       },
       "hc_cooling": {
-        "name": "Heizkreis{idx} Kühlen Ein/Aus",
+        "name": "Kühlen Ein/Aus",
         "state": {
           "0": "Heizen",
           "1": "Kühlen"
         }
       },
       "hc_heating_mode": {
-        "name": "Heizkreis{idx} Modus",
+        "name": "Modus",
         "state": {
           "0": "Heizen",
           "1": "Kühlen",
@@ -258,7 +258,7 @@
         }
       },
       "hc_mode": {
-        "name": "Heizkreis{idx} Betriebsart",
+        "name": "Betriebsart",
         "state": {
           "0": "Dauerbetrieb",
           "1": "Absenkbetrieb",
@@ -267,7 +267,7 @@
         }
       },
       "hp_smart_grid": {
-        "name": "Wärmepumpe Betriebsart SG - Ready",
+        "name": "Betriebsart SG - Ready",
         "state": {
           "0": "Deaktiviert",
           "1": "Gesperrt",
@@ -279,10 +279,10 @@
     },
     "sensor": {
       "bb_ash_container": {
-        "name": "Kessel Ascheboxfüllstand"
+        "name": "Ascheboxfüllstand"
       },
       "bb_boiler_operating_mode": {
-        "name": "Kessel Betriebsart",
+        "name": "Betriebsart",
         "state": {
           "0": "Stückholz",
           "1": "Stückholz Automatik",
@@ -293,20 +293,20 @@
         }
       },
       "bb_cleaning": {
-        "name": "Kessel Reinigung"
+        "name": "Reinigung"
       },
       "bb_heat_energy_total": {
-        "name": "Kessel Produzierte Wärmemenge gesamt"
+        "name": "Produzierte Wärmemenge gesamt"
       },
       "bb_log_wood": {
-        "name": "Kessel Stückholz",
+        "name": "Stückholz",
         "state": {
           "0": "Stückholz anheizen/ nachlegen nicht notwendig/möglich",
           "1": "Stückholz kann angeheizt/ nachgelegt werden"
         }
       },
       "bb_message_number": {
-        "name": "Kessel Nachrichtennummer",
+        "name": "Nachrichtennummer",
         "state": {
           "0": "Keine Meldung",
           "1": "Interner Speicher ist ungültig",
@@ -432,22 +432,22 @@
         }
       },
       "bb_octoplus_buffer_temperature_bottom": {
-        "name": "Kessel octoplus Speichertemperatur unten"
+        "name": "Octoplus Speichertemperatur unten"
       },
       "bb_octoplus_buffer_temperature_top": {
-        "name": "Kessel octoplus Speichertemperatur oben"
+        "name": "Octoplus Speichertemperatur oben"
       },
       "bb_outdoor_temperature": {
-        "name": "Kessel Außentemperatur"
+        "name": "Außentemperatur"
       },
       "bb_pellet_usage_last_fill": {
-        "name": "Kessel Pelletverbrauch seit letzter Lagerraumbefüllung"
+        "name": "Pelletverbrauch seit letzter Lagerraumbefüllung"
       },
       "bb_pellet_usage_total": {
-        "name": "Kessel Pelletverbrauch gesamt"
+        "name": "Pelletverbrauch gesamt"
       },
       "bb_status": {
-        "name": "Kessel Statuszeile",
+        "name": "Statuszeile",
         "state": {
           "0": "Bereitschaft",
           "1": "Zündphase",
@@ -599,10 +599,10 @@
         }
       },
       "bb_temperature": {
-        "name": "Kessel Temperatur"
+        "name": "Temperatur"
       },
       "bo_circulation": {
-        "name": "Boiler{idx} Zirkulation anfordern",
+        "name": "Zirkulation anfordern",
         "state": {
           "-1": "Gesperrt",
           "0": "Aus",
@@ -610,7 +610,7 @@
         }
       },
       "bo_mode": {
-        "name": "Boiler{idx} Freigabeart - Ist",
+        "name": "Freigabeart - Ist",
         "state": {
           "0": "Immer Aus",
           "1": "Immer Ein",
@@ -620,7 +620,7 @@
         }
       },
       "bo_single_charge": {
-        "name": "Boiler{idx} Einmalladung",
+        "name": "Einmalladung",
         "state": {
           "-1": "Gesperrt",
           "0": "Aus",
@@ -628,7 +628,7 @@
         }
       },
       "bo_state": {
-        "name": "Boiler{idx} Status",
+        "name": "Status",
         "state": {
           "0": "Boilerstatus nicht vorhanden",
           "1": "Bereitschaft",
@@ -660,22 +660,22 @@
         }
       },
       "bo_temperature": {
-        "name": "Boiler{idx} Temperatur"
+        "name": "Temperatur"
       },
       "bu_bottom_temperature": {
-        "name": "Pufferspeicher{idx} Temperatur unten"
+        "name": "Temperatur unten"
       },
       "bu_external_bottom_temperature_x35": {
-        "name": "Pufferspeicher{idx} Temperatur unten X35 extern"
+        "name": "Temperatur unten X35 extern"
       },
       "bu_external_middle_temperature_x36": {
-        "name": "Pufferspeicher{idx} Temperatur unten/Mitte X36 extern"
+        "name": "Temperatur unten/Mitte X36 extern"
       },
       "bu_external_top_temperature_x44": {
-        "name": "Pufferspeicher{idx} Temperatur oben X44 extern"
+        "name": "Temperatur oben X44 extern"
       },
       "bu_mode": {
-        "name": "Pufferspeicher{idx} Freigabeart",
+        "name": "Freigabeart",
         "state": {
           "0": "Immer Aus",
           "1": "Immer Ein",
@@ -683,7 +683,7 @@
         }
       },
       "bu_state": {
-        "name": "Pufferspeicher{idx} Status",
+        "name": "Status",
         "state": {
           "0": "Status nicht vorhanden",
           "1": "Bereitschaft",
@@ -705,16 +705,16 @@
         }
       },
       "bu_top_temperature": {
-        "name": "Pufferspeicher{idx} Temperatur oben"
+        "name": "Temperatur oben"
       },
       "bu_x35_temperature": {
-        "name": "Pufferspeicher{idx} Temperatur X35"
+        "name": "Temperatur X35"
       },
       "fm_flow_rate": {
-        "name": "Frischwassermodul{idx} WW-Durchfluss"
+        "name": "WW-Durchfluss"
       },
       "fm_state": {
-        "name": "Frischwassermodul{idx} Statuszeile",
+        "name": "Statuszeile",
         "state": {
           "0": "Vorlauffühler nicht angeschlossen",
           "1": "Pumpe ausgeschaltet",
@@ -724,22 +724,22 @@
         }
       },
       "fm_supply_temperature": {
-        "name": "Frischwassermodul{idx} WW-Vorlauftemperatur"
+        "name": "WW-Vorlauftemperatur"
       },
       "fm_target_temperature": {
-        "name": "Frischwassermodul{idx} WW-Solltemperatur"
+        "name": "WW-Solltemperatur"
       },
       "hc_humidity": {
-        "name": "Heizkreis{idx} Feuchte"
+        "name": "Feuchte"
       },
       "hc_mixer_valve": {
-        "name": "Heizkreis{idx} Mischerstellung"
+        "name": "Mischerstellung"
       },
       "hc_room_temperature": {
-        "name": "Heizkreis{idx} Raumtemperatur"
+        "name": "Raumtemperatur"
       },
       "hc_state": {
-        "name": "Heizkreis{idx} Status",
+        "name": "Status",
         "state": {
           "0": "Heizkreis ist ausgeschaltet",
           "1": "Absenkbetrieb",
@@ -804,73 +804,73 @@
         }
       },
       "hc_supply_temperature": {
-        "name": "Heizkreis{idx} Vorlauftemperatur"
+        "name": "Vorlauftemperatur"
       },
       "hp_compressor_speed": {
-        "name": "Wärmepumpe Kompressordrehzahl"
+        "name": "Kompressordrehzahl"
       },
       "hp_cop_cooling": {
-        "name": "Wärmepumpe Arbeitszahl Kühlung"
+        "name": "Arbeitszahl Kühlung"
       },
       "hp_cop_heating": {
-        "name": "Wärmepumpe Arbeitszahl Heizung"
+        "name": "Arbeitszahl Heizung"
       },
       "hp_electrical_energy_cooling": {
-        "name": "Wärmepumpe el. Energie Kühlung"
+        "name": "El. Energie Kühlung"
       },
       "hp_electrical_energy_drinking_water": {
-        "name": "Wärmepumpe elektr. Energie Trinkwassererwärmung"
+        "name": "Elektr. Energie Trinkwassererwärmung"
       },
       "hp_electrical_energy_heating": {
-        "name": "Wärmepumpe elektr. Energie Heizung"
+        "name": "Elektr. Energie Heizung"
       },
       "hp_electrical_energy_total": {
-        "name": "Wärmepumpe Gesamtenergie elektrisch Heizung + Trinkwassererwärmung"
+        "name": "Gesamtenergie elektrisch Heizung + Trinkwassererwärmung"
       },
       "hp_electrical_power": {
-        "name": "Wärmepumpe aktuell aufgenommene elektr. Leistung"
+        "name": "Aktuell aufgenommene elektr. Leistung"
       },
       "hp_flow_rate": {
-        "name": "Wärmepumpe Durchfluss"
+        "name": "Durchfluss"
       },
       "hp_outdoor_temperature": {
-        "name": "Wärmepumpe Außentemperatur"
+        "name": "Außentemperatur"
       },
       "hp_performance_overall": {
-        "name": "Wärmepumpe Arbeitszahl gesamt"
+        "name": "Arbeitszahl gesamt"
       },
       "hp_performance_overall_drinking_water": {
-        "name": "Wärmepumpe Gesamtarbeitszahl Trinkwassererwärmung"
+        "name": "Gesamtarbeitszahl Trinkwassererwärmung"
       },
       "hp_performance_overall_heating": {
-        "name": "Wärmepumpe Gesamtarbeitszahl Heizung"
+        "name": "Gesamtarbeitszahl Heizung"
       },
       "hp_return_temperature": {
-        "name": "Wärmepumpe Rücklauftemperatur"
+        "name": "Rücklauftemperatur"
       },
       "hp_supply_temperature": {
-        "name": "Wärmepumpe Vorlauftemperatur"
+        "name": "Vorlauftemperatur"
       },
       "hp_thermal_energy_cooling": {
-        "name": "Wärmepumpe thermische Energie Kühlung"
+        "name": "Thermische Energie Kühlung"
       },
       "hp_thermal_energy_drinking_water": {
-        "name": "Wärmepumpe thermische Energie Trinkwassererwärmung"
+        "name": "Thermische Energie Trinkwassererwärmung"
       },
       "hp_thermal_energy_heating": {
-        "name": "Wärmepumpe thermische Energie Heizung"
+        "name": "Thermische Energie Heizung"
       },
       "hp_thermal_energy_total": {
-        "name": "Wärmepumpe Gesamtenergie thermisch Heizung + Trinkwassererwärmung"
+        "name": "Gesamtenergie thermisch Heizung + Trinkwassererwärmung"
       },
       "hp_thermal_power_cooling": {
-        "name": "Wärmepumpe aktuelle thermische Leistung Kühlen"
+        "name": "Aktuelle thermische Leistung Kühlen"
       },
       "hp_thermal_power_heating": {
-        "name": "Wärmepumpe aktuelle thermische Leistung Heizen"
+        "name": "Aktuelle thermische Leistung Heizen"
       },
       "hp_vampair_state": {
-        "name": "Wärmepumpe vampair Status",
+        "name": "Vampair Status",
         "state": {
           "0": "Bereitschaft",
           "1": "Heizbetrieb",
@@ -888,52 +888,52 @@
         }
       },
       "pv_grid_export": {
-        "name": "Photovoltaik Einspeisung"
+        "name": "Einspeisung"
       },
       "pv_grid_import": {
-        "name": "Photovoltaik Netzbezug"
+        "name": "Netzbezug"
       },
       "pv_heatpump_consumption": {
-        "name": "Photovoltaik Verbrauch WP"
+        "name": "Verbrauch WP"
       },
       "pv_house_consumption": {
-        "name": "Photovoltaik Verbrauch"
+        "name": "Verbrauch"
       },
       "pv_power": {
-        "name": "Photovoltaik Leistung PV"
+        "name": "Leistung PV"
       },
       "so_buffer_sensor_1": {
-        "name": "Solar{idx} Speicherfühler 1"
+        "name": "Speicherfühler 1"
       },
       "so_buffer_sensor_2": {
-        "name": "Solar{idx} Speicherfühler 2"
+        "name": "Speicherfühler 2"
       },
       "so_buffer_sensor_3": {
-        "name": "Solar{idx} Speicherfühler 3"
+        "name": "Speicherfühler 3"
       },
       "so_collector_return_temperature": {
-        "name": "Solar{idx} Kollektorrücklauftemperatur"
+        "name": "Kollektorrücklauftemperatur"
       },
       "so_collector_supply_temperature": {
-        "name": "Solar{idx} Kollektorvorlauftemperatur"
+        "name": "Kollektorvorlauftemperatur"
       },
       "so_collector_temperature_1": {
-        "name": "Solar{idx} Kollektortemperatur 1"
+        "name": "Kollektortemperatur 1"
       },
       "so_collector_temperature_2": {
-        "name": "Solar{idx} Kollektortemperatur 2"
+        "name": "Kollektortemperatur 2"
       },
       "so_current_power": {
-        "name": "Solar{idx} aktuelle Leistung"
+        "name": "Aktuelle Leistung"
       },
       "so_current_yield_heat_meter": {
-        "name": "Solar{idx} Ertrag WMZ"
+        "name": "Ertrag WMZ"
       },
       "so_flow_heat_meter": {
-        "name": "Solar{idx} Durchfluss WMZ"
+        "name": "Durchfluss WMZ"
       },
       "so_state": {
-        "name": "Solar{idx} Statuszeile",
+        "name": "Statuszeile",
         "state": {
           "0": "Solarkreis in Betrieb",
           "201": "Kollektorfühler Kurzschluss!",
@@ -978,18 +978,44 @@
         }
       },
       "so_today_yield": {
-        "name": "Solar{idx} Tagesertrag"
+        "name": "Tagesertrag"
       }
     },
     "switch": {
       "hp_evu_lock": {
-        "name": "Wärmepumpe EVU - Lock"
+        "name": "EVU - Lock"
       }
     },
     "water_heater": {
       "bo_domestic_hot_water": {
-        "name": "Boiler{idx} Warmwasser"
+        "name": "Warmwasser"
       }
+    }
+  },
+  "device": {
+    "heating_circuit": {
+      "name": "Heizkreis{idx}"
+    },
+    "buffer": {
+      "name": "Pufferspeicher{idx}"
+    },
+    "boiler": {
+      "name": "Boiler{idx}"
+    },
+    "fresh_water_module": {
+      "name": "Frischwassermodul{idx}"
+    },
+    "solar": {
+      "name": "Solar{idx}"
+    },
+    "heatpump": {
+      "name": "Wärmepumpe"
+    },
+    "photovoltaic": {
+      "name": "Photovoltaik"
+    },
+    "biomassboiler": {
+      "name": "Kessel"
     }
   }
 }

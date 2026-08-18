@@ -7,7 +7,6 @@ These tests pin the mapping down for one entity of every platform.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from pysolarfocus import ApiVersions, Systems
 import pytest
 
 from custom_components.solarfocus.binary_sensor import (
@@ -22,13 +21,13 @@ from custom_components.solarfocus.const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
     BOILER_PREFIX,
+    CONF_BOILER,
     DOMAIN,
     HEAT_PUMP_COMPONENT,
     HEAT_PUMP_COMPONENT_PREFIX,
-    HEAT_PUMP_PREFIX,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
-    HEATING_CIRCUIT_PREFIX,
+    MANUFACTURER,
 )
 from custom_components.solarfocus.entity import create_description
 from custom_components.solarfocus.number import (
@@ -62,12 +61,12 @@ from homeassistant.const import ATTR_TEMPERATURE, STATE_OFF, UnitOfTemperature
 from .conftest import build_config_entry, build_coordinator
 
 
-def _make(entity_class, description, prefix, component, component_prefix, idx="1"):
+def _make(entity_class, description, component, component_prefix, idx="1"):
     """Create an entity of the given class on a mocked coordinator."""
     coordinator = build_coordinator(build_config_entry())
     entity = entity_class(
         coordinator,
-        create_description(prefix, component, component_prefix, idx, description),
+        create_description(component, component_prefix, idx, description),
     )
     entity.async_write_ha_state = MagicMock()
     return entity
@@ -79,7 +78,6 @@ def boiler_water_heater_fixture() -> SolarfocusWaterHeaterEntity:
     return _make(
         SolarfocusWaterHeaterEntity,
         WATER_HEATER_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
         idx="2",
@@ -94,7 +92,6 @@ def test_unique_id_combines_the_device_name_and_the_key() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -103,31 +100,52 @@ def test_unique_id_combines_the_device_name_and_the_key() -> None:
     assert entity.translation_key == f"bo_{BOILER_SENSOR_TYPES[0].key}"
 
 
-def test_device_info_describes_the_heating_system() -> None:
-    """All entities belong to a single device, identified by the entry id.
+def test_device_info_puts_the_entity_on_its_own_component() -> None:
+    """A boiler entity belongs to a boiler, not to the whole heating system.
 
-    The title of the entry identified it until version 9, which is why renaming
-    an entry built a second device beside the first.
+    The identifier is always indexed, `..._bo1`, even where the name of the
+    device drops the index - so raising the count of a component renames its
+    first device rather than orphaning it.
     """
     entry = build_config_entry()
+    coordinator = build_coordinator(entry)
+    coordinator.hub_device_id = "hub"
     entity = SolarfocusSensor(
-        build_coordinator(entry),
+        coordinator,
         create_description(
-            BOILER_PREFIX,
-            BOILER_COMPONENT,
+                        BOILER_COMPONENT,
             BOILER_COMPONENT_PREFIX,
-            "1",
+            "2",
             BOILER_SENSOR_TYPES[0],
         ),
     )
 
     device_info = entity.device_info
 
-    assert device_info["identifiers"] == {(DOMAIN, entry.entry_id)}
-    assert entry.entry_id != entry.title
-    assert device_info["manufacturer"] == "Solarfocus"
-    assert device_info["model"] == Systems.VAMPAIR.value
-    assert device_info["sw_version"] == ApiVersions.V_23_020.value
+    assert device_info["identifiers"] == {(DOMAIN, f"{entry.entry_id}_bo2")}
+    assert device_info["translation_key"] == CONF_BOILER
+    assert device_info["translation_placeholders"] == {"idx": " 2"}
+    assert device_info["model"] == BOILER_PREFIX
+    assert device_info["manufacturer"] == MANUFACTURER
+    # Every component hangs off the controller
+    assert device_info["via_device_id"] == "hub"
+
+
+def test_a_component_that_exists_once_is_not_numbered() -> None:
+    """There is one heat pump, so its device is `Heat pump`, not `Heat pump 1`."""
+    coordinator = build_coordinator(build_config_entry())
+    coordinator.hub_device_id = "hub"
+    entity = SolarfocusSwitchEntity(
+        coordinator,
+        create_description(
+                        HEAT_PUMP_COMPONENT,
+            HEAT_PUMP_COMPONENT_PREFIX,
+            "",
+            HEATPUMP_SWITCH_TYPES[0],
+        ),
+    )
+
+    assert entity.device_info["translation_placeholders"] == {"idx": ""}
 
 
 def test_device_info_values_are_strings() -> None:
@@ -140,14 +158,13 @@ def test_device_info_values_are_strings() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
 
     device_info = entity.device_info
 
-    for field in ("name", "model", "sw_version", "manufacturer"):
+    for field in ("model", "manufacturer"):
         assert isinstance(device_info[field], str), (
             f"{field} is {type(device_info[field]).__name__}, not str"
         )
@@ -158,7 +175,6 @@ def test_entity_is_unavailable_after_a_failed_update() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -175,7 +191,6 @@ def test_indexed_components_are_addressed_by_position() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
         idx="3",
@@ -192,7 +207,6 @@ def test_components_without_an_index_are_read_directly() -> None:
     entity = _make(
         SolarfocusSwitchEntity,
         HEATPUMP_SWITCH_TYPES[0],
-        HEAT_PUMP_PREFIX,
         HEAT_PUMP_COMPONENT,
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
@@ -207,7 +221,6 @@ async def test_async_update_requests_a_coordinator_refresh() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -223,7 +236,6 @@ async def test_entity_follows_the_coordinator_while_added() -> None:
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -249,7 +261,6 @@ def test_sensor_reports_the_component_value() -> None:
     entity = _make(
         SolarfocusSensor,
         description,
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -272,7 +283,6 @@ def test_binary_sensor_compares_against_its_on_state(
     entity = _make(
         SolarfocusBinarySensorEntity,
         SolarfocusBinarySensorEntityDescription(key="pump", on_state=on_state),
-        HEATING_CIRCUIT_PREFIX,
         HEATING_CIRCUIT_COMPONENT,
         HEATING_CIRCUIT_COMPONENT_PREFIX,
     )
@@ -289,7 +299,6 @@ async def test_number_writes_the_value() -> None:
     entity = _make(
         SolarfocusNumberEntity,
         BOILER_NUMBER_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -305,7 +314,6 @@ def test_number_reads_the_value() -> None:
     entity = _make(
         SolarfocusNumberEntity,
         BOILER_NUMBER_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -322,7 +330,6 @@ async def test_select_writes_and_reports_the_option() -> None:
     entity = _make(
         SolarfocusSelectEntity,
         HEATPUMP_SELECT_TYPES[0],
-        HEAT_PUMP_PREFIX,
         HEAT_PUMP_COMPONENT,
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
@@ -347,7 +354,6 @@ async def test_switch_turns_the_lock_on_and_off() -> None:
     entity = _make(
         SolarfocusSwitchEntity,
         HEATPUMP_SWITCH_TYPES[0],
-        HEAT_PUMP_PREFIX,
         HEAT_PUMP_COMPONENT,
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
@@ -368,7 +374,6 @@ def test_switch_reports_its_state() -> None:
     entity = _make(
         SolarfocusSwitchEntity,
         HEATPUMP_SWITCH_TYPES[0],
-        HEAT_PUMP_PREFIX,
         HEAT_PUMP_COMPONENT,
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
@@ -392,7 +397,6 @@ async def test_button_triggers_its_item(description) -> None:
     entity = _make(
         SolarfocusButtonEntity,
         description,
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
@@ -498,7 +502,6 @@ def test_set_native_value_writes_and_refreshes_the_component() -> None:
     entity = _make(
         SolarfocusNumberEntity,
         BOILER_NUMBER_TYPES[0],
-        BOILER_PREFIX,
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
