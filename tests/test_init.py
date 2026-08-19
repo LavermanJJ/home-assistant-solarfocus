@@ -21,8 +21,10 @@ from custom_components.solarfocus.const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
+    CONTROLLER_NAME,
     DEFAULT_NAME,
     DOMAIN,
+    MANUFACTURER,
 )
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
@@ -845,6 +847,55 @@ async def test_every_component_is_its_own_device_under_the_hub(
     assert components
     assert all(device.via_device_id == hub.id for device in components)
     assert hub.via_device_id is None
+
+
+async def test_the_hub_is_the_controller(
+    hass: HomeAssistant, enable_custom_integrations, api, mock_api, device_registry
+) -> None:
+    """The device every component hangs off is the box they are wired to.
+
+    It is the same controller whichever heating system it drives, so the name
+    does not vary with the system - `Solarfocus` is the make, and the model of
+    the device says which system it is.
+    """
+    api.system = Systems.THERMINATOR
+
+    entry = build_config_entry(Systems.THERMINATOR, biomassboiler=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+
+    assert hub.name == CONTROLLER_NAME
+    assert hub.manufacturer == MANUFACTURER
+    assert hub.model == Systems.THERMINATOR.value
+
+
+async def test_the_hub_keeps_the_name_the_user_gave_it(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+) -> None:
+    """Telling two heating systems apart by name is renaming their controllers.
+
+    The registry holds the name a user gave a device separately from the one the
+    integration reports, and theirs is what the frontend shows - so a reload
+    does not undo it.
+    """
+    entry = build_config_entry(Systems.VAMPAIR, heatpump=True)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    device_registry.async_update_device(hub.id, name_by_user="Heizung Keller")
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    renamed = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+
+    assert renamed.name_by_user == "Heizung Keller"
+    assert renamed.name == CONTROLLER_NAME
 
 
 async def test_every_entity_sits_on_the_component_it_reads(

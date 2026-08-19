@@ -60,6 +60,11 @@ FRESH_WATER_MODULE_COMPONENT_PREFIX = "fm"
 
 MANUFACTURER = "Solarfocus"
 
+# What the controller every component hangs off is called. `Solarfocus` is the
+# make and the device page says so already; this is the product, and it is the
+# same box whichever heating system is wired to it.
+CONTROLLER_NAME = "eco manager-touch"
+
 # The device the entities of a component belong to, keyed by the prefix every
 # entity description already carries: the key its name is translated under, and
 # the model shown on its device page - a heating circuit has no model of its own

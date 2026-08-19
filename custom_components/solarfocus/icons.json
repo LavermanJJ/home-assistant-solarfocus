@@ -1,6 +1,24 @@
 {
   "entity": {
     "binary_sensor": {
+      "bu_pump": {
+        "default": "mdi:pump",
+        "state": {
+          "off": "mdi:pump-off"
+        }
+      },
+      "hc_circulator_pump": {
+        "default": "mdi:pump",
+        "state": {
+          "off": "mdi:pump-off"
+        }
+      },
+      "hp_boiler_charge": {
+        "default": "mdi:pump",
+        "state": {
+          "off": "mdi:pump-off"
+        }
+      },
       "hp_defrost_active": {
         "default": "mdi:snowflake",
         "state": {
@@ -10,10 +28,10 @@
     },
     "button": {
       "bo_circulation": {
-        "default": "mdi:reload"
+        "default": "mdi:sync"
       },
       "bo_single_charge": {
-        "default": "mdi:water-boiler"
+        "default": "mdi:fire"
       }
     },
     "number": {

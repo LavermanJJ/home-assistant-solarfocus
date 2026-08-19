@@ -33,6 +33,7 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     CONF_SOLARFOCUS_SYSTEM,
+    CONTROLLER_NAME,
     DOMAIN,
     MANUFACTURER,
     build_unique_id,
@@ -330,11 +331,17 @@ def _async_hub_device(
 
     It is registered here rather than left to an entity, because a component
     device points at it by device id, which is only known once it exists.
+
+    The name is what the controller is called - `Solarfocus` is the make, and
+    the model page of the device already says it. Which heating system this one
+    belongs to is the name of the entry, not of the device: two systems in one
+    Home Assistant are two entries, and a user who wants to tell their devices
+    apart by name renames this one, which the registry keeps separately.
     """
     return dr.async_get(hass).async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, entry.entry_id)},
-        name="Solarfocus",
+        name=CONTROLLER_NAME,
         model=api.system.value,
         sw_version=api.api_version.value,
         manufacturer=MANUFACTURER,
