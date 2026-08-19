@@ -137,7 +137,18 @@ async def test_full_flow_vampair(
     assert len(setup_entry.mock_calls) == 1
 
 
-@pytest.mark.parametrize("system", [Systems.THERMINATOR, Systems.ECOTOP])
+@pytest.mark.parametrize(
+    "system",
+    [
+        Systems.THERMINATOR,
+        Systems.ECOTOP,
+        # Regression test for #217: the component step branched on the three
+        # systems the dropdown used to offer and had no else, so a fourth left
+        # both heat source flags unset and raised `KeyError` on the next line.
+        Systems.PELLETELEGANCE,
+        Systems.OCTOPLUS,
+    ],
+)
 async def test_full_flow_biomass_systems(
     hass: HomeAssistant, enable_custom_integrations, mock_api, system: Systems
 ) -> None:
@@ -589,6 +600,114 @@ async def test_reconfigure_leaves_the_components_alone(
     assert entry.options[CONF_HEATING_CIRCUIT] == 3
     assert entry.options[CONF_BUFFER] == 2
     assert entry.options[CONF_HEATPUMP] is True
+
+
+async def test_reconfigure_changes_the_system(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Regression test for #217.
+
+    Which system an entry is was asked once in the user step and never again,
+    so an owner who picked the nearest of the three that used to be offered
+    could only correct it by deleting the entry and losing its history.
+    """
+    entry = build_config_entry(
+        Systems.ECOTOP, heating_circuit=1, biomassboiler=True
+    )
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {**RECONFIGURE_INPUT, CONF_SOLARFOCUS_SYSTEM: Systems.PELLETELEGANCE},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.PELLETELEGANCE
+
+
+async def test_reconfigure_starts_from_the_current_system(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The system is being corrected, not chosen again from scratch."""
+    entry = build_config_entry(Systems.ECOTOP, biomassboiler=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+
+    defaults = {
+        key.schema: key.default() for key in result["data_schema"].schema if key.default
+    }
+
+    assert defaults[CONF_SOLARFOCUS_SYSTEM] == Systems.ECOTOP
+
+
+async def test_reconfigure_between_biomass_systems_keeps_the_heat_source(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """Both have a biomass boiler, so there is nothing to switch over.
+
+    Someone who turned the biomass boiler off in the options meant it, and
+    correcting the model of the boiler is no reason to turn it back on.
+    """
+    entry = build_config_entry(
+        Systems.ECOTOP, heating_circuit=1, biomassboiler=False
+    )
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {**RECONFIGURE_INPUT, CONF_SOLARFOCUS_SYSTEM: Systems.PELLETELEGANCE},
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_BIOMASS_BOILER] is False
+    assert entry.options[CONF_HEATPUMP] is False
+
+
+async def test_reconfigure_to_a_heat_pump_switches_the_heat_source(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The component step only ever offers the heat source the system has.
+
+    So crossing between them here has to switch the flags over, or the entry
+    would go on reading a biomass boiler the vampair does not have.
+    """
+    entry = build_config_entry(
+        Systems.ECOTOP, heating_circuit=1, biomassboiler=True
+    )
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {**RECONFIGURE_INPUT, CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR},
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_HEATPUMP] is True
+    assert entry.options[CONF_BIOMASS_BOILER] is False
+
+
+async def test_reconfigure_to_a_biomass_system_switches_the_heat_source(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """And the same crossing the other way."""
+    entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {**RECONFIGURE_INPUT, CONF_SOLARFOCUS_SYSTEM: Systems.PELLETELEGANCE},
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_BIOMASS_BOILER] is True
+    assert entry.options[CONF_HEATPUMP] is False
 
 
 async def test_reconfigure_refuses_the_address_of_another_entry(

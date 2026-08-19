@@ -59,6 +59,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
+    every_system_but,
     filterVersionAndSystem,
 )
 
@@ -574,27 +575,31 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         key="boiler_operating_mode",
         device_class=SensorDeviceClass.ENUM,
         options=enum_options(range(0, 6)),
-        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
+        unsupported_systems=every_system_but(Systems.THERMINATOR),
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
+        # Register 2410 is the buffer only on an octoplus. On every other
+        # Sigmatek boiler bar the vampair it is the return flow temperature -
+        # a different measurement at the same address, which wants an entity
+        # of its own rather than this one under a name that would misread it.
+        unsupported_systems=every_system_but(Systems.OCTOPLUS),
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
+        unsupported_systems=every_system_but(Systems.OCTOPLUS),
     ),
     SolarfocusSensorEntityDescription(
         key="log_wood",
         device_class=SensorDeviceClass.ENUM,
         options=enum_options(range(0, 2)),
-        unsupported_systems=[Systems.VAMPAIR, Systems.ECOTOP],
+        unsupported_systems=every_system_but(Systems.THERMINATOR),
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",

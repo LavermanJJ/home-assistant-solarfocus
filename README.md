@@ -165,7 +165,7 @@ The eco<sup>manager-touch</sup> can integrate the following heating systems
 - [Thermin<sup>nator</sup>](https://www.solarfocus.com/en/products/biomassheating) biomass boilers
 - [Ecotop<sup>light</sup> / Ecotop<sup>zero</sup>](https://www.solarfocus.com/de/produkte/biomasseheizung/pelletkessel/ecotop) biomass boilers (_beta_)
 - [Octo<sup>plus</sup>](https://www.solarfocus.com/en/products/biomassheating/pellet-boiler/octoplus) biomass boilers
-- [pellet<sup>elegance</sup>](https://www.solarfocus.com/pelletelegance) biomass boilers (select ecotop)
+- [pellet<sup>elegance</sup>](https://www.solarfocus.com/pelletelegance) biomass boilers
 
 | Components | Supported |
 |---|---|
@@ -216,7 +216,7 @@ The first step of the setup asks for:
 | Host | `solarfocus` | Hostname or IP address of the eco<sup>manager-touch</sup>. |
 | Port | `502` | Modbus TCP port of the controller. |
 | Polling interval (s) | `10` | Seconds between two reads of the heating system. Values below 5 are rejected. |
-| Solarfocus System | `Heat pump vampair` | `vampair`, `Therminator II` or `EcoTop`. This decides which components the second step offers and which entities exist, and it is the one setting that cannot be changed afterwards. |
+| Solarfocus System | `Heat pump vampair` | `vampair`, `Therminator II`, `EcoTop`, `Pellet Elegance` or `Octoplus`. This decides which components the second step offers and which entities exist. It can be corrected afterwards, see [Changing the Connection](#changing-the-connection). |
 | Solarfocus API Version | `23.020` | Software version of your eco<sup>manager-touch</sup>, see [Software](#software). Entities that need a newer version than the one selected are not created. |
 
 The second step asks which components your installation has. Everything here can be changed
@@ -237,7 +237,7 @@ immediately.
 | Fresh water module | 0 - 4 | Number of fresh water modules (_Frischwassermodule_), from version `23.020`. |
 | Solar | 0 - 4 | Number of solar circuits. More than one requires version `25.030`; below that only the first one is built, whatever the count says. |
 | Heat Pump | on / off | vampair systems only. |
-| Biomass boiler | on / off | Therminator and EcoTop systems only. |
+| Biomass boiler | on / off | Every system except the vampair. |
 | Photovoltaic | on / off | Photovoltaic sensors and the `number` entities used to feed values back, see [Photovoltaic](#photovoltaic). |
 
 Setting a count to 0 (or a switch to off) stops that component from being polled and removes
@@ -245,17 +245,27 @@ its entities.
 
 ### Changing the Connection
 
-The address of the controller, its Modbus TCP port and the API version are what it takes to
-read the system at all, so they are not in the form above. Change them via **Settings →
-Devices & Services → Solarfocus → the three-dot menu of the entry → Reconfigure**, which
-asks for the connection on its own and leaves your component layout untouched.
+The address of the controller, its Modbus TCP port, which system it is and the API version are
+what it takes to read the system at all, so they are not in the form above. Change them via
+**Settings → Devices & Services → Solarfocus → the three-dot menu of the entry → Reconfigure**,
+which asks for the connection on its own and leaves your component layout untouched.
 
 | Setting | Description |
 |---|---|
 | Host | Address of the controller, e.g. after a DHCP change. |
 | Port | Modbus TCP port. |
 | Polling interval (s) | Seconds between two reads, the same setting as above. |
+| Solarfocus System | Correct a system picked wrongly at setup, e.g. a pellet<sup>elegance</sup> added as an EcoTop before it was offered. Entities are identified by the name of the entry and their own key, neither of which holds the system, so every entity the two systems share keeps its history. Entities only the new system has appear empty until the next poll. See below for what happens to the ones only the old system had. |
 | Solarfocus API Version | Raise this after a software update of the heating system to get the entities that version added. Setting it higher than the controller runs makes it answer the wrong registers, see [Troubleshooting](#troubleshooting). |
+
+Changing between the vampair and any of the biomass boilers also switches the heat source the
+entry reads, since no system has both. That removes the device of the old heat source and every
+entity on it, history included — a vampair corrected to a Therminator loses its heat pump
+entities. Changing between two biomass boilers leaves your component layout exactly as it is.
+
+Either way, an entity the new system does not have simply stops being created. Its entry in the
+entity registry stays behind and shows as unavailable, because nothing removes entities one at a
+time — only whole devices. Delete those by hand if you want them gone.
 
 ### Removing the Integration
 
@@ -403,8 +413,6 @@ These are properties of the integration or the Modbus interface, not bugs:
   address or a DNS name.
 - **No authentication.** Modbus TCP has none. Anyone with access to the network segment of the
   controller can read and write the same registers.
-- **The system type cannot be changed.** Switching between vampair, Therminator and EcoTop means
-  deleting the entry and setting it up again.
 - **The name of an entry is part of the identity of its entities.** Renaming the config entry
   after setup gives the entities new unique ids: the old ones are orphaned and a duplicate set
   appears with a `_2` suffix. Rename the entities or one of the devices instead, both of which

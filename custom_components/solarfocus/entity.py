@@ -86,6 +86,18 @@ def create_description[_DescriptionT: SolarfocusEntityDescription](
     )
 
 
+def every_system_but(*supported: Systems) -> list[Systems]:
+    """Return every system except the ones given.
+
+    Some registers are documented for a single system - the register document
+    writes them "Kesselbetriebsart therminator" or "Speichertemperatur Oben
+    octoplus". Naming the system that has the register says that far more
+    plainly than listing the four that do not, and it keeps a system added to
+    the enum later out of a register the document never granted it.
+    """
+    return [system for system in Systems if system not in supported]
+
+
 def filterVersionAndSystem[_EntityT: SolarfocusEntity](
     config_entry: SolarfocusConfigEntry, entities: list[_EntityT]
 ) -> Generator[_EntityT]:

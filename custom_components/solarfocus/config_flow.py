@@ -50,6 +50,10 @@ SOLARFOCUS_SYSTEMS = [
         value="Therminator", label=" Biomass boiler therminator II"
     ),
     selector.SelectOptionDict(value="Ecotop", label=" Biomass boiler EcoTop"),
+    selector.SelectOptionDict(
+        value="Pellet Elegance", label=" Biomass boiler Pellet Elegance"
+    ),
+    selector.SelectOptionDict(value="Octoplus", label=" Biomass boiler Octoplus"),
 ]
 
 # CONF_API_VERSION
@@ -81,8 +85,33 @@ _COMPONENT_COUNT_ZERO_FOUR_SELECTOR = vol.All(
     vol.Coerce(int),
 )
 
+
+def _heat_source(was: str, now: str) -> dict[str, bool]:
+    """Return the component flags a change of system forces, if any.
+
+    The heat pump and the biomass boiler are the one part of the component
+    layout that the system decides rather than the user: the component step
+    only ever offers whichever of the two the chosen system has. So crossing
+    between them has to switch the flags over, or the entry would go on reading
+    a heat source its system does not have and stop reading the one it does.
+    The new one arrives switched on, as it does in the component step.
+
+    A change that stays on the same side of that line - the EcoTop read as a
+    Pellet Elegance this is mostly here for - leaves both alone. Someone who
+    turned the biomass boiler off meant it.
+    """
+    if (was == Systems.VAMPAIR) == (now == Systems.VAMPAIR):
+        return {}
+    heat_pump = now == Systems.VAMPAIR
+    return {CONF_HEATPUMP: heat_pump, CONF_BIOMASS_BOILER: not heat_pump}
+
+
 def _connection_schema(current: Mapping[str, Any]) -> vol.Schema:
-    """Return the form for where the heating system is and how often to ask it."""
+    """Return the form for what it takes to read the heating system at all.
+
+    Where it is, which system it is, which register layout it speaks, and how
+    often to ask it.
+    """
     return vol.Schema(
         {
             vol.Required(CONF_HOST, default=current[CONF_HOST]): cv.string,
@@ -90,6 +119,13 @@ def _connection_schema(current: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
             ): cv.positive_int,
+            vol.Required(
+                CONF_SOLARFOCUS_SYSTEM, default=current[CONF_SOLARFOCUS_SYSTEM]
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=SOLARFOCUS_SYSTEMS, mode=selector.SelectSelectorMode.DROPDOWN
+                ),
+            ),
             vol.Required(
                 CONF_API_VERSION, default=current[CONF_API_VERSION]
             ): selector.SelectSelector(
@@ -270,10 +306,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Handle the Component Selection step."""
         if user_input is None:
-            # `SOLARFOCUS_SYSTEMS` offers the vampair and the two biomass
-            # boilers and nothing else, so the boiler form covers everything
-            # that is not the heat pump. Falling out of this without a form
-            # would leave the step reading an input the user has not given yet.
+            # The vampair is the only heat pump in `SOLARFOCUS_SYSTEMS`, so the
+            # boiler form covers everything else. Falling out of this without a
+            # form would leave the step reading an input the user has not given
+            # yet.
             if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
                 return self.async_show_form(
                     step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
@@ -283,10 +319,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
             )
 
+        # Split on the heat pump here as well, so this reads back exactly the
+        # flag the form above asked for. Naming the biomass systems instead
+        # would leave a system neither branch knows about falling through with
+        # both flags unset, into a `KeyError` on the entry below.
         if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
             self.data[CONF_BIOMASS_BOILER] = False
-        elif self.data[CONF_SOLARFOCUS_SYSTEM] in [Systems.THERMINATOR, Systems.ECOTOP]:
+        else:
             self.data[CONF_BIOMASS_BOILER] = user_input[CONF_BIOMASS_BOILER]
             self.data[CONF_HEATPUMP] = False
 
@@ -315,13 +355,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Point an entry at the address its heating system is on now.
+        """Correct what an entry says its heating system is and where it is.
 
-        The options flow can already change these four settings, but it asks for
-        the whole component layout in the same form: a user whose controller
-        moved to another address has to answer for every component of their
-        heating system in order to say so, and a wrong answer there removes
+        The options flow can already change the address and the interval, but it
+        asks for the whole component layout in the same form: a user whose
+        controller moved to another address has to answer for every component of
+        their heating system in order to say so, and a wrong answer there removes
         entities. This is the connection on its own.
+
+        Which system it is belongs here too. It was asked once, in the user step,
+        and never again, so anyone who picked the wrong one - or picked the
+        nearest of the three that used to be offered - could only fix it by
+        deleting the entry and losing its history. An entity `unique_id` is built
+        from the title of the entry and the key of the entity, and the system is
+        in neither, so changing it here keeps every entity the two systems share.
         """
         entry = self._get_reconfigure_entry()
 
@@ -342,12 +389,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             try:
                 await validate_input(
-                    self.hass,
-                    {
-                        CONF_NAME: entry.data[CONF_NAME],
-                        CONF_SOLARFOCUS_SYSTEM: entry.data[CONF_SOLARFOCUS_SYSTEM],
-                        **user_input,
-                    },
+                    self.hass, {CONF_NAME: entry.data[CONF_NAME], **user_input}
                 )
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -371,7 +413,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     # here is the collision that migration avoided.
                     unique_id=None if entry.unique_id is None else unique_id,
                     data={**entry.data, **connection},
-                    options={**entry.options, CONF_SCAN_INTERVAL: scan_interval},
+                    options={
+                        **entry.options,
+                        **_heat_source(
+                            entry.data[CONF_SOLARFOCUS_SYSTEM],
+                            user_input[CONF_SOLARFOCUS_SYSTEM],
+                        ),
+                        CONF_SCAN_INTERVAL: scan_interval,
+                    },
                 )
 
         return self.async_show_form(
