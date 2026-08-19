@@ -1867,15 +1867,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/08/64/a99f27d3b4347486c
 
 [[package]]
 name = "pysolarfocus"
-version = "5.2.2"
+version = "5.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "pymodbus" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/fb/af9e6d65285f40c74c4e42f7bf9008e4370bbb52d27fb8baa3accd0adf70/pysolarfocus-5.2.2.tar.gz", hash = "sha256:a04eb04c7a0e0ad74743a678a82841ac458a4ccd0f42c849a17804fb3de2e6ff", size = 741743, upload-time = "2026-08-12T18:13:47.501Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/39/aad717044120e5fa2992e2565454526d9bf3ceff34cd09f43a76f951b7c1/pysolarfocus-5.2.3.tar.gz", hash = "sha256:b94f7c343e55ccd13526706a79176b3d6c8debd048c59c1257651b74ce8f7d4b", size = 742593, upload-time = "2026-08-19T05:25:50.998Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/25/22bf2c80a67ce815e5621d3f9205058e333e36094f5ff1eaa10f58b5ef77/pysolarfocus-5.2.2-py3-none-any.whl", hash = "sha256:18945e0397402fd6c9a467f6960cd85bcf50af70add3a45e2dce1ab95ea8817e", size = 31689, upload-time = "2026-08-12T18:13:46.063Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/c0/fbc95803aea26320a2946e733ac520fc8c0e0913a9c4c3cc130c068b7e6b/pysolarfocus-5.2.3-py3-none-any.whl", hash = "sha256:8492183dc19d302dfb0a9875bea66cef82956c9773cc2e62c31171c297ed9b97", size = 31773, upload-time = "2026-08-19T05:25:49.713Z" },
 ]
 
 [[package]]
@@ -2292,7 +2292,7 @@ wheels = [
 
 [[package]]
 name = "solarfocus"
-version = "5.1.0"
+version = "5.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "homeassistant" },
@@ -2315,7 +2315,7 @@ requires-dist = [
     { name = "packaging", specifier = "~=24.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
     { name = "pylint", specifier = ">=3.3.3" },
-    { name = "pysolarfocus", specifier = ">=5.2.2,<6" },
+    { name = "pysolarfocus", specifier = ">=5.2.3,<6" },
     { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.355,<0.14" },
     { name = "pytest-socket", specifier = ">=0.8.0,<0.9" },
 ]

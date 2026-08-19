@@ -9,8 +9,8 @@
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/lavermanjj/home-assistant-solarfocus/issues",
-  "requirements": ["pysolarfocus==5.2.2"],
+  "requirements": ["pysolarfocus==5.2.3"],
   "ssdp": [],
-  "version": "5.1.0",
+  "version": "5.1.1",
   "zeroconf": []
 }
