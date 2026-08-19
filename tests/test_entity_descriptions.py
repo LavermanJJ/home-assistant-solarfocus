@@ -232,3 +232,52 @@ def test_single_system_biomass_registers_reach_only_that_system(
                 f"{key} is documented for {supported.name} only, but reaches "
                 f"{system.name}."
             )
+
+
+# What register 2405 was measured to hold, and on which boiler. A door contact
+# is worth pinning down: get the polarity backwards and the entity still works,
+# it just says the opposite of the truth, which is how #91 and #101 have stayed
+# open for two years.
+MEASURED_DOOR_POLARITIES = [
+    (Systems.THERMINATOR, "1"),
+    (Systems.ECOTOP, "0"),
+    # 15 kW on v25.110, read at the door for #217: 1 open, 0 closed.
+    (Systems.PELLETELEGANCE, "1"),
+]
+
+
+@pytest.mark.parametrize(("system", "on_state"), MEASURED_DOOR_POLARITIES)
+def test_the_door_contact_reads_the_way_it_was_measured(
+    system: Systems, on_state: str
+) -> None:
+    """Exactly one door description reaches a system, with the measured polarity."""
+    reaching = [
+        d
+        for d in binary_sensor.BIOMASS_BOILER_BINARY_SENSOR_TYPES
+        if d.key == "door_contact"
+        and system not in (d.unsupported_systems or [])
+    ]
+
+    assert len(reaching) == 1, (
+        f"{system.name} reaches {len(reaching)} door descriptions; they share a "
+        f"key, so only one can ever become an entity."
+    )
+    assert reaching[0].on_state == on_state
+
+
+def test_the_octoplus_has_no_door_contact() -> None:
+    """Nobody has read 2405 on an octoplus.
+
+    The two polarities above are both attested on real boilers, so picking one
+    for an unmeasured system is a coin toss that produces a door sensor which
+    is confidently wrong half the time. Better to have no entity until someone
+    reads the register with the door open and with it closed.
+    """
+    reaching = [
+        d
+        for d in binary_sensor.BIOMASS_BOILER_BINARY_SENSOR_TYPES
+        if d.key == "door_contact"
+        and Systems.OCTOPLUS not in (d.unsupported_systems or [])
+    ]
+
+    assert not reaching
