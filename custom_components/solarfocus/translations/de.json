@@ -89,7 +89,7 @@
       },
       "reconfigure": {
         "title": "Solarfocus-Verbindung",
-        "description": "Ändern, wo dieser Eintrag die Heizungsanlage sucht und um welche Anlage es sich handelt. Welche Komponenten gelesen werden, bleibt unverändert.",
+        "description": "Ändern, wo dieser Eintrag die Heizungsanlage sucht und um welche Anlage es sich handelt. Die Komponentenauswahl bleibt erhalten - außer beim Wechsel zwischen vampair und einem Biomassekessel: Dabei wird die Wärmequelle umgestellt und die Entitäten der alten entfernt.",
         "data": {
           "host": "Host",
           "port": "Port",

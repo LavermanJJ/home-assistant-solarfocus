@@ -255,12 +255,17 @@ which asks for the connection on its own and leaves your component layout untouc
 | Host | Address of the controller, e.g. after a DHCP change. |
 | Port | Modbus TCP port. |
 | Polling interval (s) | Seconds between two reads, the same setting as above. |
-| Solarfocus System | Correct a system picked wrongly at setup, e.g. a pellet<sup>elegance</sup> added as an EcoTop before it was offered. Entities are identified by the name of the entry and their own key, neither of which holds the system, so every entity the two systems share keeps its history. Entities only the old system has are removed, and entities only the new one has appear empty until the next poll. |
+| Solarfocus System | Correct a system picked wrongly at setup, e.g. a pellet<sup>elegance</sup> added as an EcoTop before it was offered. Entities are identified by the name of the entry and their own key, neither of which holds the system, so every entity the two systems share keeps its history. Entities only the new system has appear empty until the next poll. See below for what happens to the ones only the old system had. |
 | Solarfocus API Version | Raise this after a software update of the heating system to get the entities that version added. Setting it higher than the controller runs makes it answer the wrong registers, see [Troubleshooting](#troubleshooting). |
 
 Changing between the vampair and any of the biomass boilers also switches the heat source the
-entry reads, since no system has both. Changing between two biomass boilers leaves your
-component layout exactly as it is.
+entry reads, since no system has both. That removes the device of the old heat source and every
+entity on it, history included — a vampair corrected to a Therminator loses its heat pump
+entities. Changing between two biomass boilers leaves your component layout exactly as it is.
+
+Either way, an entity the new system does not have simply stops being created. Its entry in the
+entity registry stays behind and shows as unavailable, because nothing removes entities one at a
+time — only whole devices. Delete those by hand if you want them gone.
 
 ### Removing the Integration
 

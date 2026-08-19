@@ -78,7 +78,7 @@
       },
       "reconfigure": {
         "title": "Solarfocus connection",
-        "description": "Change where this entry looks for your heating system, and which system it is. Which components it reads stays as it is.",
+        "description": "Change where this entry looks for your heating system, and which system it is. Your component layout is kept - except when you change between the vampair and a biomass boiler, which switches the heat source over and removes the entities of the old one.",
         "data": {
           "host": "Host",
           "port": "Port",
