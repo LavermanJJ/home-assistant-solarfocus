@@ -81,12 +81,13 @@ class SolarfocusSwitchEntity(SolarfocusEntity, SwitchEntity):
 
     @property
     @override
-    def is_on(self) -> bool | None:
+    def is_on(self) -> bool:
         """Return the state of the switch."""
         switch = self.entity_description.item
-        value = self._get_native_value(switch)
-        # The register holds 0 or 1, `None` while the component cannot be read.
-        return None if value is None else bool(value)
+        # The register holds 0 or 1. A register that could not be read keeps
+        # whatever it last held, so there is no third answer to give here -
+        # the entity goes unavailable with the coordinator instead.
+        return bool(self._get_native_value(switch))
 
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
