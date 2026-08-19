@@ -296,3 +296,50 @@ class SolarfocusEntity(Entity):
         )
 
         return native_value
+
+
+class SolarfocusControllerEntity(SolarfocusEntity):
+    """An entity of the controller itself rather than of one of its components.
+
+    The service menu codes are the only things this integration reports without
+    reading a register: they are arithmetic on the date and on what the display
+    of the controller shows. So they belong to the controller, they exist
+    whatever components the entry has configured, and none of what a component
+    entity does with the coordinator applies to them.
+    """
+
+    # There is nothing to poll: these follow the calendar and the user, not the
+    # heating system.
+    _attr_should_poll = False
+
+    @property
+    @override
+    def available(self) -> bool:
+        """Return True - these do not depend on the controller answering.
+
+        A heating system that cannot be read is exactly when its service menu is
+        wanted, so they stay available while every other entity of the entry
+        goes unavailable with the poll.
+        """
+        return True
+
+    @property
+    @override
+    def device_info(self) -> DeviceInfo:
+        """Return the controller, which is what these entities belong to.
+
+        The identifier only: `async_setup_entry` registers the device with its
+        name, model and software version, and repeating any of that here would
+        be a second place to change it.
+        """
+        return DeviceInfo(identifiers={(DOMAIN, self._entry_id)})
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Do not follow the poll, unlike every entity of a component.
+
+        There is no reading behind these, so a refresh of the coordinator has
+        nothing to tell them. Home Assistant's own hook is
+        `async_internal_added_to_hass`, which is untouched here - it is what
+        restores the number the user last entered.
+        """

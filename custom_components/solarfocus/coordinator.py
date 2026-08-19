@@ -23,6 +23,7 @@ from .const import (
     CONF_SOLAR,
     DOMAIN,
 )
+from .service_menu import DisplayedNumber
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +63,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         # points at it by id rather than by identifier, which Home Assistant
         # deprecates.
         self.hub_device_id: str | None = None
+        # The number the installer menu of the controller shows: typed in on
+        # one entity of it and multiplied by another. Not a register, so it
+        # lives here, where both platforms can reach it.
+        self.displayed_number = DisplayedNumber()
 
         super().__init__(
             hass,

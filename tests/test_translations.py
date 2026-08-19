@@ -34,6 +34,7 @@ from custom_components.solarfocus.const import (
     BOILER_PREFIX,
     BUFFER_PREFIX,
     COMPONENT_DEVICES,
+    CONTROLLER_NAME,
     DOMAIN,
     FRESH_WATER_MODULE_PREFIX,
     HEAT_PUMP_PREFIX,
@@ -429,7 +430,9 @@ async def test_an_entity_name_is_the_words_of_its_key(hass: HomeAssistant) -> No
     wrong = []
     async for domain, description in _descriptions(hass):
         name = entity[domain][description.translation_key]["name"]
-        expected = description.item.replace("_", " ")
+        # What the entity id is built from, which is the words of the key -
+        # the entity of the controller has no register to take them from
+        expected = description.object_id_name
         if name.lower() != expected.lower():
             wrong.append((domain, description.translation_key, name, expected))
 
@@ -461,7 +464,9 @@ async def test_no_entity_name_repeats_its_component(
         for key, block in keys.items()
         if block["name"]
         .lower()
-        .startswith(component_of[key.split("_")[0]].lower() + " ")
+        # An unprefixed key is one of the controller's own, and the device it
+        # reads on is the controller.
+        .startswith(component_of.get(key.split("_")[0], CONTROLLER_NAME).lower() + " ")
     ]
 
     assert not repeated

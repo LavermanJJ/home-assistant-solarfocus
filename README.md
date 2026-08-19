@@ -309,6 +309,7 @@ reading is always English.
 
 | Platform | Component | Entities |
 |---|---|---|
+| `sensor` | eco<sup>manager-touch</sup> | Service code and installer code, see [Service menu codes](#service-menu-codes) |
 | `sensor` | Heating circuit | Supply and room temperature, humidity, mixer valve, state |
 | `sensor` | Buffer | Top and bottom temperature, state, mode, external sensors X35 / X36 / X44 |
 | `sensor` | Boiler | Temperature, state, mode, single charge, circulation |
@@ -327,6 +328,7 @@ reading is always English.
 | `water_heater` | Boiler | Domestic hot water |
 | `number` | Heating circuit | Target supply and room temperature, external room temperature and humidity |
 | `number` | Boiler | Target temperature |
+| `number` | eco<sup>manager-touch</sup> | Installer code input, see [Service menu codes](#service-menu-codes) |
 | `number` | Photovoltaic | Smart meter, photovoltaic, grid import/export, HEMS target power, see [Photovoltaic](#photovoltaic) |
 | `select` | Heating circuit | Mode, heating mode, cooling |
 | `select` | Boiler | Holding mode |
@@ -338,6 +340,23 @@ Some noisier or less commonly used entities are created disabled; enable them on
 page if you need them. Which entities exist also depends on the configured API version and on
 the system - a Therminator has no heat pump sensors, and entities added in a later software
 version only appear once that version is selected.
+
+### Service menu codes
+
+The eco<sup>manager-touch</sup> asks for a code before it lets anyone into its service menus, and
+both codes are on the controller device rather than on a component. They read no register, which
+is why they keep reporting while the heating system is unreachable - which is when they tend to be
+wanted - and they change at local midnight rather than with the polling interval.
+
+| Entity | Platform | What it is |
+|---|---|---|
+| `Service code` | `sensor` | The code of the day: day of the month and month, each weighted with the day of the week. Nothing to enter. |
+| `Installer code input` | `number` | The number the installer menu shows on the display. Type it in; it is kept across restarts. |
+| `Installer code` | `sensor` | That number times the day of the week. Unknown until the number is entered. |
+
+**The two installer entities are created disabled**, since entering the number is something an
+installer does once - enable them on the device page of the eco<sup>manager-touch</sup> when you
+need them. `Service code` is enabled.
 
 ### States of the mode and status entities
 

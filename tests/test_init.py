@@ -914,6 +914,11 @@ async def test_every_entity_sits_on_the_component_it_reads(
     for registered in er.async_entries_for_config_entry(entity_registry, entry.entry_id):
         device = device_registry.async_get(registered.device_id)
         identifier = next(iter(device.identifiers))[1]
+        if identifier == entry.entry_id:
+            # The controller itself, which carries the one entity that reads no
+            # component: the service code, computed from the date.
+            continue
+
         component = registered.unique_id.split("_")[1]
         if not identifier.endswith(f"_{component}"):
             misplaced.append((registered.entity_id, identifier))

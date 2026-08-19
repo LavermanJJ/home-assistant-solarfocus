@@ -201,6 +201,9 @@
       "hc_target_supply_temperature": {
         "name": "Target supply temperature"
       },
+      "installer_code_input": {
+        "name": "Installer code input"
+      },
       "pv_grid_im_export": {
         "name": "Grid im export"
       },
@@ -867,6 +870,9 @@
           "9": "External boiler active, Heat pump off"
         }
       },
+      "installer_code": {
+        "name": "Installer code"
+      },
       "pv_grid_export": {
         "name": "Grid export"
       },
@@ -881,6 +887,9 @@
       },
       "pv_power": {
         "name": "Power"
+      },
+      "service_code": {
+        "name": "Service code"
       },
       "so_buffer_sensor_1": {
         "name": "Buffer sensor 1"
