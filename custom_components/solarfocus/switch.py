@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import logging
+from typing import Any, override
 
 from homeassistant.components.switch import (
     SwitchDeviceClass,
@@ -10,10 +11,9 @@ from homeassistant.components.switch import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_HEATPUMP, HEAT_PUMP_COMPONENT, HEAT_PUMP_COMPONENT_PREFIX
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -57,7 +57,7 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusSwitchEntityDescription(
     SolarfocusEntityDescription, SwitchEntityDescription
 ):
@@ -67,28 +67,35 @@ class SolarfocusSwitchEntityDescription(
 class SolarfocusSwitchEntity(SolarfocusEntity, SwitchEntity):
     """Representation of a Solarfocus switch entity."""
 
+    entity_description: SolarfocusSwitchEntityDescription
+
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusSwitchEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
     @property
-    def is_on(self):
+    @override
+    def is_on(self) -> bool | None:
         """Return the state of the switch."""
         switch = self.entity_description.item
-        return self._get_native_value(switch)
+        value = self._get_native_value(switch)
+        # The register holds 0 or 1, `None` while the component cannot be read.
+        return None if value is None else bool(value)
 
-    async def async_turn_on(self, **kwargs) -> None:
+    @override
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         switch = self.entity_description.item
         return self._set_native_value(switch, ON)
 
-    async def async_turn_off(self, **kwargs):
+    @override
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         switch = self.entity_description.item
         return self._set_native_value(switch, OFF)

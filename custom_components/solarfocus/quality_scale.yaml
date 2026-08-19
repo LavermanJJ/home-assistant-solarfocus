@@ -102,5 +102,11 @@ rules:
   strict-typing:
     status: todo
     comment: |
-      There is no `py.typed` and no mypy configuration; the platform modules
-      are only partly annotated.
+      Half done. The integration itself passes the strict mypy configuration
+      core applies to an integration in its `.strict-typing`, kept in `mypy.ini`
+      here and run by `make check-mypy` in CI, with no per-module exceptions.
+
+      What is left is pysolarfocus: the rule wants the dependency to be PEP 561
+      compliant, and it ships no `py.typed`. Nearly all of it is annotated
+      already, so this is a marker file and a release rather than a rewrite -
+      and a change in that library rather than here.

@@ -7,7 +7,6 @@ import logging
 
 from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_API_VERSION,
     CONF_HOST,
@@ -350,7 +349,7 @@ def _async_hub_device(
 
 @callback
 def _async_identify_device_by_entry_id(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
 ) -> None:
     """Re-identify the device of this entry by the entry id.
 
@@ -421,7 +420,9 @@ async def async_reload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) 
     await async_setup_entry(hass, entry)
 
 
-async def async_migrate_entry(hass, config_entry: ConfigEntry):
+async def async_migrate_entry(
+    hass: HomeAssistant, config_entry: SolarfocusConfigEntry
+) -> bool:
     """Migrate old entry."""
     _LOGGER.info("Migrating from version %s", config_entry.version)
 

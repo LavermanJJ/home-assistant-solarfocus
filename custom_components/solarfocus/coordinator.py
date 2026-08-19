@@ -2,12 +2,13 @@
 
 from datetime import timedelta
 import logging
+from typing import override
 
 from pysolarfocus import SolarfocusAPI
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -38,10 +39,18 @@ COMPONENT_UPDATES: tuple[tuple[str, str], ...] = (
 )
 
 
-class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
+# Nothing is handed to the entities through the coordinator: an entity reads
+# the component objects of the library directly, so a refresh has no data of
+# its own to carry.
+class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
     """Get the latest data and update the states."""
 
-    def __init__(self, hass, entry, api: SolarfocusAPI) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: "SolarfocusConfigEntry",
+        api: SolarfocusAPI,
+    ) -> None:
         """Init the Solarfocus data object."""
 
         self.api = api
@@ -71,7 +80,8 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator):
         """Return the address of the heating system, for log messages."""
         return f"{self._entry.data[CONF_HOST]}:{self._entry.data[CONF_PORT]}"
 
-    async def _async_update_data(self):
+    @override
+    async def _async_update_data(self) -> None:
         """Update data via library."""
 
         if not self.api.is_connected and not await self.hass.async_add_executor_job(
@@ -194,7 +204,9 @@ def component_issue_id(entry_id: str, option: str) -> str:
 
 
 @callback
-def async_delete_component_issues(hass, entry) -> None:
+def async_delete_component_issues(
+    hass: HomeAssistant, entry: "SolarfocusConfigEntry"
+) -> None:
     """Delete every component issue an entry raised.
 
     An entry that is unloaded is not reading anything, and one that is removed
