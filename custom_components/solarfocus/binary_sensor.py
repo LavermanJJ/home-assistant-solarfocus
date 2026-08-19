@@ -39,6 +39,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
+    every_system_but,
     filterVersionAndSystem,
 )
 
@@ -207,18 +208,29 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
     ),
 ]
 
+# Register 2405 is reported the other way round on a therminator than on an
+# EcoTop, which is why the door is described twice. Both descriptions carry the
+# same key, so they build the same `unique_id` and only one of the two may ever
+# survive the system filter: each names the single system it was measured on.
+#
+# That leaves Pellet Elegance and Octoplus without a door contact, deliberately.
+# The one Pellet Elegance measured for #217 answered 2 with the door open and 2
+# with it closed, which is neither of the states below, on a boiler whose owner
+# reports the contact does not work. Until someone with a working contact says
+# which way round it reads, an entity here could only be wrong in one of the two
+# directions - and a door sensor stuck on "closed" is the worse one.
 BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
-        unsupported_systems=[Systems.ECOTOP, Systems.VAMPAIR],
+        unsupported_systems=every_system_but(Systems.THERMINATOR),
     ),
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="0",
-        unsupported_systems=[Systems.THERMINATOR, Systems.VAMPAIR],
+        unsupported_systems=every_system_but(Systems.ECOTOP),
     ),
 ]
 

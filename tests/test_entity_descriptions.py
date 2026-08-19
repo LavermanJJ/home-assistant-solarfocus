@@ -171,3 +171,64 @@ def test_buffer_x35_excluded_where_missing() -> None:
     unsupported = description.unsupported_systems or []
     for system in (Systems.VAMPAIR, Systems.PELLETELEGANCE, Systems.OCTOPLUS):
         assert system in unsupported
+
+
+@pytest.mark.parametrize("system", list(Systems), ids=lambda s: s.name)
+def test_no_key_is_described_twice_for_one_system(system: Systems) -> None:
+    """One system may only ever reach one description per key.
+
+    A description list is allowed to carry the same key more than once - the
+    biomass boiler door is described twice because register 2405 is reported
+    the other way round on a therminator than on an EcoTop. What the duplicates
+    must not do is survive the system filter together: the key is half of the
+    `unique_id`, so Home Assistant would create the first entity and drop the
+    second, with nothing to say which of the two it kept.
+    """
+    for descriptions, component in DESCRIPTION_LISTS:
+        reached = [
+            description.key
+            for description in descriptions
+            if system not in (description.unsupported_systems or [])
+        ]
+        duplicates = {key for key in reached if reached.count(key) > 1}
+        assert not duplicates, (
+            f"{component} describes {sorted(duplicates)} more than once for "
+            f"system {system.name}; only one of them can become an entity."
+        )
+
+
+# Register -> the one system the register document grants it to. The document
+# names each of these after a single system: "Kesselbetriebsart therminator",
+# "Speichertemperatur Oben octoplus", "Stueckholz therminator". Register 2410 is
+# the octoplus buffer bottom, and on the other Sigmatek boilers the return flow
+# temperature - a different measurement that wants its own entity, not this one.
+SINGLE_SYSTEM_BIOMASS_REGISTERS = [
+    ("boiler_operating_mode", Systems.THERMINATOR),
+    ("log_wood", Systems.THERMINATOR),
+    ("octoplus_buffer_temperature_top", Systems.OCTOPLUS),
+    ("octoplus_buffer_temperature_bottom", Systems.OCTOPLUS),
+]
+
+
+@pytest.mark.parametrize(("key", "supported"), SINGLE_SYSTEM_BIOMASS_REGISTERS)
+def test_single_system_biomass_registers_reach_only_that_system(
+    key: str, supported: Systems
+) -> None:
+    """Regression test for #217.
+
+    These four were excluded from the vampair and the EcoTop and given to
+    everything else, which handed a pellet boiler a log wood register and a
+    therminator two buffer temperatures its controller does not have.
+    """
+    description = next(
+        d for d in sensor.BIOMASS_BOILER_SENSOR_TYPES if d.key == key
+    )
+    unsupported = description.unsupported_systems or []
+
+    assert supported not in unsupported
+    for system in Systems:
+        if system is not supported:
+            assert system in unsupported, (
+                f"{key} is documented for {supported.name} only, but reaches "
+                f"{system.name}."
+            )

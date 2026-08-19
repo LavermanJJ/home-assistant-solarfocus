@@ -78,17 +78,19 @@
       },
       "reconfigure": {
         "title": "Solarfocus connection",
-        "description": "Change where this entry looks for your heating system. Which components it reads stays as it is.",
+        "description": "Change where this entry looks for your heating system, and which system it is. Which components it reads stays as it is.",
         "data": {
           "host": "Host",
           "port": "Port",
           "scan_interval": "Polling interval (s)",
+          "system": "Solarfocus System",
           "api_version": "Solarfocus API Version"
         },
         "data_description": {
           "host": "The hostname or IP address of the eco manager-touch.",
           "port": "The Modbus TCP port of the controller, 502 unless it was changed.",
           "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
+          "system": "Which Solarfocus system this is. Changing it keeps the entities both systems have in common, with their history.",
           "api_version": "The version the controller shows under Fachmann - Modbus. A higher one than it runs creates entities it cannot answer."
         }
       }
