@@ -2,14 +2,14 @@
 
 from dataclasses import dataclass
 import logging
+from typing import override
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, CONF_BOILER
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -55,7 +55,7 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusButtonEntityDescription(
     SolarfocusEntityDescription, ButtonEntityDescription
 ):
@@ -65,16 +65,19 @@ class SolarfocusButtonEntityDescription(
 class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     """Representation of a Solarfocus button entity."""
 
+    entity_description: SolarfocusButtonEntityDescription
+
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusButtonEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
+    @override
     async def async_press(self) -> None:
         """Update the current value."""
         button = self.entity_description.item

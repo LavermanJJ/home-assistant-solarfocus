@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import logging
+from typing import cast, override
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -13,7 +14,6 @@ from homeassistant.const import PERCENTAGE, UnitOfPower, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     BOILER_COMPONENT,
@@ -26,7 +26,7 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
 )
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -91,7 +91,7 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusNumberEntityDescription(
     SolarfocusEntityDescription, NumberEntityDescription
 ):
@@ -101,26 +101,30 @@ class SolarfocusNumberEntityDescription(
 class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
     """Representation of a Solarfocus number entity."""
 
+    entity_description: SolarfocusNumberEntityDescription
+
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusNumberEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
+    @override
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         number = self.entity_description.item
         return self._set_native_value(number, value)
 
     @property
-    def native_value(self):
+    @override
+    def native_value(self) -> float | None:
         """Return the current state."""
         number = self.entity_description.item
-        return self._get_native_value(number)
+        return cast(float | None, self._get_native_value(number))
 
 
 HEATING_CIRCUIT_NUMBER_TYPES = [

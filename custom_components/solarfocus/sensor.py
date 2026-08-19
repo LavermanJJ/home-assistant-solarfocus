@@ -1,8 +1,9 @@
 """Sensors for the Solarfocus integration."""
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import logging
+from typing import cast, override
 
 from pysolarfocus import Systems
 
@@ -23,6 +24,8 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import StateType
 
 from .const import (
     BIOMASS_BOILER_COMPONENT,
@@ -78,8 +81,10 @@ def enum_options(*groups: Iterable[int]) -> list[str]:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: SolarfocusConfigEntry, async_add_entities
-):
+    hass: HomeAssistant,
+    config_entry: SolarfocusConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Initialize sensor platform from config entry."""
     coordinator = config_entry.runtime_data
     entities = []
@@ -179,8 +184,11 @@ async def async_setup_entry(
                     # One solar circuit keeps the unnumbered name and key it had
                     # before there could be four of them. The index stays on the
                     # description, the library addresses the component with it.
-                    _description.device_idx = ""
-                    _description.key = _description.key.replace("so1_", "so_")
+                    _description = replace(
+                        _description,
+                        device_idx="",
+                        key=_description.key.replace("so1_", "so_"),
+                    )
 
                 entity = SolarfocusSensor(coordinator, _description)
                 entities.append(entity)
@@ -200,7 +208,7 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusSensorEntityDescription(
     SolarfocusEntityDescription, SensorEntityDescription
 ):
@@ -209,6 +217,8 @@ class SolarfocusSensorEntityDescription(
 
 class SolarfocusSensor(SolarfocusEntity, SensorEntity):
     """Sensor for the Solarfocus."""
+
+    entity_description: SolarfocusSensorEntityDescription
 
     _attr_has_entity_name = True
 
@@ -221,7 +231,8 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
         super().__init__(coordinator=coordinator, description=description)
 
     @property
-    def native_value(self):
+    @override
+    def native_value(self) -> StateType:
         """Return native value."""
         sensor = self.entity_description.item
         value = self._get_native_value(sensor)
@@ -235,7 +246,7 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
             # for it.
             return str(int(value))
 
-        return value
+        return cast(StateType, value)
 
 
 HEATING_CIRCUIT_SENSOR_TYPES = [

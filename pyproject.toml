@@ -27,10 +27,15 @@ Homepage = "https://github.com/LavermanJJ/home-assistant-solarfocus"
 Repository = "https://github.com/LavermanJJ/home-assistant-solarfocus"
 
 [dependency-groups]
-dev = ["ruff>=0.0.286,<0.0.287"]
+dev = [
+    "mypy>=2.3.1,<3",
+    "ruff>=0.0.286,<0.0.287",
+]
 
 [tool.pylint.MAIN]
-py-version = "3.11"
+# The floor `requires-python` sets, so pylint accepts what the code may use -
+# PEP 695 generics and `typing.override` among them.
+py-version = "3.14"
 ignore = [
     "tests",
 ]

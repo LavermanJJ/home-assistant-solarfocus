@@ -1,57 +1,62 @@
 """Entity for Solarfocus integration."""
 
 
-import copy
-from dataclasses import dataclass
+from collections.abc import Generator
+from dataclasses import dataclass, replace
 import logging
+from typing import Any, override
 
 from packaging import version
 from pysolarfocus import Systems
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_VERSION
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
 from .const import COMPONENT_DEVICES, CONF_SOLARFOCUS_SYSTEM, DOMAIN, MANUFACTURER
-from .coordinator import SolarfocusDataUpdateCoordinator
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusEntityDescription(EntityDescription):
-    """Description of a Solarfocus entity."""
+    """Description of a Solarfocus entity.
 
-    item: str | None = None
-    component: str | None = None
-    component_prefix: str | None = None
-    component_idx: str | None = None
-    object_id_name: str | None = None
+    Frozen, like every description in Home Assistant. A description is shared
+    by every entity built from it until `create_description` binds a copy to
+    one instance of a component, and something shared is something no entity
+    should be able to write to.
+    """
+
+    # Blank on the descriptions the tables below declare, filled in by
+    # `create_description` on every description an entity is actually built
+    # from. `component_idx` stays blank for the components that exist once.
+    item: str = ""
+    component: str = ""
+    component_prefix: str = ""
+    component_idx: str = ""
+    object_id_name: str = ""
     # The index as a device name shows it, " 1" or blank - see `create_description`
     device_idx: str = ""
     min_required_version: str = "21.140"
     unsupported_systems: list[Systems] | None = None
 
 
-def create_description(
+def create_description[_DescriptionT: SolarfocusEntityDescription](
     component: str,
     prefix: str,
     idx: str,
-    description: SolarfocusEntityDescription,
-) -> SolarfocusEntityDescription:
+    description: _DescriptionT,
+) -> _DescriptionT:
     """Return a copy of a description, bound to one instance of a component.
 
     The display name of the component is not needed here any more: the device
     an entity sits on carries it, and the name of the device is translated.
+
+    Generic in the description so a platform gets its own description type back
+    rather than this base one, and can read the fields it added to it.
     """
-    _description = copy.copy(description)
-
-    _description.item = description.key
-    _description.component_idx = idx
-    _description.component = component
-    _description.component_prefix = prefix
-
     # The name the user reads is not built here any more. `has_entity_name` makes
     # it the name of the entity, and a name built from the key is English
     # whatever language Home Assistant is in, so it comes from the translation of
@@ -59,44 +64,31 @@ def create_description(
     #
     # The index is not in the entity name either. It belongs to the device the
     # entity is on - `Supply temperature` on `Heating circuit 2` - so it is
-    # carried here for the device name to put back. The space belongs to it: a
-    # single solar circuit keeps the unnumbered name it has always had, and
-    # `format` does not tidy up after an empty placeholder.
-    _description.device_idx = f" {idx}" if idx else ""
-
-    # What the entity id is built from. Home Assistant composes it out of the
-    # name of the device and this, so the component and the index are not in it
-    # either - the device supplies both. The words of the key rather than the
-    # translated name, so this half of the id stays English in every language.
-    _description.object_id_name = description.key.replace("_", " ")
-
-    _description.key = "".join(
-        filter(
-            None,
-            (
-                prefix,
-                idx,
-                "_",
-                _description.item,
-            ),
-        )
+    # carried in `device_idx` for the device name to put back. The space belongs
+    # to it: a single solar circuit keeps the unnumbered name it has always had,
+    # and `format` does not tidy up after an empty placeholder.
+    #
+    # `object_id_name` is what the entity id is built from. Home Assistant
+    # composes it out of the name of the device and this, so the component and
+    # the index are not in it either - the device supplies both. The words of the
+    # key rather than the translated name, so this half of the id stays English
+    # in every language.
+    return replace(
+        description,
+        item=description.key,
+        component=component,
+        component_prefix=prefix,
+        component_idx=idx,
+        device_idx=f" {idx}" if idx else "",
+        object_id_name=description.key.replace("_", " "),
+        key="".join(filter(None, (prefix, idx, "_", description.key))),
+        translation_key="".join(filter(None, (prefix, "_", description.key))),
     )
 
-    _description.translation_key = "".join(
-        filter(
-            None,
-            (
-                prefix,
-                "_",
-                _description.item,
-            ),
-        )
-    )
 
-    return _description
-
-
-def filterVersionAndSystem(config_entry: ConfigEntry, entities):
+def filterVersionAndSystem[_EntityT: SolarfocusEntity](
+    config_entry: SolarfocusConfigEntry, entities: list[_EntityT]
+) -> Generator[_EntityT]:
     """Filter entities not compatible to version or system."""
     api_version = version.parse(config_entry.data[CONF_API_VERSION])
 
@@ -115,8 +107,6 @@ def filterVersionAndSystem(config_entry: ConfigEntry, entities):
         elif current_system not in unsupported_systems:
             yield entity
 
-    return filtered_entities
-
 
 class SolarfocusEntity(Entity):
     """Defines a base Solarfocus entity."""
@@ -124,6 +114,7 @@ class SolarfocusEntity(Entity):
     _attr_should_poll = True
     has_entity_name = True
 
+    entity_description: SolarfocusEntityDescription
 
     def __init__(
         self,
@@ -134,11 +125,11 @@ class SolarfocusEntity(Entity):
         self.coordinator = coordinator
         self._name = coordinator._entry.title
         self._entry_id = coordinator._entry.entry_id
-        self._state = None
+        self._state: str | None = None
         self.entity_description = description
 
-
     @property
+    @override
     def device_info(self) -> DeviceInfo:
         """Return the component this entity belongs to, as its own device.
 
@@ -161,10 +152,10 @@ class SolarfocusEntity(Entity):
         description = self.entity_description
         translation_key, model = COMPONENT_DEVICES[description.component_prefix]
 
-        return DeviceInfo(
+        device_info = DeviceInfo(
             identifiers={
                 (DOMAIN, f"{self._entry_id}_{description.component_prefix}"
-                 f"{description.component_idx or ''}")
+                 f"{description.component_idx}")
             },
             translation_key=translation_key,
             # Blank for the components that exist once, and for the single
@@ -173,27 +164,40 @@ class SolarfocusEntity(Entity):
             translation_placeholders={"idx": description.device_idx},
             model=model,
             manufacturer=MANUFACTURER,
-            via_device_id=self.coordinator.hub_device_id,
         )
 
+        # `async_setup_entry` registers the controller before it forwards the
+        # entry to the platforms, so this is set by the time an entity is asked
+        # for its device. Left out rather than passed as `None` if it is not:
+        # an explicit `None` reads as "no via device" and would unlink a
+        # component from the controller it hangs off.
+        if (hub_device_id := self.coordinator.hub_device_id) is not None:
+            device_info["via_device_id"] = hub_device_id
+
+        return device_info
+
     @property
-    def available(self):
+    @override
+    def available(self) -> bool:
         """Return True if entity is available."""
         return self.coordinator.last_update_success
 
     @property
-    def unique_id(self):
+    @override
+    def unique_id(self) -> str:
         """Return a unique ID to use for this entity."""
         _LOGGER.debug("Unique_id - %s", self.entity_description.key)
         return f"{self._name}_{self.entity_description.key}"
 
     @property
-    def translation_key(self):
+    @override
+    def translation_key(self) -> str:
         """Return a translation key to use for this entity."""
         _LOGGER.debug("Translation_key - %s", self.entity_description.translation_key)
         return f"{self.entity_description.translation_key}"
 
     @property
+    @override
     def suggested_object_id(self) -> str | None:
         """Return the entity half of the entity id.
 
@@ -206,18 +210,22 @@ class SolarfocusEntity(Entity):
         """
         return self.entity_description.object_id_name
 
-    async def async_added_to_hass(self):
+    @override
+    async def async_added_to_hass(self) -> None:
         """Connect to dispatcher listening for entity data notifications."""
         self.async_on_remove(
             self.coordinator.async_add_listener(self.async_write_ha_state)
         )
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Update entity."""
         await self.coordinator.async_request_refresh()
 
-    def _set_native_value(self, item, value):
-        component: None
+    def _set_native_value(self, item: str, value: Any) -> None:
+        """Write a value to one register of the component this entity is on."""
+        # The library builds its components at runtime, so what a component and
+        # its registers are is only known to it - `Any` is the honest type here.
+        component: Any
         idx = -1
 
         if self.entity_description.component_idx:
@@ -252,8 +260,9 @@ class SolarfocusEntity(Entity):
 
         self.async_write_ha_state()
 
-    def _get_native_value(self, item):
-        component: None
+    def _get_native_value(self, item: str) -> Any:
+        """Read the value of one register of the component this entity is on."""
+        component: Any
         idx = -1
 
         if self.entity_description.component_idx:

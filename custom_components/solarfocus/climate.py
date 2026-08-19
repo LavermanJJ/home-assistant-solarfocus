@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import Any, cast, override
 
 from pysolarfocus import ApiVersions
 
@@ -18,14 +18,13 @@ from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_HEATING_CIRCUIT,
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
 )
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
@@ -113,7 +112,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusClimateEntityDescription(
     SolarfocusEntityDescription, ClimateEntityDescription
 ):
@@ -127,6 +126,7 @@ class SolarfocusClimateExtraStoredData(ExtraStoredData):
     target_temperatures: dict[str, float]
     active_mode: str
 
+    @override
     def as_dict(self) -> dict[str, Any]:
         """Return a serializable representation."""
         return {
@@ -138,6 +138,8 @@ class SolarfocusClimateExtraStoredData(ExtraStoredData):
 class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
     """Representation of a Solarfocus number entity."""
 
+    entity_description: SolarfocusClimateEntityDescription
+
     _attr_supported_features = (
         ClimateEntityFeature.PRESET_MODE
         | ClimateEntityFeature.TARGET_TEMPERATURE
@@ -147,7 +149,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusClimateEntityDescription,
     ) -> None:
         """Initialize the Solarfocus select entity."""
@@ -160,6 +162,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         self._dew_point_warning_logged = False
 
     @property
+    @override
     def extra_restore_state_data(self) -> SolarfocusClimateExtraStoredData:
         """Return the setpoints to restore after a restart."""
         return SolarfocusClimateExtraStoredData(
@@ -170,6 +173,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
             active_mode=self._active_mode.value,
         )
 
+    @override
     async def async_added_to_hass(self) -> None:
         """Restore the setpoints the user has set before the restart."""
         await super().async_added_to_hass()
@@ -194,11 +198,12 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
     @property
     def cooling_supported(self) -> bool:
         """Return whether the circuit can be switched to "Heizen + Kühlen"."""
-        return self.coordinator.api.api_version.greater_or_equal(
-            MIN_COOLING_API_VERSION
+        return cast(
+            bool, self.coordinator.api.api_version.greater_or_equal(MIN_COOLING_API_VERSION)
         )
 
     @property
+    @override
     def max_temp(self) -> float:
         """Return max temperature."""
         if self._get_native_value("cooling"):
@@ -206,6 +211,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return 45.0
 
     @property
+    @override
     def min_temp(self) -> float:
         """Return minimum temperature."""
         if self._get_native_value("cooling"):
@@ -213,6 +219,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return 22.0
 
     @property
+    @override
     def target_temperature(self) -> float:
         """Return target supply temperature."""
         if value := self._get_native_value("target_supply_temperature"):
@@ -235,15 +242,17 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return DEFAULT_TARGET_TEMPERATURE[hvac_mode]
 
     @property
+    @override
     def current_temperature(self) -> float:
         """Return current temperature."""
         # if self._get_native_value("target_room_temperatur"):
         #    return self._get_native_value("room_temperature")
 
-        return self._get_native_value("supply_temperature")
+        return cast(float, self._get_native_value("supply_temperature"))
 
     @property
-    def hvac_mode(self):
+    @override
+    def hvac_mode(self) -> HVACMode:
         """Return hvac target hvac state."""
         if self._get_native_value("state") in [0]:
             return HVACMode.OFF
@@ -254,6 +263,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return HVACMode.HEAT
 
     @property
+    @override
     def hvac_action(self) -> HVACAction:
         """Return hvac action."""
         state = self._get_native_value("state")
@@ -285,7 +295,8 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return HVACAction.HEATING
 
     @property
-    def hvac_modes(self):
+    @override
+    def hvac_modes(self) -> list[HVACMode]:
         """Return the list of available operation modes."""
         modes = [HVACMode.OFF, HVACMode.HEAT]
         if self.cooling_supported:
@@ -293,12 +304,14 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         return modes
 
     @property
-    def preset_mode(self) -> str:
+    @override
+    def preset_mode(self) -> str | None:
         """Return preset mode."""
         mode = self._get_native_value("mode")
         return SOLARFOCUS_MODE_TO_PRESET.get(mode)
 
     @property
+    @override
     def preset_modes(self) -> list[str]:
         """Return available preset modes."""
         presets = []
@@ -313,11 +326,13 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
     #    return self._get_native_value("humidity")
 
     @property
+    @override
     def temperature_unit(self) -> str:
         """Return temperature unit."""
         return UnitOfTemperature.CELSIUS
 
-    async def async_set_hvac_mode(self, hvac_mode):
+    @override
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         _LOGGER.info("Set HVAC Mode: %s", hvac_mode)
 
@@ -380,12 +395,14 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
             self.entity_description.component_idx,
         )
 
-    async def async_set_preset_mode(self, preset_mode):
+    @override
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new target preset mode."""
         mode = PRESET_TO_SOLARFOCUS_MODE.get(preset_mode)
         _LOGGER.info("Set Preset Mode: %s (mapped mode: %s)", preset_mode, mode)
         self._set_native_value("mode", mode)
 
+    @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set the flow setpoint of the mode the circuit is running in."""
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
@@ -405,10 +422,12 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         self._target_temperatures[hvac_mode] = float(temperature)
         self._set_native_value("target_supply_temperature", temperature)
 
+    @override
     async def async_turn_on(self) -> None:
         """Turn on - by setting HVAC mode to HEAT."""
         await self.async_set_hvac_mode(HVACMode.HEAT)
 
+    @override
     async def async_turn_off(self) -> None:
         """Turn on - by setting HVAC mode to OFF."""
         await self.async_set_hvac_mode(HVACMode.OFF)

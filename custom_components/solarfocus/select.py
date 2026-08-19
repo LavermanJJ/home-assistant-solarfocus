@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+from typing import override
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     BOILER_COMPONENT,
@@ -22,7 +22,7 @@ from .const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
 )
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -87,7 +87,7 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusSelectEntityDescription(
     SolarfocusEntityDescription, SelectEntityDescription
 ):
@@ -96,23 +96,26 @@ class SolarfocusSelectEntityDescription(
     current_option: str | None = None
     # kept for compatibility reasons. Removing it would make 2022.11 the min
     # required version.
-    solarfocus_options: list[str] = None
+    solarfocus_options: list[str]
 
 
 class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
     """Representation of a Solarfocus select entity."""
 
+    entity_description: SolarfocusSelectEntityDescription
+
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusSelectEntityDescription,
     ) -> None:
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
         self._attr_options = description.solarfocus_options
 
+    @override
     async def async_select_option(self, option: str) -> None:
         """Update the current selected option."""
         self._attr_current_option = option
@@ -120,6 +123,7 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
         return self._set_native_value(select, option)
 
     @property
+    @override
     def current_option(self) -> str:
         """Return current option."""
         select = self.entity_description.item

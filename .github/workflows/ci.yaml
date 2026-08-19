@@ -52,3 +52,6 @@ jobs:
 
       - name: Run pylint
         run: make check-pylint
+
+      - name: Run mypy
+        run: make check-mypy

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import logging
+from typing import override
 
 from pysolarfocus import Systems
 
@@ -12,7 +13,6 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     BIOMASS_BOILER_COMPONENT,
@@ -34,7 +34,7 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
 )
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
@@ -133,30 +133,34 @@ async def async_setup_entry(
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusBinarySensorEntityDescription(
     SolarfocusEntityDescription, BinarySensorEntityDescription
 ):
     """Description of a Solarfocus binary sensor entity."""
 
-    on_state: str = None
+    # Every binary sensor names the register value it reads as `on`.
+    on_state: str
 
 
 class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
     """Representation of a Solarfocus binary sensor entity."""
 
+    entity_description: SolarfocusBinarySensorEntityDescription
+
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusBinarySensorEntityDescription,
     ) -> None:
         """Initialize the Solarfocus number entity."""
         super().__init__(coordinator, description)
 
     @property
-    def is_on(self):
+    @override
+    def is_on(self) -> bool:
         """Return the state of the binary sensor."""
         binary_sensor = self.entity_description.item
         value = self._get_native_value(binary_sensor)

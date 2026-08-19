@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import logging
-from typing import Any
+from typing import Any, override
 
 from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
 import voluptuous as vol
@@ -17,7 +17,6 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 import homeassistant.helpers.config_validation as cv
@@ -177,7 +176,7 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
 class Solarfocus:
     """Solarfocus Configflow."""
 
-    def __init__(self, hass: HomeAssistant, data) -> None:
+    def __init__(self, hass: HomeAssistant, data: dict[str, Any]) -> None:
         """Initialize."""
         self.host = data[CONF_HOST]
         self.port = data[CONF_PORT]
@@ -216,9 +215,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     data: dict[str, Any]
 
+    @override
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Handle the initial step."""
 
         if user_input is None:
@@ -267,21 +267,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_component(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Handle the Component Selection step."""
         if user_input is None:
+            # `SOLARFOCUS_SYSTEMS` offers the vampair and the two biomass
+            # boilers and nothing else, so the boiler form covers everything
+            # that is not the heat pump. Falling out of this without a form
+            # would leave the step reading an input the user has not given yet.
             if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
                 return self.async_show_form(
                     step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
                 )
-            if self.data[CONF_SOLARFOCUS_SYSTEM] in [
-                Systems.THERMINATOR,
-                Systems.ECOTOP,
-            ]:
-                return self.async_show_form(
-                    step_id="component",
-                    data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
-                )
+            return self.async_show_form(
+                step_id="component",
+                data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
+            )
 
         if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             self.data[CONF_HEATPUMP] = user_input[CONF_HEATPUMP]
@@ -314,7 +314,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Point an entry at the address its heating system is on now.
 
         The options flow can already change these four settings, but it asks for
@@ -382,6 +382,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
+    @override
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
@@ -401,7 +402,7 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Manage the options."""
         if user_input is None:
             return self._show_init_form(self.config_entry.options, {})
@@ -427,9 +428,13 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     @callback
-    def _show_init_form(self, current: Mapping[str, Any], errors: dict[str, str]):
+    def _show_init_form(
+        self, current: Mapping[str, Any], errors: dict[str, str]
+    ) -> config_entries.ConfigFlowResult:
         """Show the options form, filled in with what the entry has now."""
-        schema = {
+        # A voluptuous schema holds markers against validators of every shape,
+        # a selector next to a plain `bool`, so there is no narrower type here.
+        schema: dict[Any, Any] = {
             vol.Optional(
                 CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
             ): cv.positive_int,

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import logging
+from typing import Any, cast, override
 
 from homeassistant.components.water_heater import (
     WaterHeaterEntity,
@@ -16,10 +17,9 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, CONF_BOILER
-from .coordinator import SolarfocusConfigEntry
+from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import SolarfocusEntity, SolarfocusEntityDescription, create_description
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolarfocusWaterHeaterEntityDescription(
     SolarfocusEntityDescription, WaterHeaterEntityDescription
 ):
@@ -91,6 +91,8 @@ class SolarfocusWaterHeaterEntityDescription(
 
 class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     """Representation of a Solarfocus number entity."""
+
+    entity_description: SolarfocusWaterHeaterEntityDescription
 
     _attr_has_entity_name = True
 
@@ -102,60 +104,70 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: SolarfocusDataUpdateCoordinator,
         description: SolarfocusWaterHeaterEntityDescription,
     ) -> None:
         """Initialize the Solarfocus select entity."""
         super().__init__(coordinator, description)
 
     @property
+    @override
     def operation_list(self) -> list[str]:
         """Return list of operations."""
         return list(HA_MODE_TO_SOLARFOCUS)
 
     @property
-    def temperature_unit(self):
+    @override
+    def temperature_unit(self) -> str:
         """Return the unit of measurement."""
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self):
+    @override
+    def current_temperature(self) -> float | None:
         """Return the current temperature."""
-        return self._get_native_value("temperature")
+        return cast(float | None, self._get_native_value("temperature"))
 
     @property
-    def target_temperature(self):
+    @override
+    def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
-        return self._get_native_value("target_temperature")
+        return cast(float | None, self._get_native_value("target_temperature"))
 
     @property
-    def current_operation(self):
+    @override
+    def current_operation(self) -> str | None:
         """Return current operation ie. heat, cool, idle."""
         mode = self._get_native_value("mode")
         _LOGGER.debug("Current_operation: %s", mode)
         return SOLARFOCUS_TO_HA_MODE.get(mode)
 
     @property
-    def min_temp(self):
+    @override
+    def min_temp(self) -> float:
         """Return the minimum temperature."""
         return SOLARFOCUS_TEMP_WATER_MIN
 
     @property
-    def max_temp(self):
+    @override
+    def max_temp(self) -> float:
         """Return the maximum temperature."""
         return SOLARFOCUS_TEMP_WATER_MAX
 
     @property
+    @override
     def target_temperature_step(self) -> float:
         """Set target temperature."""
         return PRECISION_TENTHS
 
-    async def async_set_temperature(self, **kwargs):
+    @override
+    async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
             self._set_native_value("target_temperature", temp)
             _LOGGER.debug("Set Temperature: %s", temp)
 
+    @override
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target temperature."""
         mapped_mode = HA_MODE_TO_SOLARFOCUS.get(operation_mode)
@@ -164,12 +176,14 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
             "Set Operation Mode: %s (mapped to: %s)", operation_mode, mapped_mode
         )
 
-    async def async_turn_on(self) -> None:
+    @override
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn water heater on."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
         _LOGGER.debug("async_turn_on")
 
-    async def async_turn_off(self) -> None:
+    @override
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn water heater off."""
         self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
         _LOGGER.debug("async_turn_off")
