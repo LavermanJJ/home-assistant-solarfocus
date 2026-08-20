@@ -1,5 +1,7 @@
 """Constants for the Solarfocus integration."""
 
+from typing import NamedTuple
+
 from packaging import version
 
 from homeassistant.config_entries import ConfigEntry
@@ -65,22 +67,51 @@ MANUFACTURER = "Solarfocus"
 # same box whichever heating system is wired to it.
 CONTROLLER_NAME = "eco manager-touch"
 
+
+class ComponentDevice(NamedTuple):
+    """What an entity description's component prefix says about its device.
+
+    The option and the translation key spell the same word today, and used to
+    be the same field for it. They answer to different things: the option is
+    the name the entry stores a component under, which is also what a failed
+    read is reported as, and the translation key is what `strings.json` calls
+    the device. Renaming one silently rewired the other - a device key of
+    `heat_pump` would have left the entities of a heat pump that cannot be read
+    available for good, because nothing compares them but the entity itself.
+    """
+
+    # The entry option this component is configured by, and the name
+    # `failed_components` reports it as when it cannot be read.
+    option: str
+    # The key `strings.json` translates the device name under.
+    translation_key: str
+    # The model shown on the device page - a heating circuit has no model of
+    # its own to report, and a device page with nothing on it says less than
+    # the word.
+    model: str
+
+
 # The device the entities of a component belong to, keyed by the prefix every
-# entity description already carries: the key its name is translated under, and
-# the model shown on its device page - a heating circuit has no model of its own
-# to report, and a device page with nothing on it says less than the word.
-COMPONENT_DEVICES: dict[str, tuple[str, str]] = {
-    HEATING_CIRCUIT_COMPONENT_PREFIX: (CONF_HEATING_CIRCUIT, HEATING_CIRCUIT_PREFIX),
-    BUFFER_COMPONENT_PREFIX: (CONF_BUFFER, BUFFER_PREFIX),
-    BOILER_COMPONENT_PREFIX: (CONF_BOILER, BOILER_PREFIX),
-    FRESH_WATER_MODULE_COMPONENT_PREFIX: (
-        CONF_FRESH_WATER_MODULE,
-        FRESH_WATER_MODULE_PREFIX,
+# entity description already carries.
+COMPONENT_DEVICES: dict[str, ComponentDevice] = {
+    HEATING_CIRCUIT_COMPONENT_PREFIX: ComponentDevice(
+        CONF_HEATING_CIRCUIT, "heating_circuit", HEATING_CIRCUIT_PREFIX
     ),
-    SOLAR_COMPONENT_PREFIX: (CONF_SOLAR, SOLAR_PREFIX),
-    HEAT_PUMP_COMPONENT_PREFIX: (CONF_HEATPUMP, HEAT_PUMP_PREFIX),
-    PHOTOVOLTAIC_COMPONENT_PREFIX: (CONF_PHOTOVOLTAIC, PHOTOVOLTAIC_PREFIX),
-    BIOMASS_BOILER_COMPONENT_PREFIX: (CONF_BIOMASS_BOILER, BIOMASS_BOILER_PREFIX),
+    BUFFER_COMPONENT_PREFIX: ComponentDevice(CONF_BUFFER, "buffer", BUFFER_PREFIX),
+    BOILER_COMPONENT_PREFIX: ComponentDevice(CONF_BOILER, "boiler", BOILER_PREFIX),
+    FRESH_WATER_MODULE_COMPONENT_PREFIX: ComponentDevice(
+        CONF_FRESH_WATER_MODULE, "fresh_water_module", FRESH_WATER_MODULE_PREFIX
+    ),
+    SOLAR_COMPONENT_PREFIX: ComponentDevice(CONF_SOLAR, "solar", SOLAR_PREFIX),
+    HEAT_PUMP_COMPONENT_PREFIX: ComponentDevice(
+        CONF_HEATPUMP, "heatpump", HEAT_PUMP_PREFIX
+    ),
+    PHOTOVOLTAIC_COMPONENT_PREFIX: ComponentDevice(
+        CONF_PHOTOVOLTAIC, "photovoltaic", PHOTOVOLTAIC_PREFIX
+    ),
+    BIOMASS_BOILER_COMPONENT_PREFIX: ComponentDevice(
+        CONF_BIOMASS_BOILER, "biomassboiler", BIOMASS_BOILER_PREFIX
+    ),
 }
 
 """Version from which several solar circuits exist"""

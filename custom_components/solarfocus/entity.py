@@ -158,19 +158,19 @@ class SolarfocusEntity(Entity):
         its first device rather than orphaning it.
         """
         description = self.entity_description
-        translation_key, model = COMPONENT_DEVICES[description.component_prefix]
+        device = COMPONENT_DEVICES[description.component_prefix]
 
         device_info = DeviceInfo(
             identifiers={
                 (DOMAIN, f"{self._entry_id}_{description.component_prefix}"
                  f"{description.component_idx}")
             },
-            translation_key=translation_key,
+            translation_key=device.translation_key,
             # Blank for the components that exist once, and for the single
             # solar circuit that keeps the unnumbered name it had before there
             # could be four of them.
             translation_placeholders={"idx": description.device_idx},
-            model=model,
+            model=device.model,
             manufacturer=MANUFACTURER,
         )
 
@@ -208,7 +208,7 @@ class SolarfocusEntity(Entity):
         that does answer keep taking them.
         """
         return self.coordinator.last_update_success and (
-            COMPONENT_DEVICES[self.entity_description.component_prefix][0]
+            COMPONENT_DEVICES[self.entity_description.component_prefix].option
             not in self.coordinator.failed_components
         )
 

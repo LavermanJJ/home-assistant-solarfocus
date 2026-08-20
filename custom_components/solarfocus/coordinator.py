@@ -57,7 +57,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         self.api = api
         self._entry = entry
         self.hass = hass
-        self._failed_components: set[str] = set()
+        self._failed_components: frozenset[str] = frozenset()
         # The controller every component device of this entry hangs off, set by
         # `async_setup_entry` once the device is registered. A component device
         # points at it by id rather than by identifier, which Home Assistant
@@ -76,9 +76,14 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         )
 
     @property
-    def failed_components(self) -> set[str]:
-        """Return the components that could not be read on the last refresh."""
-        return set(self._failed_components)
+    def failed_components(self) -> frozenset[str]:
+        """Return the components that could not be read on the last refresh.
+
+        Every entity of the entry reads this on every state write, so it is
+        handed out as it is rather than copied: a frozenset cannot be added to
+        by the caller, which is what the copy was there for.
+        """
+        return self._failed_components
 
     @property
     def _address(self) -> str:
@@ -107,7 +112,16 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
             if not await self.hass.async_add_executor_job(getattr(self.api, update)):
                 failed.append(option)
 
-        if failed and len(failed) == configured:
+        # A connection that drops part way through the poll fails every
+        # component read after it, whatever those components would have
+        # answered - the library returns False without asking the socket
+        # anything. Calling that a component that does not answer would grey
+        # out an arbitrary tail of the system and raise an issue per component
+        # telling the user to switch it off, for what is one dropped
+        # connection, re-established on the next refresh.
+        connection_lost = bool(failed) and not self.api.is_connected
+
+        if connection_lost or (failed and len(failed) == configured):
             # Nothing could be read: the system is gone rather than one of its
             # components being unhappy. Reporting that as a success would leave
             # every entity available and showing its last value.
@@ -118,8 +132,14 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
             # issue saying that every other component reads fine. The outage
             # itself is what the failed refresh says, and the issue comes back
             # on the first refresh that reads anything at all.
-            self._failed_components = set()
+            self._failed_components = frozenset()
             self._report_failed_components([])
+            if connection_lost:
+                raise UpdateFailed(
+                    translation_domain=DOMAIN,
+                    translation_key="cannot_connect",
+                    translation_placeholders={"address": self._address},
+                )
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_read",
@@ -148,10 +168,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         """
         self._report_failed_components(failed)
 
-        if set(failed) == self._failed_components:
+        if frozenset(failed) == self._failed_components:
             return
 
-        self._failed_components = set(failed)
+        self._failed_components = frozenset(failed)
 
         if failed:
             _LOGGER.warning(

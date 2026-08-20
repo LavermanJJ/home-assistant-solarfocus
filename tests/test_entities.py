@@ -21,6 +21,7 @@ from custom_components.solarfocus.const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
     BOILER_PREFIX,
+    COMPONENT_DEVICES,
     CONF_BOILER,
     DOMAIN,
     HEAT_PUMP_COMPONENT,
@@ -28,7 +29,9 @@ from custom_components.solarfocus.const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     MANUFACTURER,
+    ComponentDevice,
 )
+from custom_components.solarfocus.coordinator import COMPONENT_UPDATES
 from custom_components.solarfocus.entity import create_description
 from custom_components.solarfocus.number import (
     BOILER_NUMBER_TYPES,
@@ -222,6 +225,43 @@ def test_only_the_component_that_failed_goes_unavailable() -> None:
 
     assert boiler.available is False
     assert heat_pump.available is True
+
+
+@pytest.mark.parametrize(("prefix", "device"), sorted(COMPONENT_DEVICES.items()))
+def test_every_component_goes_unavailable_under_its_own_option(
+    prefix: str, device: ComponentDevice
+) -> None:
+    """Availability is read off the option, which is not the translation key.
+
+    The two spell the same word, and used to be the same field for it: renaming
+    what `strings.json` calls a device would have left the entities of that
+    component available whatever the coordinator said about it. Every component
+    is pinned here rather than the boiler alone, because a mismatch is one
+    component with entities that never go unavailable and nothing else.
+    """
+    coordinator = build_coordinator(build_config_entry())
+    entity = SolarfocusSensor(
+        coordinator,
+        create_description(BOILER_COMPONENT, prefix, "1", BOILER_SENSOR_TYPES[0]),
+    )
+
+    coordinator.failed_components = {device.option}
+    assert entity.available is False
+
+    coordinator.failed_components = {device.translation_key + "_renamed"}
+    assert entity.available is True
+
+
+def test_every_component_device_names_an_option_the_coordinator_polls() -> None:
+    """A device whose option is not polled has entities that never grey out.
+
+    The other way round is worse: a component the coordinator reports as failed
+    under a name no device carries greys out nothing at all.
+    """
+    assert (
+        {device.option for device in COMPONENT_DEVICES.values()}
+        == {option for option, _ in COMPONENT_UPDATES}
+    )
 
 
 def test_a_failing_component_takes_every_instance_of_it() -> None:

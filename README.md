@@ -402,10 +402,13 @@ read, so raising the number of components does not raise the number of round tri
 interval. The connection is opened once and re-established automatically if it drops.
 
 If the heating system cannot be read at all, the entities of the entry become unavailable until
-the next successful poll, and the failure is logged once rather than once per interval. If a
-single component cannot be read while the others can, only the entities of that component become
-unavailable and the rest carry on reading; the log names it and a repair issue asks you to sort
-it out, since a component that answers nothing on one poll answers nothing on every one.
+the next successful poll, and the failure is logged once rather than once per interval. The same
+goes for a connection that drops part way through a poll: the components that were not reached
+are not blamed for it, and the connection is re-established on the next interval. If a single
+component cannot be read over a connection that is up while the others read fine, only the
+entities of that component become unavailable and the rest carry on reading; the log names it and
+a repair issue asks you to sort it out, since a register range a controller does not answer is
+usually a component that is not installed or an API version set higher than the controller runs.
 
 Writes go the other way and take effect immediately: setting a target temperature, pressing a
 button or changing a select writes the register, re-reads the component it belongs to and

@@ -19,6 +19,7 @@ from custom_components.solarfocus.const import (
 from custom_components.solarfocus.coordinator import SolarfocusDataUpdateCoordinator
 from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .conftest import build_api, build_config_entry
@@ -200,6 +201,88 @@ async def test_one_failing_component_keeps_the_others_working(
     assert coordinator.last_update_success
     assert api.update_buffer.called
     assert "Could not read heating_circuit" in caplog.text
+
+
+async def test_a_connection_dropping_mid_poll_is_an_outage(hass: HomeAssistant) -> None:
+    """The components after the drop failed for want of a socket, not a register.
+
+    A read on a closed connection returns False without asking the device
+    anything, so a connection that goes away half way through a poll fails an
+    arbitrary tail of the components. Calling those unreadable would grey them
+    out and raise an issue per component telling the user to switch it off, for
+    a connection that is re-established on the next refresh.
+    """
+    api = build_api()
+
+    def drop_the_connection() -> bool:
+        api.is_connected = False
+        return False
+
+    api.update_boiler.side_effect = drop_the_connection
+    api.update_heatpump.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, boiler=1, heatpump=True)
+
+    with pytest.raises(UpdateFailed) as failure:
+        await coordinator._async_update_data()
+
+    assert failure.value.translation_key == "cannot_connect"
+    assert failure.value.translation_placeholders == {"address": "solarfocus.local:502"}
+    # Not the boiler and not the heat pump: neither of them was asked anything.
+    assert coordinator.failed_components == frozenset()
+
+
+async def test_a_connection_dropping_mid_poll_raises_no_component_issue(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """End to end: an outage is not a component to be configured away."""
+    entry = build_config_entry(heating_circuit=1, boiler=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    def drop_the_connection() -> bool:
+        api.is_connected = False
+        return False
+
+    api.update_boiler.side_effect = drop_the_connection
+    await entry.runtime_data.async_refresh()
+
+    assert not entry.runtime_data.last_update_success
+    assert not ir.async_get(hass).issues
+
+
+async def test_a_failing_component_on_a_live_connection_is_still_partial(
+    hass: HomeAssistant,
+) -> None:
+    """The guard is about the connection, not about a read that returns False."""
+    api = build_api()
+    api.update_boiler.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, boiler=1)
+
+    await coordinator.async_refresh()
+
+    assert coordinator.last_update_success
+    assert coordinator.failed_components == frozenset({CONF_BOILER})
+
+
+async def test_failed_components_is_handed_out_rather_than_copied(
+    hass: HomeAssistant,
+) -> None:
+    """Every entity of the entry reads this on every state write.
+
+    A copy per read is hundreds of throwaway sets per poll for a set of at most
+    eight names. A frozenset cannot be added to by whoever reads it, which is
+    what the copy was there for.
+    """
+    api = build_api()
+    api.update_boiler.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, boiler=1)
+
+    await coordinator.async_refresh()
+
+    assert isinstance(coordinator.failed_components, frozenset)
+    assert coordinator.failed_components is coordinator.failed_components
 
 
 async def test_only_the_failing_component_is_greyed_out(
