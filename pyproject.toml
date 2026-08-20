@@ -1,6 +1,6 @@
 [project]
 name = "solarfocus"
-version = "6.0.0rc5"
+version = "6.0.0rc6"
 description = "Custom component for integrating Solarfocus heating systems into Home Assistant."
 authors = [{ name = "Jeroen Laverman", email = "jjlaverman@web.de" }]
 requires-python = ">=3.14.2,<3.15"
