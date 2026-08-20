@@ -147,6 +147,10 @@ def build_coordinator(entry, api: MagicMock | None = None) -> MagicMock:
     coordinator._entry = entry
     coordinator.api = api if api is not None else build_api()
     coordinator.last_update_success = True
+    # Every component reads, so the entities on them are available. A stub of it
+    # rather than whatever a MagicMock makes of `in`, which is what availability
+    # asks of this.
+    coordinator.failed_components = set()
     # The real one, not a mock: the number the installer menu shows is shared
     # between two entities, and what a test of either is about is that sharing.
     coordinator.displayed_number = DisplayedNumber()

@@ -17,6 +17,7 @@ from custom_components.solarfocus.const import (
     DOMAIN,
 )
 from custom_components.solarfocus.coordinator import SolarfocusDataUpdateCoordinator
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -199,6 +200,38 @@ async def test_one_failing_component_keeps_the_others_working(
     assert coordinator.last_update_success
     assert api.update_buffer.called
     assert "Could not read heating_circuit" in caplog.text
+
+
+async def test_only_the_failing_component_is_greyed_out(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """End to end: the heating circuit answers nothing, the boiler answers.
+
+    The refresh succeeds, so the entry keeps polling and every entity of the
+    boiler carries its value as usual. The entities of the heating circuit go
+    unavailable rather than keeping the last value they read, which they used to
+    do for as long as the entry was loaded.
+    """
+    api.update_heating.return_value = False
+    entry = build_config_entry(heating_circuit=1, boiler=1)
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    def states(device: str) -> list[str]:
+        return [
+            hass.states.get(entity_id).state
+            for entity_id in hass.states.async_entity_ids()
+            if entity_id.split(".", 1)[1].startswith(device)
+        ]
+
+    heating_circuit = states("heating_circuit_1_")
+    boiler = states("boiler_1_")
+
+    assert heating_circuit and boiler, "the entities of both components are there"
+    assert set(heating_circuit) == {STATE_UNAVAILABLE}
+    assert STATE_UNAVAILABLE not in boiler
 
 
 async def test_a_partial_failure_is_logged_once_and_the_recovery_too(

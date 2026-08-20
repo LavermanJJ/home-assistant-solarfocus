@@ -403,8 +403,9 @@ interval. The connection is opened once and re-established automatically if it d
 
 If the heating system cannot be read at all, the entities of the entry become unavailable until
 the next successful poll, and the failure is logged once rather than once per interval. If a
-single component cannot be read while the others can, only that one keeps its last value and
-the rest carry on; the log names it.
+single component cannot be read while the others can, only the entities of that component become
+unavailable and the rest carry on reading; the log names it and a repair issue asks you to sort
+it out, since a component that answers nothing on one poll answers nothing on every one.
 
 Writes go the other way and take effect immediately: setting a target temperature, pressing a
 button or changing a select writes the register, re-reads the component it belongs to and
@@ -477,12 +478,14 @@ rather than once per interval. Common causes are the controller being restarted,
 change (point the entry at the new address, see [Changing the Connection](#changing-the-connection))
 or another Modbus client holding the connection.
 
-**One component is stuck on old values while the rest updates.**
+**One component is unavailable while the rest updates.**
 That component could not be read. The log names it, with a warning when it starts failing and
-another when it recovers. If it fails on every poll, the registers of that component are
-probably not answered by your software version - lower the API version under
-[Changing the Connection](#changing-the-connection) or set the component to 0 under
-[Configuration Options](#configuration-options) if your installation does not have it.
+another when it recovers, and a repair issue is raised for it. If it fails on every poll, the
+registers of that component are probably not answered by your software version - lower the API
+version under [Changing the Connection](#changing-the-connection) or set the component to 0
+under [Configuration Options](#configuration-options) if your installation does not have it.
+Entities of a component that cannot be read do not accept writes either: a `switch`, `number`
+or `select` on it is unavailable like everything else on it.
 
 **Entities I expect are missing.**
 Either the component is set to 0 in the options, or the entity needs a newer API version than

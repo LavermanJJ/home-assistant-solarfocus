@@ -141,6 +141,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         poll, and the components that do work - including the ones that can be
         written - would go with it. So the rest keeps updating and the failure
         is logged instead, once, until the set of failing components changes.
+
+        What the failing component itself does is read off `failed_components`
+        by the entities on it, which go unavailable while the rest of the entry
+        carries on.
         """
         self._report_failed_components(failed)
 
@@ -151,7 +155,7 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
 
         if failed:
             _LOGGER.warning(
-                "Could not read %s from %s, its entities keep their last value."
+                "Could not read %s from %s, its entities are unavailable."
                 " The other components were read successfully",
                 ", ".join(failed),
                 self._address,
@@ -163,11 +167,10 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         """Raise a repair issue per component that cannot be read, one per entry.
 
         A register range a particular firmware does not answer fails on every
-        poll and never recovers on its own. The entities of that component keep
-        their last value for good, which looks like a heating system that has
-        stopped moving rather than like a component that is not there - and the
-        log line saying so is written once, so it has usually scrolled away by
-        the time anybody looks.
+        poll and never recovers on its own. The entities of that component are
+        unavailable for as long as it lasts, which says nothing about why - and
+        the log line that does is written once, so it has usually scrolled away
+        by the time anybody looks.
 
         Nothing here can fix it: either the component is not installed and the
         user should switch it off in the options, or the api version is set

@@ -124,7 +124,7 @@
     },
     "component_unavailable": {
       "title": "{component} kann nicht von der Solarfocus-Anlage gelesen werden",
-      "description": "\"{title}\" liest alle anderen Komponenten der Anlage unter {address}, {component} antwortet jedoch nicht. Die zugehörigen Entitäten behalten ihren letzten Wert - das ist nicht dasselbe wie nicht verfügbar, sie wirken daher wie eine Heizungsanlage, die stehengeblieben ist.\n\nDas geht nicht von selbst weg. Entweder ist die Komponente nicht vorhanden, dann schalte sie unter Konfigurieren ab, oder die API-Version des Eintrags ist höher eingestellt als der Regler tatsächlich hat - die Version steht am Regler unter Fachmann - Modbus."
+      "description": "\"{title}\" liest alle anderen Komponenten der Anlage unter {address}, {component} antwortet jedoch nicht. Die zugehörigen Entitäten sind so lange nicht verfügbar, und was sie ausliest - ein Template, ein Diagramm, eine Automatisierung - findet nichts vor.\n\nDas geht nicht von selbst weg. Entweder ist die Komponente nicht vorhanden, dann schalte sie unter Konfigurieren ab, oder die API-Version des Eintrags ist höher eingestellt als der Regler tatsächlich hat - die Version steht am Regler unter Fachmann - Modbus."
     }
   },
   "entity": {
