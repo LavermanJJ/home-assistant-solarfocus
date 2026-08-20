@@ -317,7 +317,7 @@ reading is always English.
 | `sensor` | Buffer | Top and bottom temperature, state, mode, external sensors X35 / X36 / X44 |
 | `sensor` | Boiler | Temperature, state, mode, single charge, circulation |
 | `sensor` | Heat pump | Outdoor, supply and return temperature, flow rate, compressor speed, electrical and thermal energy and power, COP and overall performance, state |
-| `sensor` | Biomass boiler | Temperature, status, message number, cleaning, ash container, outdoor temperature, operating mode, log wood, pellet usage, heat energy |
+| `sensor` | Biomass boiler | Temperature, return temperature, status, message number, cleaning, ash container, outdoor temperature, operating mode, log wood, pellet usage, heat energy |
 | `sensor` | Solar | Collector, supply, return and buffer temperatures, flow, current power, yields, state |
 | `sensor` | Photovoltaic | Power, house consumption, heat pump consumption, grid import and export |
 | `sensor` | Fresh water module | State, supply and target temperature, flow rate |

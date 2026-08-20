@@ -431,6 +431,9 @@
       "bb_pellet_usage_total": {
         "name": "Pellet usage total"
       },
+      "bb_return_temperature": {
+        "name": "Return temperature"
+      },
       "bb_status": {
         "name": "Status",
         "state": {

@@ -12,14 +12,25 @@ dropdown - `update_biomassboiler` named THERMINATOR and ECOTOP, so both new
 systems showed a boiler at 0.0 degrees and called it fine. These tests tie the
 dropdown to the library, so offering a system the library does not poll fails
 here instead of in somebody's dashboard.
+
+The same goes for the registers under a component. An entity reads its value by
+`getattr`-ing its key off the pysolarfocus component, so a description whose key
+the library does not carry for that system raises an `AttributeError` on the
+first read - which is why register 2410 could not simply be renamed here and
+needed the library to name it first (issue #223).
 """
 
-import pytest
+from packaging import version
 from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
+import pytest
 
+from custom_components.solarfocus.binary_sensor import (
+    BIOMASS_BOILER_BINARY_SENSOR_TYPES,
+)
 from custom_components.solarfocus.config_flow import SOLARFOCUS_SYSTEMS
 from custom_components.solarfocus.const import CONF_BIOMASS_BOILER, CONF_HEATPUMP
 from custom_components.solarfocus.coordinator import COMPONENT_UPDATES
+from custom_components.solarfocus.sensor import BIOMASS_BOILER_SENSOR_TYPES
 
 # The systems a user can actually pick, read off the dropdown itself so that
 # adding one to the form brings it under these tests with it.
@@ -95,3 +106,96 @@ def test_the_heat_source_a_system_does_not_have_is_skipped(
         f"{system.name} has no {HEAT_SOURCE_COMPONENTS[absent]}, but pysolarfocus "
         f"reads one for it."
     )
+
+
+# Every description of the biomass boiler, whichever platform reports it.
+BIOMASS_BOILER_DESCRIPTIONS = [
+    *BIOMASS_BOILER_SENSOR_TYPES,
+    *BIOMASS_BOILER_BINARY_SENSOR_TYPES,
+]
+
+
+def _reaches(system: Systems, description) -> bool:
+    """Return whether a description survives the system and version filter."""
+    return system not in (
+        description.unsupported_systems or []
+    ) and version.parse(description.min_required_version) <= version.parse(
+        LATEST_API_VERSION.value
+    )
+
+
+@pytest.mark.parametrize("system", OFFERED_SYSTEMS, ids=lambda s: s.name)
+def test_every_biomass_boiler_entity_has_a_register_behind_it(
+    system: Systems,
+) -> None:
+    """A description the library has no attribute for cannot be read at all.
+
+    `_get_native_value` does `getattr(component, key).scaled_value`, so the
+    entity is built, added, and raises on the first refresh. Nothing else in
+    this suite notices: the platform tests build their components from mocks,
+    which answer to any name.
+    """
+    if _heat_source_of(system) != CONF_BIOMASS_BOILER:
+        pytest.skip(f"{system.name} has no biomass boiler")
+
+    boiler = SolarfocusAPI(
+        ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
+    ).biomassboiler
+
+    missing = [
+        description.key
+        for description in BIOMASS_BOILER_DESCRIPTIONS
+        if _reaches(system, description) and not hasattr(boiler, description.key)
+    ]
+
+    assert not missing, (
+        f"{system.name} would build {sorted(missing)} on its biomass boiler, "
+        f"but pysolarfocus carries no such register for that system."
+    )
+
+
+# The two names register 2410 is read under, and the systems the register
+# document grants each to. The octoplus reads the bottom of its buffer there,
+# the EcoTop and the Pellet Elegance read the return flow of the boiler, and on
+# a therminator the address is nicht belegt.
+REGISTER_2410 = {
+    "octoplus_buffer_temperature_bottom": [Systems.OCTOPLUS],
+    "return_temperature": [Systems.ECOTOP, Systems.PELLETELEGANCE],
+}
+
+
+@pytest.mark.parametrize("system", OFFERED_SYSTEMS, ids=lambda s: s.name)
+def test_register_2410_is_reported_under_one_name_per_system(
+    system: Systems,
+) -> None:
+    """Regression test for #223.
+
+    Two measurements share address 2410, so exactly one of the two names may
+    reach a system - and it has to be the one the library reads there. Reading
+    it as the buffer bottom everywhere gave an EcoTop and a Pellet Elegance
+    their return flow temperature under a name that says "buffer"; gating that
+    to the octoplus without adding this one took the reading away instead of
+    correcting it.
+    """
+    described = {
+        description.key: description
+        for description in BIOMASS_BOILER_SENSOR_TYPES
+        if description.key in REGISTER_2410
+    }
+    assert sorted(described) == sorted(REGISTER_2410), (
+        f"the biomass boiler describes {sorted(described)} for register 2410, "
+        f"and both of {sorted(REGISTER_2410)} have to be there."
+    )
+
+    reached = [key for key in REGISTER_2410 if _reaches(system, described[key])]
+    expected = [
+        key for key, systems in REGISTER_2410.items() if system in systems
+    ]
+
+    assert reached == expected
+
+    if _heat_source_of(system) == CONF_BIOMASS_BOILER:
+        boiler = SolarfocusAPI(
+            ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
+        ).biomassboiler
+        assert [key for key in REGISTER_2410 if hasattr(boiler, key)] == expected
