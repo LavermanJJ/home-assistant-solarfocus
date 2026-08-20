@@ -86,7 +86,7 @@ class SolarfocusSwitchEntity(SolarfocusEntity, SwitchEntity):
         switch = self.entity_description.item
         # The register holds 0 or 1. A register that could not be read keeps
         # whatever it last held, so there is no third answer to give here -
-        # the entity goes unavailable with the coordinator instead.
+        # the entity goes unavailable with its component instead.
         return bool(self._get_native_value(switch))
 
     @override

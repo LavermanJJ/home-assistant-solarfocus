@@ -15,7 +15,7 @@ from pytest_homeassistant_custom_component.common import (
     mock_restore_cache_with_extra_data,
 )
 
-from custom_components.solarfocus.const import DOMAIN
+from custom_components.solarfocus.const import CONF_BOILER, CONF_HEATPUMP, DOMAIN
 from custom_components.solarfocus.number import (
     DISPLAYED_NUMBER_TYPE,
     SolarfocusDisplayedNumberEntity,
@@ -294,6 +294,28 @@ def test_they_stay_available_when_the_heating_cannot_be_read(
     """A heating system that does not answer is when the service menu is wanted."""
     entity = _entity(entity_class, description)
     entity.coordinator.last_update_success = False
+
+    assert entity.available
+
+
+@pytest.mark.parametrize(
+    ("entity_class", "description"),
+    [
+        (SolarfocusServiceCodeSensor, SERVICE_CODE_SENSOR_TYPE),
+        (SolarfocusInstallerCodeSensor, INSTALLER_CODE_SENSOR_TYPE),
+        (SolarfocusDisplayedNumberEntity, DISPLAYED_NUMBER_TYPE),
+    ],
+)
+def test_they_stay_available_when_a_component_cannot_be_read(
+    entity_class, description
+) -> None:
+    """A failing component greys out its own entities and nothing else.
+
+    These are not on a component at all - they are arithmetic on the controller
+    - so the set of components that failed says nothing about them.
+    """
+    entity = _entity(entity_class, description)
+    entity.coordinator.failed_components = {CONF_HEATPUMP, CONF_BOILER}
 
     assert entity.available
 

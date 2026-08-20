@@ -454,8 +454,10 @@ async def test_no_entity_name_repeats_its_component(
     # The name of the device this entity's own component is on, in the language
     # of the file being read, so the German names are held to the German words.
     component_of = {
-        prefix: data["device"][device_key]["name"].replace("{idx}", "").strip()
-        for prefix, (device_key, _) in COMPONENT_DEVICES.items()
+        prefix: data["device"][device.translation_key]["name"]
+        .replace("{idx}", "")
+        .strip()
+        for prefix, device in COMPONENT_DEVICES.items()
     }
 
     repeated = [

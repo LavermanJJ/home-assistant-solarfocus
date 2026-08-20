@@ -158,19 +158,19 @@ class SolarfocusEntity(Entity):
         its first device rather than orphaning it.
         """
         description = self.entity_description
-        translation_key, model = COMPONENT_DEVICES[description.component_prefix]
+        device = COMPONENT_DEVICES[description.component_prefix]
 
         device_info = DeviceInfo(
             identifiers={
                 (DOMAIN, f"{self._entry_id}_{description.component_prefix}"
                  f"{description.component_idx}")
             },
-            translation_key=translation_key,
+            translation_key=device.translation_key,
             # Blank for the components that exist once, and for the single
             # solar circuit that keeps the unnumbered name it had before there
             # could be four of them.
             translation_placeholders={"idx": description.device_idx},
-            model=model,
+            model=device.model,
             manufacturer=MANUFACTURER,
         )
 
@@ -187,8 +187,30 @@ class SolarfocusEntity(Entity):
     @property
     @override
     def available(self) -> bool:
-        """Return True if entity is available."""
-        return self.coordinator.last_update_success
+        """Return True if the component this entity sits on was read.
+
+        Two ways to be unavailable, and the entry only knows about the first:
+        the whole system stopped answering, so the refresh failed, or this one
+        component did while the rest of the system read fine. The second used to
+        show as nothing at all - a partial failure is a successful refresh, so
+        the component that answers nothing kept the last value it ever returned,
+        which reads as a heating system that has stopped moving rather than as a
+        component that is not there.
+
+        One device per component is what makes this worth splitting: a component
+        that cannot be read greys out its own page and leaves the rest of the
+        system alone.
+
+        Writable entities go with it. A component whose registers do not answer
+        is not a component to be writing to, and Home Assistant drops
+        unavailable entities from service calls, so a `switch`, `number` or
+        `select` on it stops accepting writes - the entities of every component
+        that does answer keep taking them.
+        """
+        return self.coordinator.last_update_success and (
+            COMPONENT_DEVICES[self.entity_description.component_prefix].option
+            not in self.coordinator.failed_components
+        )
 
     @property
     @override

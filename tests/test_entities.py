@@ -21,6 +21,7 @@ from custom_components.solarfocus.const import (
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
     BOILER_PREFIX,
+    COMPONENT_DEVICES,
     CONF_BOILER,
     DOMAIN,
     HEAT_PUMP_COMPONENT,
@@ -28,7 +29,9 @@ from custom_components.solarfocus.const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     MANUFACTURER,
+    ComponentDevice,
 )
+from custom_components.solarfocus.coordinator import COMPONENT_UPDATES
 from custom_components.solarfocus.entity import create_description
 from custom_components.solarfocus.number import (
     BOILER_NUMBER_TYPES,
@@ -38,7 +41,11 @@ from custom_components.solarfocus.select import (
     HEATPUMP_SELECT_TYPES,
     SolarfocusSelectEntity,
 )
-from custom_components.solarfocus.sensor import BOILER_SENSOR_TYPES, SolarfocusSensor
+from custom_components.solarfocus.sensor import (
+    BOILER_SENSOR_TYPES,
+    HEATPUMP_SENSOR_TYPES,
+    SolarfocusSensor,
+)
 from custom_components.solarfocus.switch import (
     HEATPUMP_SWITCH_TYPES,
     OFF,
@@ -187,6 +194,146 @@ def test_entity_is_unavailable_after_a_failed_update() -> None:
     assert entity.available is True
 
     entity.coordinator.last_update_success = False
+
+    assert entity.available is False
+
+
+def test_only_the_component_that_failed_goes_unavailable() -> None:
+    """A boiler that answers nothing must not grey out the heat pump.
+
+    A partial failure is a successful refresh - the entry keeps reading
+    everything that answers - so `last_update_success` has nothing to say about
+    it and the entities of the failing component read `failed_components`
+    instead. One device per component is what makes that visible: the boiler
+    greys out its own page and the rest of the system carries on.
+    """
+    coordinator = build_coordinator(build_config_entry())
+    boiler = SolarfocusSensor(
+        coordinator,
+        create_description(
+            BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, "1", BOILER_SENSOR_TYPES[0]
+        ),
+    )
+    heat_pump = SolarfocusSensor(
+        coordinator,
+        create_description(
+            HEAT_PUMP_COMPONENT, HEAT_PUMP_COMPONENT_PREFIX, "", HEATPUMP_SENSOR_TYPES[0]
+        ),
+    )
+
+    coordinator.failed_components = {CONF_BOILER}
+
+    assert boiler.available is False
+    assert heat_pump.available is True
+
+
+@pytest.mark.parametrize(("prefix", "device"), sorted(COMPONENT_DEVICES.items()))
+def test_every_component_goes_unavailable_under_its_own_option(
+    prefix: str, device: ComponentDevice
+) -> None:
+    """Availability is read off the option, which is not the translation key.
+
+    The two spell the same word, and used to be the same field for it: renaming
+    what `strings.json` calls a device would have left the entities of that
+    component available whatever the coordinator said about it. Every component
+    is pinned here rather than the boiler alone, because a mismatch is one
+    component with entities that never go unavailable and nothing else.
+    """
+    coordinator = build_coordinator(build_config_entry())
+    entity = SolarfocusSensor(
+        coordinator,
+        create_description(BOILER_COMPONENT, prefix, "1", BOILER_SENSOR_TYPES[0]),
+    )
+
+    coordinator.failed_components = {device.option}
+    assert entity.available is False
+
+    coordinator.failed_components = {device.translation_key + "_renamed"}
+    assert entity.available is True
+
+
+def test_every_component_device_names_an_option_the_coordinator_polls() -> None:
+    """A device whose option is not polled has entities that never grey out.
+
+    The other way round is worse: a component the coordinator reports as failed
+    under a name no device carries greys out nothing at all.
+    """
+    assert (
+        {device.option for device in COMPONENT_DEVICES.values()}
+        == {option for option, _ in COMPONENT_UPDATES}
+    )
+
+
+def test_a_failing_component_takes_every_instance_of_it() -> None:
+    """The library reads all boilers in one call, so all of them failed."""
+    coordinator = build_coordinator(build_config_entry())
+    boilers = [
+        SolarfocusSensor(
+            coordinator,
+            create_description(
+                BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, idx, BOILER_SENSOR_TYPES[0]
+            ),
+        )
+        for idx in ("1", "2")
+    ]
+
+    coordinator.failed_components = {CONF_BOILER}
+
+    assert [boiler.available for boiler in boilers] == [False, False]
+
+
+def test_a_writable_entity_of_a_failing_component_goes_unavailable() -> None:
+    """A component whose registers do not answer is not one to be writing to.
+
+    Home Assistant drops unavailable entities from service calls, so this is
+    what stops a write to a component that cannot be read. The entities of
+    every component that does answer keep taking them, which is the whole
+    difference to failing the refresh.
+    """
+    coordinator = build_coordinator(build_config_entry())
+    number = SolarfocusNumberEntity(
+        coordinator,
+        create_description(
+            BOILER_COMPONENT, BOILER_COMPONENT_PREFIX, "1", BOILER_NUMBER_TYPES[0]
+        ),
+    )
+
+    coordinator.failed_components = {CONF_BOILER}
+
+    assert number.available is False
+
+
+def test_a_component_that_reads_again_comes_back() -> None:
+    """Availability follows the last refresh, so a recovery is enough."""
+    entity = _make(
+        SolarfocusSensor,
+        BOILER_SENSOR_TYPES[0],
+        BOILER_COMPONENT,
+        BOILER_COMPONENT_PREFIX,
+    )
+
+    entity.coordinator.failed_components = {CONF_BOILER}
+    assert entity.available is False
+
+    entity.coordinator.failed_components = set()
+    assert entity.available is True
+
+
+def test_the_whole_system_being_gone_still_beats_a_working_component() -> None:
+    """Every configured component failing fails the refresh, and clears the set.
+
+    So a failed refresh is the only thing left saying that nothing can be read,
+    and it has to be enough on its own.
+    """
+    entity = _make(
+        SolarfocusSensor,
+        BOILER_SENSOR_TYPES[0],
+        BOILER_COMPONENT,
+        BOILER_COMPONENT_PREFIX,
+    )
+
+    entity.coordinator.last_update_success = False
+    entity.coordinator.failed_components = set()
 
     assert entity.available is False
 

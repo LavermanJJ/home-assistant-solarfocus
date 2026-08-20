@@ -2,7 +2,7 @@
 
 A repair issue is for what the integration cannot fix on its own. Both of these
 are otherwise invisible: one is a log line written once at migration, the other
-is a component quietly keeping its last value for good.
+is a component that has gone unavailable for good.
 """
 
 from custom_components.solarfocus.const import CONF_BOILER, CONF_HEATING_CIRCUIT, DOMAIN
@@ -161,8 +161,8 @@ async def test_a_component_that_answers_nothing_is_reported(
 ) -> None:
     """A register range the firmware does not answer fails on every poll.
 
-    The entities keep their last value rather than going unavailable, so the
-    heating system looks stopped rather than partly unreadable.
+    The entities of that component are unavailable while it lasts, and nothing
+    in the entry says why: the log line that does is written once.
     """
     api.update_heating.return_value = False
 
