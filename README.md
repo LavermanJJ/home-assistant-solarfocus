@@ -212,7 +212,7 @@ The first step of the setup asks for:
 
 | Parameter | Default | Description |
 |---|---|---|
-| Name | `Solarfocus` | Name of the entry, and the name every entity of it is identified by. Pick a distinct one per system and do not change it afterwards, see [Known Limitations](#known-limitations). |
+| Name | `Solarfocus` | Name of the entry, shown wherever Home Assistant lists it. It can be changed at any time and two entries may share it: nothing of the entry is identified by it. |
 | Host | `solarfocus` | Hostname or IP address of the eco<sup>manager-touch</sup>. |
 | Port | `502` | Modbus TCP port of the controller. |
 | Polling interval (s) | `10` | Seconds between two reads of the heating system. Values below 5 are rejected. |
@@ -436,11 +436,6 @@ These are properties of the integration or the Modbus interface, not bugs:
   address or a DNS name.
 - **No authentication.** Modbus TCP has none. Anyone with access to the network segment of the
   controller can read and write the same registers.
-- **The name of an entry is part of the identity of its entities.** Renaming the config entry
-  after setup gives the entities new unique ids: the old ones are orphaned and a duplicate set
-  appears with a `_2` suffix. Rename the entities or one of the devices instead, both of which
-  are safe.
-  For the same reason two entries cannot share a name, and the setup rejects one that is taken.
 - **Register coverage follows the specification of the selected version.** Features the
   eco<sup>manager-touch</sup> only offers on its display, and registers added after `26.020`,
   are not available.
@@ -451,6 +446,13 @@ These are properties of the integration or the Modbus interface, not bugs:
 - **The device half of an entity id follows the language of the installation.** A German
   installation names new entities `sensor.heizkreis_1_supply_temperature`. The half that names
   the reading is always English.
+- **An entry renamed twice before 6.0.0 can need one rename back.** Entities used to be
+  identified by the name of the entry, so the upgrade has to work out which set of them you have
+  been reading. It can, unless the entry was renamed more than once with at least the last rename
+  made while the entry was not loaded - then no name the entry still knows is on any of its
+  entities. The upgrade stops rather than guess, and the entry shows as failed to migrate. The
+  warning in the log lists the unique ids of those entities; rename the entry to what they begin
+  with and restart.
 - **Writes can be ignored by the controller.** The photovoltaic registers only take effect once
   the display is configured for it, see [Photovoltaic](#photovoltaic), and the heating system
   keeps enforcing its own limits (for example the outdoor shutdown temperature) regardless of

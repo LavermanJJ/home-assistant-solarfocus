@@ -136,7 +136,6 @@ class SolarfocusEntity(Entity):
     ) -> None:
         """Initialize the Atag entity."""
         self.coordinator = coordinator
-        self._name = coordinator._entry.title
         self._entry_id = coordinator._entry.entry_id
         self._state: str | None = None
         self.entity_description = description
@@ -157,10 +156,6 @@ class SolarfocusEntity(Entity):
         The identifier of a component is always indexed, `..._so1` even where
         the name says only `Solar`, so raising the count of a component renames
         its first device rather than orphaning it.
-
-        The entity `unique_id` is still built from the title of the entry. That
-        is the other half of the rename problem and a migration of its own, see
-        #212.
         """
         description = self.entity_description
         translation_key, model = COMPONENT_DEVICES[description.component_prefix]
@@ -198,9 +193,20 @@ class SolarfocusEntity(Entity):
     @property
     @override
     def unique_id(self) -> str:
-        """Return a unique ID to use for this entity."""
-        _LOGGER.debug("Unique_id - %s", self.entity_description.key)
-        return f"{self._name}_{self.entity_description.key}"
+        """Return the name the entity registry knows this entity by.
+
+        The entry id, which is the one name an entry has that a user cannot
+        change. It used to be the title, and a title is a name the UI offers to
+        rename at any moment: every entity of the entry came back from a rename
+        with an id Home Assistant had never seen, so the registry kept the old
+        one holding its last value and registered a new one beside it, under a
+        `_2` suffix because the entity id it wanted was taken.
+
+        Version 10 of the entry rewrites the ids that were built from a title,
+        so an entity that has been read since before this keeps its history and
+        everything the user set on it.
+        """
+        return f"{self._entry_id}_{self.entity_description.key}"
 
     @property
     @override

@@ -30,7 +30,7 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 9
+CURRENT_VERSION = 10
 
 
 def build_data(system: Systems = Systems.VAMPAIR) -> dict:
