@@ -284,21 +284,22 @@ async def test_a_second_system_can_be_added(
     assert result["step_id"] == "component"
 
 
-async def test_a_second_system_needs_its_own_name(
+async def test_a_second_system_may_share_the_name_of_the_first(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:
-    """Entities are identified by the title of their entry.
+    """Nothing of an entry is identified by its name any more.
 
-    A second entry under the same name gives every entity the unique id an
-    entity of the first one already has, and Home Assistant drops them all.
+    A second entry under a name that is taken used to give every entity of it
+    the unique id an entity of the first already had, so the setup refused one.
+    Entities are identified by the entry id since version 10, and two heating
+    systems that the user thinks of under one name are their business.
     """
     build_config_entry().add_to_hass(hass)
 
     result = await _start_user_step(hass, {**USER_INPUT, CONF_HOST: "10.0.0.9"})
 
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
-    assert result["errors"] == {CONF_NAME: "name_exists"}
+    assert result["step_id"] == "component"
 
 
 async def test_a_different_port_is_a_different_system(

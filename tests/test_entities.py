@@ -87,16 +87,21 @@ def boiler_water_heater_fixture() -> SolarfocusWaterHeaterEntity:
 # --- base entity ------------------------------------------------------------
 
 
-def test_unique_id_combines_the_device_name_and_the_key() -> None:
-    """The unique id has to stay stable, it identifies the entity in the registry."""
+def test_unique_id_combines_the_entry_id_and_the_key() -> None:
+    """The unique id has to stay stable, it identifies the entity in the registry.
+
+    The entry id, not the title: the title is renamed from the UI, and an entity
+    that changes its unique id is a new entity to Home Assistant.
+    """
     entity = _make(
         SolarfocusSensor,
         BOILER_SENSOR_TYPES[0],
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
+    entry_id = entity.coordinator._entry.entry_id
 
-    assert entity.unique_id == f"Solarfocus_bo1_{BOILER_SENSOR_TYPES[0].key}"
+    assert entity.unique_id == f"{entry_id}_bo1_{BOILER_SENSOR_TYPES[0].key}"
     assert entity.translation_key == f"bo_{BOILER_SENSOR_TYPES[0].key}"
 
 

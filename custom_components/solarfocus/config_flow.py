@@ -246,7 +246,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 9
+    VERSION = 10
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -268,19 +268,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             build_unique_id(user_input[CONF_HOST], user_input[CONF_PORT])
         )
         self._abort_if_unique_id_configured()
-
-        if any(
-            entry.title == user_input[CONF_NAME]
-            for entry in self._async_current_entries()
-        ):
-            # Entities are identified by the title of their entry, so a second
-            # entry under the same name would produce the same unique ids and
-            # Home Assistant would drop all of its entities.
-            return self.async_show_form(
-                step_id="user",
-                data_schema=STEP_USER_DATA_SCHEMA,
-                errors={CONF_NAME: "name_exists"},
-            )
 
         try:
             await validate_input(self.hass, user_input)
@@ -367,8 +354,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         and never again, so anyone who picked the wrong one - or picked the
         nearest of the three that used to be offered - could only fix it by
         deleting the entry and losing its history. An entity `unique_id` is built
-        from the title of the entry and the key of the entity, and the system is
-        in neither, so changing it here keeps every entity the two systems share.
+        from the id of the entry and the key of the entity, and the system is in
+        neither, so changing it here keeps every entity the two systems share.
         """
         entry = self._get_reconfigure_entry()
 

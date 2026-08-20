@@ -62,7 +62,7 @@ def _enable_on_the_controller(entity_registry, entry) -> None:
         entity_registry.async_get_or_create(
             domain,
             DOMAIN,
-            f"{entry.title}_{key}",
+            f"{entry.entry_id}_{key}",
             suggested_object_id=object_id,
             disabled_by=None,
         )

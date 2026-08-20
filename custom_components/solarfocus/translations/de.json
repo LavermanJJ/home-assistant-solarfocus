@@ -38,7 +38,6 @@
       "reconfigure_successful": "Neu konfiguriert"
     },
     "error": {
-      "name_exists": "Dieser Name wird bereits von einem anderen Solarfocus-Eintrag verwendet",
       "already_configured": "Diese Adresse wird bereits von einem anderen Solarfocus-Eintrag verwendet",
       "invalid_scan_interval": "Das Abfrageintervall muss mindestens fünf Sekunden betragen",
       "cannot_connect": "Verbindung Fehlgeschlagen",

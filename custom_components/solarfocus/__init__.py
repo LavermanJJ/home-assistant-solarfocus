@@ -10,6 +10,7 @@ from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
 from homeassistant.const import (
     CONF_API_VERSION,
     CONF_HOST,
+    CONF_NAME,
     CONF_PORT,
     CONF_SCAN_INTERVAL,
     Platform,
@@ -237,7 +238,7 @@ async def _async_align_solar_unique_ids(
         return
 
     old, new = ("so_", "so1_") if count > 1 else ("so1_", "so_")
-    prefix = f"{entry.title}_"
+    prefix = f"{entry.entry_id}_"
     registry = er.async_get(hass)
     taken = {registered.unique_id for registered in registry.entities.values()}
 
@@ -390,6 +391,102 @@ def _async_identify_device_by_entry_id(
                 entry.title,
             )
             registry.async_remove_device(device.id)
+
+
+@callback
+def _async_live_unique_id_prefix(
+    entry: SolarfocusConfigEntry, registered: list[er.RegistryEntry]
+) -> tuple[str, bool] | None:
+    """Return the title the entities of this entry were last registered under.
+
+    Which is the current one, in every registry that has never seen a rename.
+    A rename left the entities of the previous title in the registry beside the
+    new ones, so there can be several sets, and the one the user has been
+    reading since is the one under the title the entry was last set up with.
+
+    A title changed while the entry was not loaded is a title no entity carries.
+    The name the entry was created with is what those entities carry instead -
+    `data[CONF_NAME]` is that name, and unlike the title nothing renames it.
+
+    Returns the prefix and whether it is the current title, which is what says
+    the entities outside it are leftovers rather than a set that cannot be
+    named: a second rename while the entry was not loaded leaves entities under
+    a title nothing here records, and those are not ours to delete.
+    """
+    title_prefix = f"{entry.title}_"
+    if any(one.unique_id.startswith(title_prefix) for one in registered):
+        return title_prefix, True
+
+    if created_as := entry.data.get(CONF_NAME):
+        original_prefix = f"{created_as}_"
+        if any(one.unique_id.startswith(original_prefix) for one in registered):
+            return original_prefix, False
+
+    return None
+
+
+async def _async_identify_entities_by_entry_id(
+    hass: HomeAssistant, entry: SolarfocusConfigEntry
+) -> None:
+    """Take the entity unique ids off the title of the entry.
+
+    An entity was identified by the title and its key, and the title is a name
+    the UI renames at any moment. Renaming an entry therefore gave every entity
+    of it an id Home Assistant had never seen: the registry kept the old entity,
+    holding the last value it was written, and registered a new one beside it
+    under a `_2` suffix, which nobody's dashboards or automations name. An entry
+    of fifteen entities came out of a rename with thirty.
+
+    The ids are rewritten in place rather than left to the next setup to
+    register anew, so an entity keeps its entity id, its area, its
+    customisations and its history - the same promise the device half of this
+    made in version 9.
+
+    What the entity id is built from does not change with any of this: the name
+    of the device and the English `object_id_name`, neither of which has ever
+    been the title.
+    """
+    registry = er.async_get(hass)
+    registered = er.async_entries_for_config_entry(registry, entry.entry_id)
+    if not registered:
+        return
+
+    if (live := _async_live_unique_id_prefix(entry, registered)) is None:
+        # Every set in the registry is under a title that is neither the current
+        # one nor the one the entry was created with, so which of them is the
+        # live one cannot be told from here. Renaming nothing leaves the entry
+        # exactly as it is rather than picking the wrong set to keep.
+        _LOGGER.warning(
+            "Not re-identifying the entities of %s, none of them carries a name"
+            " this entry still knows",
+            entry.title,
+        )
+        return
+
+    prefix, is_current_title = live
+
+    if is_current_title:
+        # Everything under another title is what a rename left behind: an entity
+        # that was last written before that rename and never will be again. It
+        # would otherwise migrate to the same id as the live entity it is a copy
+        # of, and the registry refuses two entities under one id.
+        for stale in registered:
+            if not stale.unique_id.startswith(prefix):
+                _LOGGER.debug(
+                    "Removing entity %s, left behind by a rename of %s",
+                    stale.entity_id,
+                    entry.title,
+                )
+                registry.async_remove(stale.entity_id)
+
+    @callback
+    def _identified(one: er.RegistryEntry) -> dict[str, str] | None:
+        if not one.unique_id.startswith(prefix):
+            return None
+
+        return {"new_unique_id": f"{entry.entry_id}_{one.unique_id[len(prefix) :]}"}
+
+    await er.async_migrate_entries(hass, entry.entry_id, _identified)
 
 
 async def async_update_options(
@@ -571,6 +668,14 @@ async def async_migrate_entry(
         _async_identify_device_by_entry_id(hass, config_entry)
 
         hass.config_entries.async_update_entry(config_entry, version=9)
+
+    if config_entry.version == 9:
+        # The other half of the same rename: an entity was identified by the
+        # title as well, so a rename doubled every entity of the entry - the
+        # dead one keeping the entity id and the live one taking a `_2`.
+        await _async_identify_entities_by_entry_id(hass, config_entry)
+
+        hass.config_entries.async_update_entry(config_entry, version=10)
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(

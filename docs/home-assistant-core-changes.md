@@ -111,6 +111,9 @@ in local test runs.
   already built a second device, the migration removes the one the entities are not on — with
   `async_remove_device()` rather than the config-entry-management kwargs of
   `async_update_device()`, which this post deprecates.
+- The entity `unique_id` was keyed on the title in the same way and is **done** in #212: entry
+  version 10 rewrites it to `f"{entry_id}_{key}"` with `async_migrate_entries()`, and removes the
+  entities an earlier rename left behind.
 
 ---
 
@@ -289,7 +292,8 @@ the same controller.
 4. **3.2 / 3.3** Coordinator cleanup: pass `config_entry`, move `api.connect()` into `_async_setup`,
    use `async_config_entry_first_refresh()`, raise `UpdateFailed`, turn off entity polling.
 5. **3.5 + 2.4** Add a config flow unique ID and key the device identifier off `entry_id`. Both
-   done: the unique id in #185 (entry version 7), the device identifier in #210 (entry version 9).
+   done: the unique id in #185 (entry version 7), the device identifier in #210 (entry version 9),
+   the entity unique id in #212 (entry version 10).
 6. **2.1** Swap `PERCENTAGE` for `UnitOfRatio.PERCENTAGE`.
 7. **3.4 / 3.6 / 3.7 / 3.8** Polish: `icons.json`, `suggested_display_precision`, unit translations,
    `brand/` images.

@@ -96,7 +96,6 @@
       }
     },
     "error": {
-      "name_exists": "Another Solarfocus entry already uses this name",
       "already_configured": "Another Solarfocus entry already uses this address",
       "invalid_scan_interval": "The polling interval has to be at least five seconds",
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
