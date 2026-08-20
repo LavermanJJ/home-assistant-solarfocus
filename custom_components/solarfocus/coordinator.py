@@ -13,6 +13,8 @@ from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    COMPONENT_DEVICES,
+    COMPONENT_PREFIXES,
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
@@ -219,16 +221,21 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
                 continue
 
             devices = self._component_devices(option)
+            # What the device page calls this component's model, for when
+            # there is no device yet to ask - either it is not registered yet,
+            # which is what the report at the end of `async_setup_entry`
+            # catches up with, or the configured api version does not have it
+            # at all. Either way this is never the bare option: that is a
+            # config key, not a word, and leaks into every language's text.
+            fallback = COMPONENT_DEVICES[COMPONENT_PREFIXES[option]].model
             # What the device page calls this component, which is translated
             # and is whatever the user renamed it to, and the same names as
-            # links to those pages. The option is what is left if the devices
-            # are not registered yet, which is what the report at the end of
-            # `async_setup_entry` catches up with.
+            # links to those pages.
             names = [
-                device.name_by_user or device.name or option for device in devices
+                device.name_by_user or device.name or fallback for device in devices
             ]
             links = [
-                f"[{name}](/config/devices/device/{device.id})"
+                f"[{_escape_markdown_link_text(name)}](/config/devices/device/{device.id})"
                 for name, device in zip(names, devices, strict=True)
             ]
 
@@ -240,8 +247,8 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
                 severity=ir.IssueSeverity.WARNING,
                 translation_key="component_unavailable",
                 translation_placeholders={
-                    "component": ", ".join(names) or option,
-                    "devices": ", ".join(links) or option,
+                    "component": ", ".join(names) or fallback,
+                    "devices": ", ".join(links) or fallback,
                     "address": self._address,
                     "title": self._entry.title,
                 },
@@ -277,6 +284,16 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         it again over the top is what puts the device names and their links in.
         """
         self._report_failed_components(sorted(self._failed_components))
+
+
+def _escape_markdown_link_text(text: str) -> str:
+    """Escape a device name for use as the text span of a markdown link.
+
+    The name is whatever the user renamed the device to, so it can contain a
+    `]` that would otherwise close the link's text span early and leave the
+    rest of it as literal, unlinked text in the repair dialog.
+    """
+    return text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]")
 
 
 def component_issue_id(entry_id: str, option: str) -> str:
