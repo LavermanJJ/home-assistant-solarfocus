@@ -365,10 +365,16 @@ def _async_identify_device_by_entry_id(
     Every device of this entry is a device this migration is about.
 
     There can be more than one, because renaming an entry is what built a second
-    device under the new title in the first place. The one the entities are on
-    is the one that is kept; the others hold nothing and would stay in the
+    device under the new title in the first place. The one the live entities sit
+    on is the one that is kept; the others hold nothing and would stay in the
     registry forever otherwise, since they still name a config entry that
     exists.
+
+    Which entities are the live ones is the same question version 10 asks, and
+    it is asked here because removing a device takes its entities with it. Two
+    devices left by a rename hold the same number of entities, so counting alone
+    picks between them by registry order - and picking the abandoned one to keep
+    would remove the live set before version 10 ever saw it.
     """
     registry = dr.async_get(hass)
     devices = dr.async_entries_for_config_entry(registry, entry.entry_id)
@@ -377,11 +383,21 @@ def _async_identify_device_by_entry_id(
     if not devices or any(identifier in device.identifiers for device in devices):
         return
 
-    entities = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
-    entity_count = Counter(entity.device_id for entity in entities)
+    registered = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+    live = _async_live_entities(entry, registered)
+    on_a_device = registered if live is None else live[1]
+    entity_count = Counter(one.device_id for one in on_a_device)
     keep = max(devices, key=lambda device: entity_count[device.id])
 
     registry.async_update_device(keep.id, new_identifiers={identifier})
+
+    if live is None or not entity_count[keep.id]:
+        # Nothing here says which of these devices holds the entities the user
+        # has been reading, so nothing here may remove one: a device leaves with
+        # every entity registered on it. A device that holds nothing is a stray
+        # row in a registry; a device removed on a guess is history the user
+        # cannot get back.
+        return
 
     for device in devices:
         if device.id != keep.id:
@@ -394,40 +410,93 @@ def _async_identify_device_by_entry_id(
 
 
 @callback
-def _async_live_unique_id_prefix(
+def _async_entities_by_name(
     entry: SolarfocusConfigEntry, registered: list[er.RegistryEntry]
-) -> tuple[str, bool] | None:
-    """Return the title the entities of this entry were last registered under.
+) -> dict[str, list[er.RegistryEntry]]:
+    """Group the entities of this entry by the name their unique ids begin with.
 
-    Which is the current one, in every registry that has never seen a rename.
-    A rename left the entities of the previous title in the registry beside the
-    new ones, so there can be several sets, and the one the user has been
-    reading since is the one under the title the entry was last set up with.
+    The two names an entry knows: the title it carries now, and the name it was
+    created with, which sits in `data[CONF_NAME]` and which nothing renames.
+
+    An id is attributed to the longest of them it begins with, because one can
+    be a prefix of the other. An entry created as `Solarfocus_Keller` and since
+    renamed to `Solarfocus` has every abandoned id beginning with the current
+    title as well, and reading those as ids of the current title would migrate
+    the abandoned set to `{entry_id}_Keller_...` rather than recognising it as
+    the leftover it is - leaving the duplication in place for good.
+
+    Names that no id begins with are left out, so a name is in the result only
+    if there are entities under it.
+    """
+    names = [entry.title]
+    if (created_as := entry.data.get(CONF_NAME)) is not None:
+        names.append(created_as)
+
+    prefixes = sorted({f"{name}_" for name in names}, key=len, reverse=True)
+    sets: dict[str, list[er.RegistryEntry]] = {prefix: [] for prefix in prefixes}
+
+    for one in registered:
+        for prefix in prefixes:
+            if one.unique_id.startswith(prefix):
+                sets[prefix].append(one)
+                break
+
+    return {prefix: entities for prefix, entities in sets.items() if entities}
+
+
+@callback
+def _async_live_entities(
+    entry: SolarfocusConfigEntry, registered: list[er.RegistryEntry]
+) -> tuple[str, list[er.RegistryEntry]] | None:
+    """Return the name the live entities carry, and the entities under it.
+
+    The live set is the one the user has been reading: the one the entry
+    registered the last time it was set up. A rename left the set of the
+    previous title in the registry beside the new one, so there can be several,
+    and only one of them is still being written.
+
+    Under the current title, in a registry where the entry was set up at least
+    once since it was last renamed - which is every registry that has never seen
+    a rename, and every one where the rename happened while the entry was
+    loaded. That the set under the title really is the last one registered is
+    what `created_at` says: an entity outside it that the registry recorded
+    later means a set was registered after this one, and then the title names an
+    abandoned set rather than the live one - an entry renamed away and back
+    again is read correctly this way.
 
     A title changed while the entry was not loaded is a title no entity carries.
-    The name the entry was created with is what those entities carry instead -
-    `data[CONF_NAME]` is that name, and unlike the title nothing renames it.
+    The name the entry was created with is what those entities carry instead,
+    but only where that name still accounts for every entity of the entry: an
+    id outside it means some later title registered a set, and the created name
+    is then as abandoned as the title is.
 
-    Returns the prefix and whether it is the current title, which is what says
-    the entities outside it are leftovers rather than a set that cannot be
-    named: a second rename while the entry was not loaded leaves entities under
-    a title nothing here records, and those are not ours to delete.
+    `None` where neither name settles it. Renaming nothing and migrating nothing
+    is the only safe answer: the sets are indistinguishable from here, and the
+    wrong one deleted is the user's history gone.
     """
+    sets = _async_entities_by_name(entry, registered)
     title_prefix = f"{entry.title}_"
-    if any(one.unique_id.startswith(title_prefix) for one in registered):
-        return title_prefix, True
 
-    if created_as := entry.data.get(CONF_NAME):
-        original_prefix = f"{created_as}_"
-        if any(one.unique_id.startswith(original_prefix) for one in registered):
-            return original_prefix, False
+    if (under_title := sets.get(title_prefix)) is not None:
+        newest = max(one.created_at for one in under_title)
+        named = {one.entity_id for one in under_title}
+        outside = [one for one in registered if one.entity_id not in named]
+        if all(one.created_at <= newest for one in outside):
+            return title_prefix, under_title
+
+        return None
+
+    if (created_as := entry.data.get(CONF_NAME)) is not None:
+        under_created = sets.get(f"{created_as}_")
+        if under_created is not None and len(under_created) == len(registered):
+            return f"{created_as}_", under_created
 
     return None
 
 
 async def _async_identify_entities_by_entry_id(
     hass: HomeAssistant, entry: SolarfocusConfigEntry
-) -> None:
+) -> bool:
     """Take the entity unique ids off the title of the entry.
 
     An entity was identified by the title and its key, and the title is a name
@@ -445,48 +514,56 @@ async def _async_identify_entities_by_entry_id(
     What the entity id is built from does not change with any of this: the name
     of the device and the English `object_id_name`, neither of which has ever
     been the title.
+
+    Returns whether the entry may move on to version 10, which is whether the
+    live set could be named at all.
     """
     registry = er.async_get(hass)
     registered = er.async_entries_for_config_entry(registry, entry.entry_id)
     if not registered:
-        return
+        return True
 
-    if (live := _async_live_unique_id_prefix(entry, registered)) is None:
+    if (live := _async_live_entities(entry, registered)) is None:
         # Every set in the registry is under a title that is neither the current
         # one nor the one the entry was created with, so which of them is the
         # live one cannot be told from here. Renaming nothing leaves the entry
-        # exactly as it is rather than picking the wrong set to keep.
+        # exactly as it is rather than picking the wrong set to keep - and it
+        # stays at version 9, so this is asked again rather than the next setup
+        # registering a third set beside the ones already there.
         _LOGGER.warning(
             "Not re-identifying the entities of %s, none of them carries a name"
-            " this entry still knows",
+            " this entry still knows. Rename the entry back to the name these"
+            " unique ids begin with and restart to migrate it: %s",
             entry.title,
+            ", ".join(sorted(one.unique_id for one in registered)),
         )
-        return
+        return False
 
-    prefix, is_current_title = live
+    prefix, entities = live
+    keep = {one.entity_id for one in entities}
 
-    if is_current_title:
-        # Everything under another title is what a rename left behind: an entity
-        # that was last written before that rename and never will be again. It
-        # would otherwise migrate to the same id as the live entity it is a copy
-        # of, and the registry refuses two entities under one id.
-        for stale in registered:
-            if not stale.unique_id.startswith(prefix):
-                _LOGGER.debug(
-                    "Removing entity %s, left behind by a rename of %s",
-                    stale.entity_id,
-                    entry.title,
-                )
-                registry.async_remove(stale.entity_id)
+    # Everything outside the live set is what a rename left behind: an entity
+    # that was last written before that rename and never will be again. It would
+    # otherwise migrate to the same id as the live entity it is a copy of, and
+    # the registry refuses two entities under one id.
+    for stale in registered:
+        if stale.entity_id not in keep:
+            _LOGGER.debug(
+                "Removing entity %s, left behind by a rename of %s",
+                stale.entity_id,
+                entry.title,
+            )
+            registry.async_remove(stale.entity_id)
 
     @callback
     def _identified(one: er.RegistryEntry) -> dict[str, str] | None:
-        if not one.unique_id.startswith(prefix):
+        if one.entity_id not in keep:
             return None
 
         return {"new_unique_id": f"{entry.entry_id}_{one.unique_id[len(prefix) :]}"}
 
     await er.async_migrate_entries(hass, entry.entry_id, _identified)
+    return True
 
 
 async def async_update_options(
@@ -673,7 +750,13 @@ async def async_migrate_entry(
         # The other half of the same rename: an entity was identified by the
         # title as well, so a rename doubled every entity of the entry - the
         # dead one keeping the entity id and the live one taking a `_2`.
-        await _async_identify_entities_by_entry_id(hass, config_entry)
+        if not await _async_identify_entities_by_entry_id(hass, config_entry):
+            # The live set could not be named, so the entities are still under a
+            # title. Moving to version 10 would settle that for good - the next
+            # setup registers the entry id set beside them and this never runs
+            # again - so the entry stays where it is and the migration fails
+            # visibly instead.
+            return False
 
         hass.config_entries.async_update_entry(config_entry, version=10)
 

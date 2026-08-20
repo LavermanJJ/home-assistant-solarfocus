@@ -730,6 +730,87 @@ async def test_migration_keeps_the_device_the_entities_are_on(
     assert len(dr.async_entries_for_config_entry(device_registry, entry.entry_id)) == 1
 
 
+async def test_migration_keeps_the_device_of_the_live_entity_set(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry, entity_registry
+) -> None:
+    """A rename left two devices holding the same number of entities.
+
+    Version 9 removes the device it does not keep, and a device leaves the
+    registry with every entity registered on it. Counting cannot tell these two
+    apart, so keeping the fuller one keeps whichever the registry happens to
+    list first - the abandoned one - and the live set is gone before version 10
+    is ever asked about it.
+
+    Which set is live is the question version 10 answers, so version 9 asks it
+    too, and the device the live entities sit on is the one that stays.
+    """
+    entry = _version_8_entry(hass, title="Werkstatt")
+    abandoned = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, DEFAULT_NAME)}
+    )
+    live = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Werkstatt")}
+    )
+    for device, name in ((abandoned, DEFAULT_NAME), (live, "Werkstatt")):
+        for key in ("hc1_supply_temperature", "bo1_temperature"):
+            entity_registry.async_get_or_create(
+                "sensor",
+                DOMAIN,
+                f"{name}_{key}",
+                config_entry=entry,
+                device_id=device.id,
+            )
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert device_registry.async_get(abandoned.id) is None
+    assert device_registry.async_get(live.id).identifiers == {(DOMAIN, entry.entry_id)}
+
+    # The live set survived the device half and was re-identified by the entity
+    # half, rather than being removed along with the device it sat on.
+    assert {
+        one.unique_id
+        for one in er.async_entries_for_config_entry(entity_registry, entry.entry_id)
+    } == {
+        f"{entry.entry_id}_hc1_supply_temperature",
+        f"{entry.entry_id}_bo1_temperature",
+    }
+
+
+async def test_migration_removes_no_device_it_cannot_choose_between(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry, entity_registry
+) -> None:
+    """Neither name is on any entity, so neither device is known to be dead.
+
+    A stray device holding nothing is a row in a registry. A device removed on a
+    guess is the user's history, and it does not come back, so nothing is
+    removed here at all.
+    """
+    entry = _version_8_entry(hass, title="Werkstatt")
+    one = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Haus")}
+    )
+    another = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "Garage")}
+    )
+    for device, name in ((one, "Haus"), (another, "Garage")):
+        entity_registry.async_get_or_create(
+            "sensor",
+            DOMAIN,
+            f"{name}_hc1_supply_temperature",
+            config_entry=entry,
+            device_id=device.id,
+        )
+
+    # Version 10 cannot name the live set either, so the migration stops there.
+    assert await async_migrate_entry(hass, entry) is False
+
+    assert device_registry.async_get(one.id) is not None
+    assert device_registry.async_get(another.id) is not None
+    assert len(er.async_entries_for_config_entry(entity_registry, entry.entry_id)) == 2
+
+
 async def test_migration_leaves_the_device_of_another_entry_alone(
     hass: HomeAssistant, device_registry: dr.DeviceRegistry
 ) -> None:
@@ -869,15 +950,109 @@ async def test_migration_leaves_a_set_it_cannot_name_alone(
     Which of the sets in the registry is the live one cannot be told from here,
     and picking the wrong one would delete the entities the user is reading. The
     entry is left exactly as it is instead.
+
+    Left at version 9, too. Moving it on would leave the entities under a title
+    for good: the next setup registers the entry id set beside them, and a
+    migration that has already run never runs again. Failing keeps the entry
+    recoverable - renamed back to a name it knows, it migrates on the restart
+    after.
     """
     entry = _version_9_entry(hass, title="Werkstatt")
     registered = _register(entity_registry, entry, "Haus_hc1_supply_temperature")
+
+    assert await async_migrate_entry(hass, entry) is False
+
+    assert entry.version == 9
+    assert (
+        entity_registry.async_get(registered.entity_id).unique_id
+        == "Haus_hc1_supply_temperature"
+    )
+
+
+async def test_migration_of_a_set_it_could_not_name_runs_again(
+    hass: HomeAssistant, entity_registry: er.EntityRegistry
+) -> None:
+    """What being left at version 9 buys the user.
+
+    Renaming the entry back to the name its entities carry is the way out, and
+    it only works because the failed migration did not record itself as done.
+    """
+    entry = _version_9_entry(hass, title="Werkstatt")
+    registered = _register(entity_registry, entry, "Haus_hc1_supply_temperature")
+
+    assert await async_migrate_entry(hass, entry) is False
+
+    hass.config_entries.async_update_entry(entry, title="Haus")
 
     assert await async_migrate_entry(hass, entry) is True
 
     assert entry.version == CURRENT_VERSION
     assert (
         entity_registry.async_get(registered.entity_id).unique_id
+        == f"{entry.entry_id}_hc1_supply_temperature"
+    )
+
+
+async def test_migration_reads_a_title_the_created_name_starts_with(
+    hass: HomeAssistant, entity_registry: er.EntityRegistry
+) -> None:
+    """The current title can be a prefix of every id of an abandoned set.
+
+    An entry created as `Solarfocus_Keller` and renamed to `Solarfocus` has ids
+    beginning `Solarfocus_Keller_` beside the live `Solarfocus_` ones, and the
+    live prefix begins them both. Read by prefix alone the abandoned set is a
+    set of the current title, and it migrates to `{entry_id}_Keller_...` - the
+    duplication that survives the migration and stays for good, with the live
+    entity keeping the `_2` entity id it took at the rename.
+    """
+    entry = build_config_entry()
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        entry,
+        title="Solarfocus",
+        data={**entry.data, CONF_NAME: "Solarfocus_Keller"},
+        version=9,
+    )
+    abandoned = _register(
+        entity_registry, entry, "Solarfocus_Keller_hc1_supply_temperature"
+    )
+    live = _register(entity_registry, entry, "Solarfocus_hc1_supply_temperature")
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entity_registry.async_get(abandoned.entity_id) is None
+    migrated = entity_registry.async_get(live.entity_id)
+    assert migrated is not None
+    assert migrated.unique_id == f"{entry.entry_id}_hc1_supply_temperature"
+    assert len(er.async_entries_for_config_entry(entity_registry, entry.entry_id)) == 1
+
+
+async def test_migration_leaves_a_created_name_a_later_set_outlived_alone(
+    hass: HomeAssistant, entity_registry: er.EntityRegistry
+) -> None:
+    """The created name is only the live one while it accounts for everything.
+
+    Renamed once while loaded and once while not - `Solarfocus` to `Haus` to
+    `Werkstatt` - the registry holds the abandoned `Solarfocus_` set and the
+    live `Haus_` one, and the entry knows neither name as its title. Taking the
+    created name as the live one migrates the set nobody reads and orphans the
+    set they do, stranding everything recorded since the first rename.
+    """
+    entry = _version_9_entry(hass, title="Werkstatt")
+    abandoned = _register(
+        entity_registry, entry, f"{DEFAULT_NAME}_hc1_supply_temperature"
+    )
+    live = _register(entity_registry, entry, "Haus_hc1_supply_temperature")
+
+    assert await async_migrate_entry(hass, entry) is False
+
+    assert entry.version == 9
+    assert (
+        entity_registry.async_get(abandoned.entity_id).unique_id
+        == f"{DEFAULT_NAME}_hc1_supply_temperature"
+    )
+    assert (
+        entity_registry.async_get(live.entity_id).unique_id
         == "Haus_hc1_supply_temperature"
     )
 

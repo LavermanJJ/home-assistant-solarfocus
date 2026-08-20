@@ -446,6 +446,13 @@ These are properties of the integration or the Modbus interface, not bugs:
 - **The device half of an entity id follows the language of the installation.** A German
   installation names new entities `sensor.heizkreis_1_supply_temperature`. The half that names
   the reading is always English.
+- **An entry renamed twice before 6.0.0 can need one rename back.** Entities used to be
+  identified by the name of the entry, so the upgrade has to work out which set of them you have
+  been reading. It can, unless the entry was renamed more than once with at least the last rename
+  made while the entry was not loaded - then no name the entry still knows is on any of its
+  entities. The upgrade stops rather than guess, and the entry shows as failed to migrate. The
+  warning in the log lists the unique ids of those entities; rename the entry to what they begin
+  with and restart.
 - **Writes can be ignored by the controller.** The photovoltaic registers only take effect once
   the display is configured for it, see [Photovoltaic](#photovoltaic), and the heating system
   keeps enforcing its own limits (for example the outdoor shutdown temperature) regardless of
