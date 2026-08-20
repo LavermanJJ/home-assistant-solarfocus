@@ -189,9 +189,9 @@ DISPLAYED_NUMBER_TYPE = SolarfocusNumberEntityDescription(
     # an installer does once.
     entity_registry_enabled_default=False,
     native_min_value=0,
-    # The installer menu shows two digits, so 99 is the highest there is to
-    # type - and a wider range would only let a typo through.
-    native_max_value=99,
+    # The installer menu shows up to four digits, so 9999 is the highest there
+    # is to type - and a wider range would only let a typo through.
+    native_max_value=9999,
     native_step=1,
     # A box rather than a slider: the number is read off the display and typed
     # in, not searched for by dragging.

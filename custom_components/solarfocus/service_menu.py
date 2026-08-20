@@ -36,11 +36,14 @@ def installer_code(displayed: float, when: datetime) -> int:
     """Return the installer code for the number the display is showing.
 
     The installer menu goes one step further than the service menu: it shows a
-    number of its own and takes back that number times the day of the week. So
-    unlike the service code this one cannot be computed from the date alone -
-    it needs what is on the display, which is what the number entity takes.
+    number of its own, up to four digits, and takes back the cross sum of that
+    number times the day of the week. So unlike the service code this one
+    cannot be computed from the date alone - it needs what is on the display,
+    which is what the number entity takes.
     """
-    return int(displayed) * weekday(when)
+    cross_sum = sum(int(digit) for digit in str(int(displayed)))
+
+    return cross_sum * weekday(when)
 
 
 class DisplayedNumber:
