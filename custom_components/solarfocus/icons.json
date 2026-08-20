@@ -143,6 +143,9 @@
       "bb_pellet_usage_total": {
         "default": "mdi:alpha-t-box"
       },
+      "bb_return_temperature": {
+        "default": "mdi:thermometer-chevron-down"
+      },
       "bb_status": {
         "default": "mdi:fire-circle",
         "state": {

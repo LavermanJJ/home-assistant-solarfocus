@@ -450,6 +450,9 @@
       "bb_pellet_usage_total": {
         "name": "Pelletverbrauch gesamt"
       },
+      "bb_return_temperature": {
+        "name": "Rücklauftemperatur"
+      },
       "bb_status": {
         "name": "Statuszeile",
         "state": {

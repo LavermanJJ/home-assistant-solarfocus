@@ -694,9 +694,24 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         # Register 2410 is the buffer only on an octoplus. On every other
         # Sigmatek boiler bar the vampair it is the return flow temperature -
-        # a different measurement at the same address, which wants an entity
-        # of its own rather than this one under a name that would misread it.
+        # a different measurement at the same address, which has an entity of
+        # its own below rather than this one under a name that would misread it.
         unsupported_systems=every_system_but(Systems.OCTOPLUS),
+    ),
+    SolarfocusSensorEntityDescription(
+        key="return_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        # The other half of register 2410, and the reason gating the buffer
+        # bottom to the octoplus was only half the fix: the boilers that were
+        # reporting a return flow temperature under the buffer's name get it
+        # back under its own. The document grants it to "alle anderen Sigmatek
+        # Kessel (ohne vampair)" bar the therminator, where 2410 is nicht
+        # belegt - which leaves the EcoTop and the Pellet Elegance.
+        unsupported_systems=every_system_but(
+            Systems.ECOTOP, Systems.PELLETELEGANCE
+        ),
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
