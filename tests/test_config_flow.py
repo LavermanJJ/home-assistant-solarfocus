@@ -94,6 +94,59 @@ async def test_form_shown_without_input(
     assert result["errors"] is None
 
 
+@pytest.mark.parametrize("step", ["user", "reconfigure"])
+async def test_every_api_version_of_the_library_is_offered(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, step: str
+) -> None:
+    """Regression test for #218: 25.100 was missing from the hand-kept list.
+
+    Every version `pysolarfocus` speaks is one a controller in the field can be
+    on, so leaving one out means the user picks a lower one and silently loses
+    the registers added since. Both forms that ask for the version read the
+    same list, newest first.
+    """
+    if step == "user":
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": "user"}
+        )
+    else:
+        entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
+        entry.add_to_hass(hass)
+        result = await _start_reconfigure(hass, entry)
+
+    versions = _offered_api_versions(result)
+
+    assert versions == [api_version.value for api_version in reversed(ApiVersions)]
+    assert ApiVersions.V_25_100.value in versions
+
+
+def _offered_api_versions(result) -> list[str]:
+    """Return the versions the version selector of a form offers, in order."""
+    schema = result["data_schema"].schema
+    selector_config = next(
+        value.config for key, value in schema.items() if key.schema == CONF_API_VERSION
+    )
+    return [option["value"] for option in selector_config["options"]]
+
+
+async def test_a_newly_offered_api_version_can_be_chosen(
+    hass: HomeAssistant, enable_custom_integrations, mock_api
+) -> None:
+    """The version the selector gained is the version the entry ends up on."""
+    result = await _start_user_step(
+        hass, {**USER_INPUT, CONF_API_VERSION: ApiVersions.V_25_100.value}
+    )
+
+    with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], VAMPAIR_COMPONENTS
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_API_VERSION] == ApiVersions.V_25_100.value
+
+
 async def test_full_flow_vampair(
     hass: HomeAssistant, enable_custom_integrations, mock_api
 ) -> None:

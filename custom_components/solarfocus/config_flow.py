@@ -57,14 +57,15 @@ SOLARFOCUS_SYSTEMS = [
 ]
 
 # CONF_API_VERSION
+# Every version the library speaks is a version the user can pick, so the list
+# is taken from it rather than written out again here. Kept by hand it fell
+# behind - 25.100 was missing from it while controllers in the field were on
+# 25.110 - and a version that is not offered leaves the user choosing one that
+# is too low, which silently drops the registers added since. Newest first,
+# which is the declaration order of the enum reversed.
 SOLARFOCUS_API_VERSIONS = [
-    selector.SelectOptionDict(value="26.020", label="v26.020"),
-    selector.SelectOptionDict(value="25.030", label="v25.030"),
-    selector.SelectOptionDict(value="23.040", label="v23.040"),
-    selector.SelectOptionDict(value="23.020", label="v23.020"),
-    selector.SelectOptionDict(value="23.010", label="v23.010"),
-    selector.SelectOptionDict(value="22.090", label="v22.090"),
-    selector.SelectOptionDict(value="21.140", label="v21.140"),
+    selector.SelectOptionDict(value=api_version.value, label=f"v{api_version.value}")
+    for api_version in reversed(ApiVersions)
 ]
 
 _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = vol.All(

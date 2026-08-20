@@ -154,7 +154,10 @@ of the eco<sup>manager-touch</sup>, see the warning about the dew point under [C
 > **Important**
 > This integration has been tested with Solarfocus eco<sup>manager-touch</sup> version `25.030`.
 
-Supported versions: `21.140` - `26.020`. Features added in later versions are not yet supported.
+Supported versions: `20.110`, `21.140`, `22.090`, `23.010`, `23.020`, `23.040`, `23.080`,
+`25.020`, `25.030`, `25.100` and `26.020` - every version the register layout changed in.
+Features added after `26.020` are not yet supported. If the version on your display is not
+one of these, pick the highest one below it: `25.110` is configured as `25.100`.
 
 The eco<sup>manager-touch</sup> Modbus TCP specification can be found [here](https://www.solarfocus.com/de/partnerportal/pdf/open/UGFydG5lcmJlcmVpY2gtREUvUmVnZWx1bmdfZWNvbWFuYWdlci10b3VjaC9BbmxlaXR1bmdlbi9lY29tYW5hZ2VyLXRvdWNoX01vZGJ1cy1UQ1AtUmVnaXN0ZXJkYXRlbl9BbmxlaXR1bmcucGRm/117920/0/Lng_YSxpM245S30zMTc4W2Y8cVRRXWlJVWRQJDsv?serialNumber=21010).
 
@@ -256,7 +259,7 @@ which asks for the connection on its own and leaves your component layout untouc
 | Port | Modbus TCP port. |
 | Polling interval (s) | Seconds between two reads, the same setting as above. |
 | Solarfocus System | Correct a system picked wrongly at setup, e.g. a pellet<sup>elegance</sup> added as an EcoTop before it was offered. Entities are identified by the name of the entry and their own key, neither of which holds the system, so every entity the two systems share keeps its history. Entities only the new system has appear empty until the next poll. See below for what happens to the ones only the old system had. |
-| Solarfocus API Version | Raise this after a software update of the heating system to get the entities that version added. Setting it higher than the controller runs makes it answer the wrong registers, see [Troubleshooting](#troubleshooting). |
+| Solarfocus API Version | Raise this after a software update of the heating system to get the entities that version added. A version your display shows but the list does not offer is configured as the highest version below it, see [Software](#software). Setting it higher than the controller runs makes it answer the wrong registers, see [Troubleshooting](#troubleshooting). |
 
 Changing between the vampair and any of the biomass boilers also switches the heat source the
 entry reads, since no system has both. That removes the device of the old heat source and every
@@ -484,8 +487,9 @@ probably not answered by your software version - lower the API version under
 **Entities I expect are missing.**
 Either the component is set to 0 in the options, or the entity needs a newer API version than
 the one configured, or it does not exist for your system. Check the version selected under
-[Changing the Connection](#changing-the-connection) against the version shown on your display,
-and note that some entities are created disabled and have to be enabled on the device page.
+[Changing the Connection](#changing-the-connection) against the version shown on your display -
+if yours is not on the list, the highest version below it is the right choice - and note that
+some entities are created disabled and have to be enabled on the device page.
 
 **A device trigger or a device action in an automation stopped working.**
 The entities moved from the one device an entry used to have onto the device of their component,
