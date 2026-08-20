@@ -39,6 +39,7 @@ from .const import (
     DOMAIN,
     MANUFACTURER,
     build_unique_id,
+    component_count,
     expected_device_identifiers,
     solar_count,
 )
@@ -74,8 +75,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
         fresh_water_module_count=entry.options[CONF_FRESH_WATER_MODULE],
-        circulation_count=entry.options[CONF_CIRCULATION],
-        differential_module_count=entry.options[CONF_DIFFERENTIAL_MODULE],
+        circulation_count=component_count(entry, CONF_CIRCULATION),
+        differential_module_count=component_count(entry, CONF_DIFFERENTIAL_MODULE),
         solar_count=solar_count(entry),
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
         api_version=ApiVersions(entry.data[CONF_API_VERSION]),

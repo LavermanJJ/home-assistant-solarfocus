@@ -3,6 +3,7 @@
 from datetime import timedelta
 import logging
 
+from pysolarfocus import ApiVersions
 import pytest
 
 from custom_components.solarfocus.const import (
@@ -25,6 +26,11 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .conftest import build_api, build_config_entry
+
+# The api version that has every component of the table below - the circulation
+# and the differential module arrived in it, and the entries the tests build
+# are older than that by default.
+EVERY_COMPONENT_VERSION = ApiVersions.V_25_030.value
 
 # Config option -> the library call the coordinator has to make for it.
 COMPONENT_UPDATES = [
@@ -56,7 +62,9 @@ async def test_only_configured_components_are_polled(
 ) -> None:
     """A component that is not configured must not be read from the device."""
     api = build_api()
-    coordinator = _coordinator(hass, api, **{option: value})
+    coordinator = _coordinator(
+        hass, api, api_version=EVERY_COMPONENT_VERSION, **{option: value}
+    )
 
     await coordinator._async_update_data()
 
@@ -81,7 +89,10 @@ async def test_all_components_are_polled(hass: HomeAssistant) -> None:
     """Every configured component is refreshed on a single update."""
     api = build_api()
     coordinator = _coordinator(
-        hass, api, **{option: value for option, value, _ in COMPONENT_UPDATES}
+        hass,
+        api,
+        api_version=EVERY_COMPONENT_VERSION,
+        **{option: value for option, value, _ in COMPONENT_UPDATES},
     )
 
     await coordinator._async_update_data()
@@ -183,6 +194,53 @@ async def test_all_reads_failing_fails_the_refresh(hass: HomeAssistant) -> None:
         "address": "solarfocus.local:502",
         "components": f"{CONF_HEATING_CIRCUIT}, {CONF_BUFFER}",
     }
+
+
+@pytest.mark.parametrize(
+    ("option", "update"),
+    [
+        (CONF_CIRCULATION, "update_circulation"),
+        (CONF_DIFFERENTIAL_MODULE, "update_differential_modules"),
+    ],
+)
+async def test_a_component_the_api_version_lacks_is_not_polled(
+    hass: HomeAssistant, option: str, update: str
+) -> None:
+    """A component that arrived in a later api version is not read below it.
+
+    The library call for one of those returns True without asking the
+    controller anything, so polling it is not merely pointless: it is a read
+    that always succeeds.
+    """
+    api = build_api()
+    coordinator = _coordinator(hass, api, **{option: 2})
+
+    await coordinator._async_update_data()
+
+    assert not getattr(api, update).called
+
+
+@pytest.mark.parametrize("option", [CONF_CIRCULATION, CONF_DIFFERENTIAL_MODULE])
+async def test_a_component_the_api_version_lacks_does_not_hide_an_outage(
+    hass: HomeAssistant, option: str
+) -> None:
+    """Nothing is read, so the refresh fails - whatever else is configured.
+
+    A component the selected version does not have is counted as configured
+    before it is counted as read successfully, and every component reading
+    successfully is what a total outage was told apart from a component that
+    is unhappy on its own. An entry configured with one of these on an older
+    version would have set up as if the controller answered.
+    """
+    api = build_api()
+    api.update_heating.return_value = False
+    coordinator = _coordinator(hass, api, heating_circuit=1, **{option: 2})
+
+    with pytest.raises(UpdateFailed) as failure:
+        await coordinator._async_update_data()
+
+    assert failure.value.translation_key == "cannot_read"
+    assert failure.value.translation_placeholders["components"] == CONF_HEATING_CIRCUIT
 
 
 async def test_one_failing_component_keeps_the_others_working(

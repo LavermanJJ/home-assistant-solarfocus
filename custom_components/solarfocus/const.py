@@ -156,6 +156,44 @@ def solar_count(entry: ConfigEntry) -> int:
     return count
 
 
+# The api version a component's registers arrived in, for those that are not in
+# every version the integration offers. Below it pysolarfocus builds no such
+# component at all - the attribute the entities would read is not there - and
+# its update call returns success without asking the controller anything.
+COMPONENT_MIN_VERSION: dict[str, str] = {
+    CONF_CIRCULATION: "25.030",
+    CONF_DIFFERENTIAL_MODULE: "25.030",
+}
+
+
+def component_count(entry: ConfigEntry, option: str) -> int:
+    """Return how many of a component this entry builds, the version counted in.
+
+    What the options hold is what the user says their heating system has, and
+    for a component that a later api version brought that is not the same as
+    what the entry has: below `COMPONENT_MIN_VERSION` there is nothing to read
+    whatever the count says, so everything that asks how many there are - the
+    devices expected in the registry, the entities built, the components the
+    coordinator counts as configured - has to ask this rather than the option.
+
+    A component that every version has answers with its option, and one
+    configured by a switch rather than a count answers 1 or 0.
+
+    See `solar_count` for the one component that is capped rather than dropped:
+    solar itself predates the version its further circuits arrived in.
+    """
+    raw = entry.options.get(option, 0)
+    count = (1 if raw else 0) if isinstance(raw, bool) else int(raw or 0)
+
+    minimum = COMPONENT_MIN_VERSION.get(option)
+    if minimum is not None and version.parse(
+        entry.data.get(CONF_API_VERSION, DEFAULT_API_VERSION)
+    ) < version.parse(minimum):
+        return 0
+
+    return count
+
+
 def build_unique_id(host: str, port: int) -> str:
     """Return the unique id identifying one eco manager-touch.
 
@@ -179,9 +217,11 @@ def expected_device_identifiers(entry: ConfigEntry) -> set[tuple[str, str]]:
         BUFFER_COMPONENT_PREFIX: entry.options[CONF_BUFFER],
         BOILER_COMPONENT_PREFIX: entry.options[CONF_BOILER],
         FRESH_WATER_MODULE_COMPONENT_PREFIX: entry.options[CONF_FRESH_WATER_MODULE],
-        CIRCULATION_COMPONENT_PREFIX: entry.options[CONF_CIRCULATION],
-        DIFFERENTIAL_MODULE_COMPONENT_PREFIX: entry.options[CONF_DIFFERENTIAL_MODULE],
-        # The count the library was built with, not the one the options hold
+        # The counts the library was built with, not the ones the options hold
+        CIRCULATION_COMPONENT_PREFIX: component_count(entry, CONF_CIRCULATION),
+        DIFFERENTIAL_MODULE_COMPONENT_PREFIX: component_count(
+            entry, CONF_DIFFERENTIAL_MODULE
+        ),
         SOLAR_COMPONENT_PREFIX: solar_count(entry),
     }
     once = {

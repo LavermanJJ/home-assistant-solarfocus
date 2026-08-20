@@ -12,6 +12,7 @@ from custom_components.solarfocus import (
     async_remove_config_entry_device,
 )
 from custom_components.solarfocus.const import (
+    CIRCULATION_COMPONENT_PREFIX,
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
@@ -25,6 +26,7 @@ from custom_components.solarfocus.const import (
     CONF_SOLARFOCUS_SYSTEM,
     CONTROLLER_NAME,
     DEFAULT_NAME,
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     DOMAIN,
     MANUFACTURER,
 )
@@ -1395,6 +1397,46 @@ async def test_lowering_a_count_removes_the_device_and_its_entities(
     )
     # The ones that are left are untouched
     assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+
+
+@pytest.mark.parametrize("component", ["circulation", "differential_module"])
+async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    component: str,
+) -> None:
+    """A component the selected version lacks is as gone as one switched off.
+
+    The circulation and the differential module arrived in 25.030, so a
+    reconfiguration back to an older version leaves the devices of a count that
+    the entry keeps but no longer builds anything for - a device page of
+    entities that are unavailable for good.
+    """
+    prefix = {
+        "circulation": CIRCULATION_COMPONENT_PREFIX,
+        "differential_module": DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
+    }[component]
+    entry = build_config_entry(
+        Systems.VAMPAIR, api_version=ApiVersions.V_25_030.value, **{component: 2}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_{prefix}2")})
+
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_API_VERSION: ApiVersions.V_23_020.value}
+    )
+    await hass.async_block_till_done()
+
+    assert not [
+        device
+        for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+        if any(
+            identifier.startswith(f"{entry.entry_id}_{prefix}")
+            for _, identifier in device.identifiers
+        )
+    ]
 
 
 async def test_switching_a_component_off_removes_its_device(

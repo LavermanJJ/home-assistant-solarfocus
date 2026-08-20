@@ -62,6 +62,7 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     SOLAR_COMPONENT,
     SOLAR_COMPONENT_PREFIX,
+    component_count,
     solar_count,
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
@@ -220,7 +221,7 @@ async def async_setup_entry(
             entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
-    for i in range(config_entry.options[CONF_CIRCULATION]):
+    for i in range(component_count(config_entry, CONF_CIRCULATION)):
         for description in CIRCULATION_SENSOR_TYPES:
             _description = create_description(
                 CIRCULATION_COMPONENT,
@@ -232,7 +233,7 @@ async def async_setup_entry(
             entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
-    for i in range(config_entry.options[CONF_DIFFERENTIAL_MODULE]):
+    for i in range(component_count(config_entry, CONF_DIFFERENTIAL_MODULE)):
         for description in DIFFERENTIAL_MODULE_SENSOR_TYPES:
             _description = create_description(
                 DIFFERENTIAL_MODULE_COMPONENT,

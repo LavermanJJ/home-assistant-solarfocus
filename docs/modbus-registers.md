@@ -284,7 +284,7 @@ _Solarkreis 1-4, +20 je Kreis_
 
 ### Differenzregelmodul — Input
 
-_Regelkreis 1-4, +10 je Modul_
+_Modul 1-4, +10 je Modul (2200, 2210, 2220, 2230), Regelkreis 1-2 je Modul_
 
 | Adr. | Bezeichnung | Typ | Gelesen als |
 | --- | --- | --- | --- |
