@@ -55,14 +55,41 @@ def _keys(entities) -> list[str]:
     return [entity.entity_description.key for entity in entities]
 
 
+def _components(entities) -> list:
+    """Return the entities of the configured components.
+
+    The controller is a device too and has an entity of its own - the service
+    code, which is computed from the date rather than read from a component, so
+    it is there whatever is configured. Every test below counts components.
+    """
+    return [
+        entity for entity in entities if entity.entity_description.component_prefix
+    ]
+
+
 @pytest.mark.parametrize("platform", PLATFORMS, ids=lambda p: p.__name__.split(".")[-1])
 async def test_no_components_creates_no_entities(
     hass: HomeAssistant, platform
 ) -> None:
-    """An entry without any component must not create entities."""
+    """An entry without any component must not create entities of one."""
     entities = await _setup(hass, platform, build_config_entry())
 
-    assert entities == []
+    assert _components(entities) == []
+
+
+async def test_the_controller_always_gets_its_service_menu_entities(
+    hass: HomeAssistant,
+) -> None:
+    """The service menu codes belong to the controller, not to a component.
+
+    They are arithmetic on the date and on what the display shows, so they do
+    not depend on anything being configured, and an entry with no component at
+    all still has them.
+    """
+    entry = build_config_entry()
+
+    assert _keys(await _setup(hass, sensor, entry)) == ["service_code", "installer_code"]
+    assert _keys(await _setup(hass, number, entry)) == ["installer_code_input"]
 
 
 @pytest.mark.parametrize("platform", PLATFORMS, ids=lambda p: p.__name__.split(".")[-1])
@@ -151,8 +178,8 @@ async def test_sensors_are_created_per_component_instance(
     hass: HomeAssistant,
 ) -> None:
     """The number of sensors scales with the configured instances."""
-    single = await _setup(hass, sensor, build_config_entry(buffer=1))
-    double = await _setup(hass, sensor, build_config_entry(buffer=2))
+    single = _components(await _setup(hass, sensor, build_config_entry(buffer=1)))
+    double = _components(await _setup(hass, sensor, build_config_entry(buffer=2)))
 
     assert single
     assert len(double) == 2 * len(single)
@@ -222,7 +249,7 @@ async def test_single_solar_instance_keeps_the_unnumbered_key(
     """A single solar keeps its pre-multi-instance entity id."""
     entry = build_config_entry(solar=1, api_version="25.030")
 
-    entities = await _setup(hass, sensor, entry)
+    entities = _components(await _setup(hass, sensor, entry))
 
     assert entities
     for entity in entities:
@@ -237,7 +264,7 @@ async def test_multiple_solar_instances_are_numbered(hass: HomeAssistant) -> Non
     """From api version 25.030 on, several solar circuits can be configured."""
     entry = build_config_entry(solar=3, api_version="25.030")
 
-    entities = await _setup(hass, sensor, entry)
+    entities = _components(await _setup(hass, sensor, entry))
 
     assert len(entities) == 3 * len(sensor.SOLAR_SENSOR_TYPES)
     assert {entity.entity_description.component_idx for entity in entities} == {
@@ -253,7 +280,7 @@ async def test_older_api_versions_are_limited_to_one_solar(
     """Before 25.030 the device only exposes a single solar circuit."""
     entry = build_config_entry(solar=3, api_version="23.020")
 
-    entities = await _setup(hass, sensor, entry)
+    entities = _components(await _setup(hass, sensor, entry))
 
     assert len(entities) == len(sensor.SOLAR_SENSOR_TYPES)
     assert all(
@@ -268,7 +295,7 @@ async def test_legacy_boolean_solar_option_creates_one_instance(
     """An entry that still stores solar as a boolean must not break setup."""
     entry = build_config_entry(solar=True, api_version="25.030")
 
-    entities = await _setup(hass, sensor, entry)
+    entities = _components(await _setup(hass, sensor, entry))
 
     assert len(entities) == len(sensor.SOLAR_SENSOR_TYPES)
 

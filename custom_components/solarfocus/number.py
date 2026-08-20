@@ -9,6 +9,7 @@ from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
     NumberMode,
+    RestoreNumber,
 )
 from homeassistant.const import PERCENTAGE, UnitOfPower, UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -28,6 +29,7 @@ from .const import (
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
+    SolarfocusControllerEntity,
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
@@ -50,7 +52,9 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Solarfocus config entry."""
     coordinator = config_entry.runtime_data
-    entities = []
+    # The controller has an entity of its own, which is not a number of a
+    # component, so the list is of what they have in common.
+    entities: list[SolarfocusEntity] = []
 
     for i in range(config_entry.options[CONF_HEATING_CIRCUIT]):
         for description in HEATING_CIRCUIT_NUMBER_TYPES:
@@ -87,6 +91,13 @@ async def async_setup_entry(
 
             entity = SolarfocusNumberEntity(coordinator, _description)
             entities.append(entity)
+
+    # The controller is a device of its own, and the number the installer menu
+    # shows is on it: it is typed in rather than read, so it exists whatever the
+    # entry has configured.
+    entities.append(
+        SolarfocusDisplayedNumberEntity(coordinator, DISPLAYED_NUMBER_TYPE)
+    )
 
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
@@ -125,6 +136,67 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
         """Return the current state."""
         number = self.entity_description.item
         return cast(float | None, self._get_native_value(number))
+
+
+class SolarfocusDisplayedNumberEntity(SolarfocusControllerEntity, RestoreNumber):
+    """The number the installer menu of the controller shows.
+
+    The only writable entity here that writes nothing: the value goes to the
+    sensor that multiplies it, not to a register, because the display is asking
+    the user for it rather than answering.
+    """
+
+    entity_description: SolarfocusNumberEntityDescription
+
+    @property
+    @override
+    def native_value(self) -> float | None:
+        """Return the number last entered, or None while there is none."""
+        return self.coordinator.displayed_number.value
+
+    @override
+    async def async_set_native_value(self, value: float) -> None:
+        """Take the number that is on the display."""
+        self.coordinator.displayed_number.set(value)
+        self.async_write_ha_state()
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Take back the number that was entered before the restart.
+
+        The display keeps showing the same number until the installer menu is
+        left, so a restart in the middle of that is not a reason to type it
+        again. Writing it back to the shared value is what makes the sensor
+        report it too.
+        """
+        await super().async_added_to_hass()
+
+        if (restored := await self.async_get_last_number_data()) is not None:
+            self.coordinator.displayed_number.set(restored.native_value)
+
+
+# What the display shows, entered by hand. No register behind it, so it names no
+# component and carries no `item`.
+DISPLAYED_NUMBER_TYPE = SolarfocusNumberEntityDescription(
+    key="installer_code_input",
+    translation_key="installer_code_input",
+    object_id_name="installer code input",
+    # Configuration rather than diagnostic: this is the one entity of the two
+    # that is written to, and Home Assistant reads diagnostic as something a
+    # device reports rather than something anyone changes.
+    entity_category=EntityCategory.CONFIG,
+    # Off unless it is asked for, like the code it feeds: entering it is a thing
+    # an installer does once.
+    entity_registry_enabled_default=False,
+    native_min_value=0,
+    # The installer menu shows two digits, so 99 is the highest there is to
+    # type - and a wider range would only let a typo through.
+    native_max_value=99,
+    native_step=1,
+    # A box rather than a slider: the number is read off the display and typed
+    # in, not searched for by dragging.
+    mode=NumberMode.BOX,
+)
 
 
 HEATING_CIRCUIT_NUMBER_TYPES = [

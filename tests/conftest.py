@@ -20,6 +20,7 @@ from custom_components.solarfocus.const import (
     DOMAIN,
     build_unique_id,
 )
+from custom_components.solarfocus.service_menu import DisplayedNumber
 from homeassistant.const import (
     CONF_API_VERSION,
     CONF_HOST,
@@ -146,4 +147,7 @@ def build_coordinator(entry, api: MagicMock | None = None) -> MagicMock:
     coordinator._entry = entry
     coordinator.api = api if api is not None else build_api()
     coordinator.last_update_success = True
+    # The real one, not a mock: the number the installer menu shows is shared
+    # between two entities, and what a test of either is about is that sharing.
+    coordinator.displayed_number = DisplayedNumber()
     return coordinator

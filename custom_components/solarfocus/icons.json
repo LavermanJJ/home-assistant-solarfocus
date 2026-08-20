@@ -47,6 +47,9 @@
       "hc_target_supply_temperature": {
         "default": "mdi:thermostat"
       },
+      "installer_code_input": {
+        "default": "mdi:dialpad"
+      },
       "pv_grid_im_export": {
         "default": "mdi:transmission-tower"
       },
@@ -464,6 +467,9 @@
           "12": "mdi:power-off"
         }
       },
+      "installer_code": {
+        "default": "mdi:account-hard-hat"
+      },
       "pv_grid_export": {
         "default": "mdi:home-export-outline"
       },
@@ -478,6 +484,9 @@
       },
       "pv_power": {
         "default": "mdi:solar-power"
+      },
+      "service_code": {
+        "default": "mdi:shield-key"
       },
       "so_current_power": {
         "default": "mdi:lightning-bolt"

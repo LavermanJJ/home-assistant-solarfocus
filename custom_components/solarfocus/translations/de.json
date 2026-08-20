@@ -220,6 +220,9 @@
       "hc_target_supply_temperature": {
         "name": "Vorlaufsolltemperatur Heizen"
       },
+      "installer_code_input": {
+        "name": "Installateurcode Eingabe"
+      },
       "pv_grid_im_export": {
         "name": "Netzbezug / Einspeisung"
       },
@@ -889,6 +892,9 @@
           "9": "Fremdkessel aktiv, Wärmepumpe aus"
         }
       },
+      "installer_code": {
+        "name": "Installateurcode"
+      },
       "pv_grid_export": {
         "name": "Einspeisung"
       },
@@ -903,6 +909,9 @@
       },
       "pv_power": {
         "name": "Leistung PV"
+      },
+      "service_code": {
+        "name": "Servicecode"
       },
       "so_buffer_sensor_1": {
         "name": "Speicherfühler 1"

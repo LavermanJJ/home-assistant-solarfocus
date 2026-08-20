@@ -10,6 +10,7 @@ from packaging import version
 from pysolarfocus import Systems
 
 from homeassistant.const import CONF_API_VERSION
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
@@ -225,6 +226,18 @@ class SolarfocusEntity(Entity):
     @override
     async def async_added_to_hass(self) -> None:
         """Connect to dispatcher listening for entity data notifications."""
+        await super().async_added_to_hass()
+
+        self._async_follow_the_poll()
+
+    @callback
+    def _async_follow_the_poll(self) -> None:
+        """Write this entity on every refresh of the coordinator.
+
+        Its own hook rather than the body of `async_added_to_hass`, so the one
+        kind of entity that has nothing to hear from a poll can leave this out
+        without cutting the chain of hooks Home Assistant itself hangs there.
+        """
         self.async_on_remove(
             self.coordinator.async_add_listener(self.async_write_ha_state)
         )
@@ -296,3 +309,54 @@ class SolarfocusEntity(Entity):
         )
 
         return native_value
+
+
+class SolarfocusControllerEntity(SolarfocusEntity):
+    """An entity of the controller itself rather than of one of its components.
+
+    The service menu codes are the only things this integration reports without
+    reading a register: they are arithmetic on the date and on what the display
+    of the controller shows. So they belong to the controller, they exist
+    whatever components the entry has configured, and none of what a component
+    entity does with the coordinator applies to them.
+    """
+
+    # There is nothing to poll: these follow the calendar and the user, not the
+    # heating system.
+    _attr_should_poll = False
+
+    @property
+    @override
+    def available(self) -> bool:
+        """Return True - these do not depend on the controller answering.
+
+        A heating system that cannot be read is exactly when its service menu is
+        wanted, so they stay available while every other entity of the entry
+        goes unavailable with the poll.
+
+        Only once the entry is set up, though: a heating system that does not
+        answer the very first read leaves the whole entry retrying its setup,
+        and an entry that never sets up has no entities to keep available.
+        """
+        return True
+
+    @property
+    @override
+    def device_info(self) -> DeviceInfo:
+        """Return the controller, which is what these entities belong to.
+
+        The identifier only: `async_setup_entry` registers the device with its
+        name, model and software version, and repeating any of that here would
+        be a second place to change it.
+        """
+        return DeviceInfo(identifiers={(DOMAIN, self._entry_id)})
+
+    @callback
+    @override
+    def _async_follow_the_poll(self) -> None:
+        """Do not follow the poll, unlike every entity of a component.
+
+        There is no reading behind these, so a refresh of the coordinator has
+        nothing to tell them. Everything else `async_added_to_hass` does is left
+        alone - that chain is what restores the number the user last entered.
+        """

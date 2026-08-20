@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
+from datetime import datetime
 import logging
 from typing import cast, override
 
@@ -23,9 +24,12 @@ from homeassistant.const import (
     UnitOfVolume,
     UnitOfVolumeFlowRate,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import dt as dt_util
 
 from .const import (
     BIOMASS_BOILER_COMPONENT,
@@ -56,12 +60,14 @@ from .const import (
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
+    SolarfocusControllerEntity,
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
     every_system_but,
     filterVersionAndSystem,
 )
+from .service_menu import installer_code, service_code
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,7 +94,9 @@ async def async_setup_entry(
 ) -> None:
     """Initialize sensor platform from config entry."""
     coordinator = config_entry.runtime_data
-    entities = []
+    # The controller has entities of its own, which are not sensors of a
+    # component, so the list is of what they have in common.
+    entities: list[SolarfocusEntity] = []
 
     _LOGGER.debug("Sensor async_setup_entry: %s", config_entry.data)
     _LOGGER.debug("Sensor async_setup_entry: %s", config_entry.options)
@@ -206,6 +214,14 @@ async def async_setup_entry(
             entity = SolarfocusSensor(coordinator, _description)
             entities.append(entity)
 
+    # The controller is a device of its own, and the service menu codes are on
+    # it: they are arithmetic rather than a reading of any component, so they
+    # exist whatever the entry has configured.
+    entities.append(SolarfocusServiceCodeSensor(coordinator, SERVICE_CODE_SENSOR_TYPE))
+    entities.append(
+        SolarfocusInstallerCodeSensor(coordinator, INSTALLER_CODE_SENSOR_TYPE)
+    )
+
     async_add_entities(filterVersionAndSystem(config_entry, entities))
 
 
@@ -248,6 +264,100 @@ class SolarfocusSensor(SolarfocusEntity, SensorEntity):
             return str(int(value))
 
         return cast(StateType, value)
+
+
+class SolarfocusControllerSensor(SolarfocusControllerEntity, SensorEntity):
+    """A sensor of the controller itself, recomputed when the date turns over."""
+
+    entity_description: SolarfocusSensorEntityDescription
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Write the new value when the date turns over.
+
+        Both codes are weighted with the day of the week, so both change at
+        midnight and neither changes with a poll. Local midnight, tracked as a
+        wall clock time rather than as a span of 24 hours, so the day they
+        change on is the day the controller is on across a daylight saving
+        change.
+        """
+        await super().async_added_to_hass()
+
+        self.async_on_remove(
+            async_track_time_change(
+                self.hass, self._async_new_day, hour=0, minute=0, second=0
+            )
+        )
+
+    @callback
+    def _async_new_day(self, now: datetime) -> None:
+        """Report the code of the day that just started."""
+        self.async_write_ha_state()
+
+
+class SolarfocusServiceCodeSensor(SolarfocusControllerSensor):
+    """The service code of the controller, for the day it is read on."""
+
+    @property
+    @override
+    def native_value(self) -> StateType:
+        """Return the code of today."""
+        return service_code(dt_util.now())
+
+
+class SolarfocusInstallerCodeSensor(SolarfocusControllerSensor):
+    """The installer code, for the number the display of the controller shows.
+
+    Half of a pair: the number it multiplies has no register behind it and no
+    other source than `Installer code input`, so this one reports nothing at all
+    while that entity is disabled. Enabling the two goes together.
+    """
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Also follow the number, which is the other half of this code."""
+        await super().async_added_to_hass()
+
+        self.async_on_remove(
+            self.coordinator.displayed_number.subscribe(self.async_write_ha_state)
+        )
+
+    @property
+    @override
+    def native_value(self) -> StateType:
+        """Return the code for what is on the display, if that has been entered.
+
+        Unknown until it is: there is no number to multiply, and reporting a 0
+        would read as a code rather than as the absence of one.
+        """
+        displayed = self.coordinator.displayed_number.value
+        if displayed is None:
+            return None
+
+        return installer_code(displayed, dt_util.now())
+
+
+# The two entities of this integration that read no register, so they name no
+# component and carry no `item` - `native_value` computes them. Diagnostic: they
+# say something about the controller rather than about the heating.
+SERVICE_CODE_SENSOR_TYPE = SolarfocusSensorEntityDescription(
+    key="service_code",
+    translation_key="service_code",
+    object_id_name="service code",
+    entity_category=EntityCategory.DIAGNOSTIC,
+)
+
+INSTALLER_CODE_SENSOR_TYPE = SolarfocusSensorEntityDescription(
+    key="installer_code",
+    translation_key="installer_code",
+    object_id_name="installer code",
+    entity_category=EntityCategory.DIAGNOSTIC,
+    # Off unless it is asked for: it reports nothing until the number from the
+    # display has been entered, and that is a thing an installer does once.
+    # Enabling this one alone leaves it unknown - the number entity that feeds
+    # it is disabled by default too, and it is the only way in.
+    entity_registry_enabled_default=False,
+)
 
 
 HEATING_CIRCUIT_SENSOR_TYPES = [
