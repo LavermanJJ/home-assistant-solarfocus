@@ -181,15 +181,20 @@ DISPLAYED_NUMBER_TYPE = SolarfocusNumberEntityDescription(
     key="installer_code_input",
     translation_key="installer_code_input",
     object_id_name="installer code input",
-    entity_category=EntityCategory.DIAGNOSTIC,
+    # Configuration rather than diagnostic: this is the one entity of the two
+    # that is written to, and Home Assistant reads diagnostic as something a
+    # device reports rather than something anyone changes.
+    entity_category=EntityCategory.CONFIG,
     # Off unless it is asked for, like the code it feeds: entering it is a thing
     # an installer does once.
     entity_registry_enabled_default=False,
     native_min_value=0,
-    native_max_value=99999,
+    # The installer menu shows two digits, so 99 is the highest there is to
+    # type - and a wider range would only let a typo through.
+    native_max_value=99,
     native_step=1,
-    # Nothing documents how wide the number on the display is, so the box takes
-    # whatever is on it rather than a slider pretending to know the range.
+    # A box rather than a slider: the number is read off the display and typed
+    # in, not searched for by dragging.
     mode=NumberMode.BOX,
 )
 

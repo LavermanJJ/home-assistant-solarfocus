@@ -10,6 +10,7 @@ from packaging import version
 from pysolarfocus import Systems
 
 from homeassistant.const import CONF_API_VERSION
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
@@ -225,6 +226,18 @@ class SolarfocusEntity(Entity):
     @override
     async def async_added_to_hass(self) -> None:
         """Connect to dispatcher listening for entity data notifications."""
+        await super().async_added_to_hass()
+
+        self._async_follow_the_poll()
+
+    @callback
+    def _async_follow_the_poll(self) -> None:
+        """Write this entity on every refresh of the coordinator.
+
+        Its own hook rather than the body of `async_added_to_hass`, so the one
+        kind of entity that has nothing to hear from a poll can leave this out
+        without cutting the chain of hooks Home Assistant itself hangs there.
+        """
         self.async_on_remove(
             self.coordinator.async_add_listener(self.async_write_ha_state)
         )
@@ -320,6 +333,10 @@ class SolarfocusControllerEntity(SolarfocusEntity):
         A heating system that cannot be read is exactly when its service menu is
         wanted, so they stay available while every other entity of the entry
         goes unavailable with the poll.
+
+        Only once the entry is set up, though: a heating system that does not
+        answer the very first read leaves the whole entry retrying its setup,
+        and an entry that never sets up has no entities to keep available.
         """
         return True
 
@@ -334,12 +351,12 @@ class SolarfocusControllerEntity(SolarfocusEntity):
         """
         return DeviceInfo(identifiers={(DOMAIN, self._entry_id)})
 
+    @callback
     @override
-    async def async_added_to_hass(self) -> None:
+    def _async_follow_the_poll(self) -> None:
         """Do not follow the poll, unlike every entity of a component.
 
         There is no reading behind these, so a refresh of the coordinator has
-        nothing to tell them. Home Assistant's own hook is
-        `async_internal_added_to_hass`, which is untouched here - it is what
-        restores the number the user last entered.
+        nothing to tell them. Everything else `async_added_to_hass` does is left
+        alone - that chain is what restores the number the user last entered.
         """

@@ -345,18 +345,22 @@ version only appear once that version is selected.
 
 The eco<sup>manager-touch</sup> asks for a code before it lets anyone into its service menus, and
 both codes are on the controller device rather than on a component. They read no register, which
-is why they keep reporting while the heating system is unreachable - which is when they tend to be
-wanted - and they change at local midnight rather than with the polling interval.
+is why they keep reporting once the integration is set up even when the heating system stops
+answering - which is when they tend to be wanted - and they change at local midnight rather than
+with the polling interval. (A Home Assistant restart while the heating system is unreachable is
+the exception: the integration retries its setup until it can read the system once, and until
+then none of its entities exist.)
 
 | Entity | Platform | What it is |
 |---|---|---|
 | `Service code` | `sensor` | The code of the day: day of the month and month, each weighted with the day of the week. Nothing to enter. |
-| `Installer code input` | `number` | The number the installer menu shows on the display. Type it in; it is kept across restarts. |
+| `Installer code input` | `number` | The two-digit number the installer menu shows on the display. Type it in; it is kept across restarts. |
 | `Installer code` | `sensor` | That number times the day of the week. Unknown until the number is entered. |
 
 **The two installer entities are created disabled**, since entering the number is something an
 installer does once - enable them on the device page of the eco<sup>manager-touch</sup> when you
-need them. `Service code` is enabled.
+need them. Enable **both**: `Installer code` has no source other than `Installer code input`, so
+on its own it stays unknown. `Service code` is enabled.
 
 ### States of the mode and status entities
 

@@ -31,6 +31,7 @@ from custom_components.solarfocus.service_menu import (
     service_code,
 )
 from homeassistant.core import HomeAssistant, State
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
@@ -108,7 +109,7 @@ def test_the_installer_code_multiplies_the_displayed_number(
     date: str, factor: int
 ) -> None:
     """The number on the display, times the day of the week."""
-    assert installer_code(4711, _at(date)) == 4711 * factor
+    assert installer_code(47, _at(date)) == 47 * factor
 
 
 def test_sunday_ends_the_week_for_python_and_starts_it_here() -> None:
@@ -119,8 +120,8 @@ def test_sunday_ends_the_week_for_python_and_starts_it_here() -> None:
     on one day in seven.
     """
     assert service_code(_at("2026-08-23")) < service_code(_at("2026-08-22"))
-    assert installer_code(100, _at("2026-08-23")) == 100
-    assert installer_code(100, _at("2026-08-22")) == 700
+    assert installer_code(10, _at("2026-08-23")) == 10
+    assert installer_code(10, _at("2026-08-22")) == 70
 
 
 # --- the number the display shows -------------------------------------------
@@ -172,13 +173,13 @@ async def test_the_number_writes_nothing_to_the_heating_system(
     number.async_write_ha_state = lambda: None
     sensor = SolarfocusInstallerCodeSensor(coordinator, INSTALLER_CODE_SENSOR_TYPE)
 
-    await number.async_set_native_value(4711)
+    await number.async_set_native_value(47)
 
     # Nothing of the library was touched - no register was read, committed or
     # written on the way through
     assert not coordinator.api.method_calls
-    assert number.native_value == 4711
-    assert sensor.native_value == 4711 * 4
+    assert number.native_value == 47
+    assert sensor.native_value == 47 * 4
 
 
 async def test_the_number_survives_a_restart(
@@ -200,13 +201,13 @@ async def test_the_number_survives_a_restart(
         hass,
         (
             (
-                State(INSTALLER_INPUT, "4711"),
+                State(INSTALLER_INPUT, "47"),
                 {
-                    "native_max_value": 99999,
+                    "native_max_value": 99,
                     "native_min_value": 0,
                     "native_step": 1,
                     "native_unit_of_measurement": None,
-                    "native_value": 4711,
+                    "native_value": 47,
                 },
             ),
         ),
@@ -215,8 +216,32 @@ async def test_the_number_survives_a_restart(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert hass.states.get(INSTALLER_INPUT).state == "4711"
-    assert hass.states.get(INSTALLER_CODE).state == str(4711 * 4)
+    assert hass.states.get(INSTALLER_INPUT).state == "47"
+    assert hass.states.get(INSTALLER_CODE).state == str(47 * 4)
+
+
+async def test_the_number_takes_the_two_digits_the_display_shows(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry,
+) -> None:
+    """The installer menu shows two digits, so 99 is the highest there is."""
+    entry = build_config_entry()
+    entry.add_to_hass(hass)
+    _enable_on_the_controller(entity_registry, entry)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 99},
+        blocking=True,
+    )
+    assert float(hass.states.get(INSTALLER_INPUT).state) == 99
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 100},
+            blocking=True,
+        )
 
 
 # --- the entities on the controller -----------------------------------------
@@ -291,11 +316,12 @@ async def test_the_registry_agrees_where_they_belong(
     }
 
     assert set(registered) == {SERVICE_CODE, INSTALLER_CODE, INSTALLER_INPUT}
-    assert all(
-        entity.device_id == controller.id
-        and entity.entity_category == er.EntityCategory.DIAGNOSTIC
-        for entity in registered.values()
-    )
+    assert all(entity.device_id == controller.id for entity in registered.values())
+    # The two that only report are diagnostic; the one that is typed into is
+    # configuration, which is the category Home Assistant has for a control.
+    assert registered[SERVICE_CODE].entity_category is er.EntityCategory.DIAGNOSTIC
+    assert registered[INSTALLER_CODE].entity_category is er.EntityCategory.DIAGNOSTIC
+    assert registered[INSTALLER_INPUT].entity_category is er.EntityCategory.CONFIG
     assert registered[SERVICE_CODE].disabled_by is None
     assert registered[INSTALLER_CODE].disabled_by is er.RegistryEntryDisabler.INTEGRATION
     assert registered[INSTALLER_INPUT].disabled_by is er.RegistryEntryDisabler.INTEGRATION
@@ -319,12 +345,12 @@ async def test_the_codes_change_at_midnight(
     await hass.services.async_call(
         "number",
         "set_value",
-        {"entity_id": INSTALLER_INPUT, "value": 4711},
+        {"entity_id": INSTALLER_INPUT, "value": 47},
         blocking=True,
     )
 
     assert hass.states.get(SERVICE_CODE).state == "127"
-    assert hass.states.get(INSTALLER_CODE).state == str(4711 * 4)
+    assert hass.states.get(INSTALLER_CODE).state == str(47 * 4)
 
     freezer.move_to("2026-08-20 00:00:01+02:00")
     async_fire_time_changed(hass)
@@ -332,4 +358,4 @@ async def test_the_codes_change_at_midnight(
 
     assert hass.states.get(SERVICE_CODE).state == "160"
     # Thursday, the fifth day of a week that starts on Sunday
-    assert hass.states.get(INSTALLER_CODE).state == str(4711 * 5)
+    assert hass.states.get(INSTALLER_CODE).state == str(47 * 5)

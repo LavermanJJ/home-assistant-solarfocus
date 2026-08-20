@@ -306,7 +306,12 @@ class SolarfocusServiceCodeSensor(SolarfocusControllerSensor):
 
 
 class SolarfocusInstallerCodeSensor(SolarfocusControllerSensor):
-    """The installer code, for the number the display of the controller shows."""
+    """The installer code, for the number the display of the controller shows.
+
+    Half of a pair: the number it multiplies has no register behind it and no
+    other source than `Installer code input`, so this one reports nothing at all
+    while that entity is disabled. Enabling the two goes together.
+    """
 
     @override
     async def async_added_to_hass(self) -> None:
@@ -349,6 +354,8 @@ INSTALLER_CODE_SENSOR_TYPE = SolarfocusSensorEntityDescription(
     entity_category=EntityCategory.DIAGNOSTIC,
     # Off unless it is asked for: it reports nothing until the number from the
     # display has been entered, and that is a thing an installer does once.
+    # Enabling this one alone leaves it unknown - the number entity that feeds
+    # it is disabled by default too, and it is the only way in.
     entity_registry_enabled_default=False,
 )
 
