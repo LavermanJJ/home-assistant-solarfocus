@@ -130,6 +130,18 @@ COMPONENT_DEVICES: dict[str, ComponentDevice] = {
     ),
 }
 
+# The entry option a component is configured by -> the prefix its devices are
+# identified by. `COMPONENT_DEVICES` is keyed the other way round, by what an
+# entity description carries; a failed read names the option, and the devices
+# of it are found by the prefix.
+COMPONENT_PREFIXES: dict[str, str] = {
+    device.option: prefix for prefix, device in COMPONENT_DEVICES.items()
+}
+
+# The components a heating system has at most one of, which is why their device
+# identifier carries no index where every other component's does.
+SINGLE_COMPONENTS = frozenset({CONF_HEATPUMP, CONF_PHOTOVOLTAIC, CONF_BIOMASS_BOILER})
+
 """Version from which several solar circuits exist"""
 MULTI_SOLAR_MIN_VERSION = "25.030"
 
@@ -203,6 +215,31 @@ def build_unique_id(host: str, port: int) -> str:
     return f"{host}:{port}"
 
 
+def component_device_identifiers(
+    entry: ConfigEntry, option: str
+) -> list[tuple[str, str]]:
+    """Return the identifier of every device of one component, in order.
+
+    One device per instance: four buffers are `Buffer 1` to `Buffer 4`, and the
+    identifier of a component that exists once is the bare prefix. How many
+    there are is what the entry builds rather than what the options hold, so a
+    component the selected api version does not have has no devices.
+
+    The identifier is what both the devices expected in the registry and the
+    devices a repair issue is about are looked up by, so they are built here
+    once rather than spelled out twice.
+    """
+    prefix = COMPONENT_PREFIXES[option]
+    count = (
+        solar_count(entry) if option == CONF_SOLAR else component_count(entry, option)
+    )
+
+    if option in SINGLE_COMPONENTS:
+        return [(DOMAIN, f"{entry.entry_id}_{prefix}")] if count else []
+
+    return [(DOMAIN, f"{entry.entry_id}_{prefix}{index + 1}") for index in range(count)]
+
+
 def expected_device_identifiers(entry: ConfigEntry) -> set[tuple[str, str]]:
     """Return the devices this entry should have, the controller included.
 
@@ -212,32 +249,8 @@ def expected_device_identifiers(entry: ConfigEntry) -> set[tuple[str, str]]:
     gone looks exactly like one of a component that is there - so the set is
     built from the configuration and everything outside it is stale.
     """
-    counted = {
-        HEATING_CIRCUIT_COMPONENT_PREFIX: entry.options[CONF_HEATING_CIRCUIT],
-        BUFFER_COMPONENT_PREFIX: entry.options[CONF_BUFFER],
-        BOILER_COMPONENT_PREFIX: entry.options[CONF_BOILER],
-        FRESH_WATER_MODULE_COMPONENT_PREFIX: entry.options[CONF_FRESH_WATER_MODULE],
-        # The counts the library was built with, not the ones the options hold
-        CIRCULATION_COMPONENT_PREFIX: component_count(entry, CONF_CIRCULATION),
-        DIFFERENTIAL_MODULE_COMPONENT_PREFIX: component_count(
-            entry, CONF_DIFFERENTIAL_MODULE
-        ),
-        SOLAR_COMPONENT_PREFIX: solar_count(entry),
-    }
-    once = {
-        HEAT_PUMP_COMPONENT_PREFIX: entry.options[CONF_HEATPUMP],
-        PHOTOVOLTAIC_COMPONENT_PREFIX: entry.options[CONF_PHOTOVOLTAIC],
-        BIOMASS_BOILER_COMPONENT_PREFIX: entry.options[CONF_BIOMASS_BOILER],
-    }
-
     identifiers = {(DOMAIN, entry.entry_id)}
-    for prefix, count in counted.items():
-        identifiers |= {
-            (DOMAIN, f"{entry.entry_id}_{prefix}{index + 1}")
-            for index in range(int(count))
-        }
-    identifiers |= {
-        (DOMAIN, f"{entry.entry_id}_{prefix}") for prefix, on in once.items() if on
-    }
+    for option in COMPONENT_PREFIXES:
+        identifiers |= set(component_device_identifiers(entry, option))
 
     return identifiers

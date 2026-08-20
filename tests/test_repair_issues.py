@@ -5,9 +5,15 @@ are otherwise invisible: one is a log line written once at migration, the other
 is a component that has gone unavailable for good.
 """
 
-from custom_components.solarfocus.const import CONF_BOILER, CONF_HEATING_CIRCUIT, DOMAIN
+from custom_components.solarfocus.const import (
+    CONF_BOILER,
+    CONF_BUFFER,
+    CONF_FRESH_WATER_MODULE,
+    CONF_HEATING_CIRCUIT,
+    DOMAIN,
+)
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 
 from .conftest import build_config_entry
 
@@ -173,10 +179,143 @@ async def test_a_component_that_answers_nothing_is_reported(
     )
 
     assert issue is not None
-    assert issue.translation_placeholders["component"] == CONF_HEATING_CIRCUIT
+    assert issue.translation_placeholders["component"] == "Heating circuit 1"
     assert issue.translation_placeholders["address"] == "solarfocus.local:502"
     # The component that reads fine has nothing raised against it
     assert _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}") is None
+
+
+async def test_the_issue_names_the_component_the_way_the_device_page_does(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The option is what the coordinator calls a component, not what a user does.
+
+    `fresh_water_module` is what the entry stores it under; `Fresh water module`
+    is what the device page has said since there is a device per component. An
+    issue naming the option asks the user to recognise their heating system in
+    a configuration key.
+
+    Every instance is named, because every instance is behind the issue: the
+    library reads both fresh water modules in one call, so one that answers
+    nothing is both of them as far as anything here can tell.
+    """
+    api.update_fresh_water_modules.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, fresh_water_module=2)
+
+    issue = _issue(
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_FRESH_WATER_MODULE}"
+    )
+
+    assert issue is not None
+    assert issue.translation_placeholders["component"] == (
+        "Fresh water module 1, Fresh water module 2"
+    )
+
+
+async def test_the_issue_names_the_component_in_the_language_of_the_system(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The device name is translated, so the issue that borrows it is too.
+
+    Which is the other half of what the option leaks: `heating_circuit` is an
+    English configuration key in the middle of a German sentence, and the
+    device page next to it says `Heizkreis 1`.
+    """
+    await hass.config.async_update(language="de")
+
+    api.update_heating.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+
+    issue = _issue(
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+    )
+
+    assert issue is not None
+    assert issue.translation_placeholders["component"] == "Heizkreis 1"
+
+
+async def test_the_issue_calls_the_component_what_the_user_renamed_it_to(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """A renamed device is the name the user knows that component by.
+
+    Nothing else they read says `Boiler 1` any more, so an issue that does is
+    about a component they cannot place.
+    """
+    api.update_boiler.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+    registry = dr.async_get(hass)
+    device = registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bo1")})
+
+    assert device is not None
+    registry.async_update_device(device.id, name_by_user="Dusche")
+    await entry.runtime_data.async_refresh()
+
+    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}")
+
+    assert issue is not None
+    assert issue.translation_placeholders["component"] == "Dusche"
+
+
+async def test_the_issue_links_the_device_pages_of_the_component(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The issue is about a device and there is no device field to say so.
+
+    A repair issue takes placeholders and nothing that binds it to a device, so
+    the link is markdown in the description - one per instance, because the
+    issue covers all of them. What it has to point at is a device that is in
+    the registry: a link to a page that does not exist is worse than no link.
+    """
+    api.update_buffer.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, buffer=2)
+    registry = dr.async_get(hass)
+
+    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BUFFER}")
+
+    assert issue is not None
+
+    devices = [
+        registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bu{index}")})
+        for index in (1, 2)
+    ]
+
+    assert all(device is not None for device in devices)
+    assert issue.translation_placeholders["devices"] == ", ".join(
+        f"[Buffer {index}](/config/devices/device/{device.id})"
+        for index, device in enumerate(devices, start=1)
+    )
+
+
+async def test_an_issue_raised_before_the_devices_exist_is_named_once_they_do(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The first refresh of a new entry is the one that has no devices to name.
+
+    Setting the entry up reads every component once, and that is what raises
+    the issue - before the platforms are forwarded, so before the entities
+    that register the devices exist. Without a second look the user would be
+    left with the option name and no link until the next poll.
+    """
+    api.update_heating.return_value = False
+
+    entry = await _setup(hass, heating_circuit=1, boiler=1)
+
+    issue = _issue(
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+    )
+    device = dr.async_get(hass).async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
+
+    assert issue is not None
+    assert device is not None
+    # No refresh has run since the one setting the entry up
+    assert issue.translation_placeholders["devices"] == (
+        f"[Heating circuit 1](/config/devices/device/{device.id})"
+    )
 
 
 async def test_a_component_coming_back_clears_only_its_own_issue(

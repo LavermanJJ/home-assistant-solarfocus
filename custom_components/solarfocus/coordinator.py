@@ -9,7 +9,7 @@ from pysolarfocus import SolarfocusAPI
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -25,6 +25,7 @@ from .const import (
     CONF_SOLAR,
     DOMAIN,
     component_count,
+    component_device_identifiers,
 )
 from .service_menu import DisplayedNumber
 
@@ -217,6 +218,20 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
                 ir.async_delete_issue(self.hass, DOMAIN, issue_id)
                 continue
 
+            devices = self._component_devices(option)
+            # What the device page calls this component, which is translated
+            # and is whatever the user renamed it to, and the same names as
+            # links to those pages. The option is what is left if the devices
+            # are not registered yet, which is what the report at the end of
+            # `async_setup_entry` catches up with.
+            names = [
+                device.name_by_user or device.name or option for device in devices
+            ]
+            links = [
+                f"[{name}](/config/devices/device/{device.id})"
+                for name, device in zip(names, devices, strict=True)
+            ]
+
             ir.async_create_issue(
                 self.hass,
                 DOMAIN,
@@ -225,11 +240,43 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
                 severity=ir.IssueSeverity.WARNING,
                 translation_key="component_unavailable",
                 translation_placeholders={
-                    "component": option,
+                    "component": ", ".join(names) or option,
+                    "devices": ", ".join(links) or option,
                     "address": self._address,
                     "title": self._entry.title,
                 },
             )
+
+    def _component_devices(self, option: str) -> list[dr.DeviceEntry]:
+        """Return the registered devices of one component, in order.
+
+        One device per instance of the component, and every one of them is
+        behind the single issue the component raises: the library reads all
+        four buffers in one call, so a buffer that answers nothing is every
+        buffer as far as anything here can tell.
+
+        A device is registered by the entities on it, which are built after the
+        refresh `async_setup_entry` awaits - so on the first refresh of a new
+        entry there are none yet, and the issue names what it can.
+        """
+        registry = dr.async_get(self.hass)
+        devices = (
+            registry.async_get_device({identifier})
+            for identifier in component_device_identifiers(self._entry, option)
+        )
+
+        return [device for device in devices if device is not None]
+
+    @callback
+    def async_report_failed_components(self) -> None:
+        """Raise the issues of the components that are failing again.
+
+        For `async_setup_entry` to call once the platforms are set up: an issue
+        raised by the refresh before that names its devices by the option they
+        are configured under, because nothing has registered them yet. Raising
+        it again over the top is what puts the device names and their links in.
+        """
+        self._report_failed_components(sorted(self._failed_components))
 
 
 def component_issue_id(entry_id: str, option: str) -> str:

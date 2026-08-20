@@ -131,8 +131,8 @@
       "description": "\"{title}\" und ein weiterer Eintrag zeigen beide auf {address}. Das stammt aus der Zeit, bevor diese Integration eine Anlage anhand ihrer Adresse identifiziert hat. Beide funktionieren weiterhin, fragen aber einen Regler über eine Modbus-Verbindung ab, und jede Entität existiert doppelt.\n\nEntferne den der beiden, den deine Dashboards und Automatisierungen nicht verwenden. Diese Entscheidung kann hier niemand abnehmen, und wird der falsche entfernt, werden die verbliebenen Entitäten umbenannt. Der Eintrag, den du behältst, übernimmt die Adresse beim nächsten Laden, und diese Meldung verschwindet damit."
     },
     "component_unavailable": {
-      "title": "{component} kann nicht von der Solarfocus-Anlage gelesen werden",
-      "description": "\"{title}\" liest alle anderen Komponenten der Anlage unter {address}, {component} antwortet jedoch nicht. Die zugehörigen Entitäten sind so lange nicht verfügbar, und was sie ausliest - ein Template, ein Diagramm, eine Automatisierung - findet nichts vor.\n\nDas geht nicht von selbst weg. Entweder ist die Komponente nicht vorhanden, dann schalte sie unter Konfigurieren ab, oder die API-Version des Eintrags ist höher eingestellt als der Regler tatsächlich hat - die Version steht am Regler unter Fachmann - Modbus."
+      "title": "Die Solarfocus-Anlage liefert keine Daten von {component}",
+      "description": "\"{title}\" liest alle anderen Komponenten der Anlage unter {address}, von {devices} kommt jedoch nichts zurück. Die Entitäten dort sind so lange nicht verfügbar, und was sie ausliest - ein Template, ein Diagramm, eine Automatisierung - findet nichts vor.\n\nDas geht nicht von selbst weg. Entweder ist die Komponente nicht vorhanden, dann schalte sie unter Konfigurieren ab, oder die API-Version des Eintrags ist höher eingestellt als der Regler tatsächlich hat - die Version steht am Regler unter Fachmann - Modbus."
     }
   },
   "entity": {

@@ -125,6 +125,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
     _async_inherit_the_hub_area(hass, entry, hub, known)
     _async_remove_gone_components(hass, entry)
 
+    # The devices a component issue names are registered by the entities on
+    # them, which the forward above is what builds - so an issue raised by the
+    # refresh further up has nothing but the option to call the component by.
+    # Now that the devices are there it is raised again over the top, with the
+    # names the device pages show and links to them.
+    coordinator.async_report_failed_components()
+
     # Registers update listener to update config entry when options are updated.
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
