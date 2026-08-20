@@ -16,6 +16,8 @@ from .const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -37,6 +39,8 @@ COMPONENT_UPDATES: tuple[tuple[str, str], ...] = (
     (CONF_BIOMASS_BOILER, "update_biomassboiler"),
     (CONF_SOLAR, "update_solar"),
     (CONF_FRESH_WATER_MODULE, "update_fresh_water_modules"),
+    (CONF_CIRCULATION, "update_circulation"),
+    (CONF_DIFFERENTIAL_MODULE, "update_differential_modules"),
 )
 
 

@@ -15,6 +15,8 @@ from custom_components.solarfocus.const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -276,6 +278,45 @@ async def test_migration_from_version_1(hass: HomeAssistant) -> None:
     assert "pelletsboiler" not in entry.options
     assert entry.options[CONF_BIOMASS_BOILER] is False
     assert entry.data[CONF_NAME] == DEFAULT_NAME
+
+
+async def test_migration_from_version_10_adds_the_two_new_module_counts(
+    hass: HomeAssistant,
+) -> None:
+    """Version 10 predates the circulation and the differential module.
+
+    Both are read by option key, in the coordinator and in every platform, so an
+    entry that has never been asked about them fails to load rather than being
+    read as having none.
+    """
+    entry = build_config_entry()
+    options = {
+        setting: value
+        for setting, value in entry.options.items()
+        if setting not in (CONF_CIRCULATION, CONF_DIFFERENTIAL_MODULE)
+    }
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options=options, version=10)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.options[CONF_CIRCULATION] == 0
+    assert entry.options[CONF_DIFFERENTIAL_MODULE] == 0
+
+
+async def test_migration_keeps_the_module_counts_an_entry_already_has(
+    hass: HomeAssistant,
+) -> None:
+    """A count the user configured is not reset by being migrated past."""
+    entry = build_config_entry(circulation=2, differential_module=1)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, version=10)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.options[CONF_CIRCULATION] == 2
+    assert entry.options[CONF_DIFFERENTIAL_MODULE] == 1
 
 
 async def test_migration_from_version_3_moves_options(hass: HomeAssistant) -> None:

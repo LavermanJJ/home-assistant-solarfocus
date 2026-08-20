@@ -26,6 +26,8 @@ CONF_PHOTOVOLTAIC = "photovoltaic"
 CONF_BIOMASS_BOILER = "biomassboiler"
 CONF_SOLAR = "solar"
 CONF_FRESH_WATER_MODULE = "fresh_water_module"
+CONF_CIRCULATION = "circulation"
+CONF_DIFFERENTIAL_MODULE = "differential_module"
 
 """Entity naming"""
 HEATING_CIRCUIT_PREFIX = "Heating circuit"
@@ -59,6 +61,14 @@ SOLAR_COMPONENT_PREFIX = "so"
 FRESH_WATER_MODULE_PREFIX = "Fresh water module"
 FRESH_WATER_MODULE_COMPONENT = "fresh_water_modules"
 FRESH_WATER_MODULE_COMPONENT_PREFIX = "fm"
+
+CIRCULATION_PREFIX = "Circulation"
+CIRCULATION_COMPONENT = "circulations"
+CIRCULATION_COMPONENT_PREFIX = "ci"
+
+DIFFERENTIAL_MODULE_PREFIX = "Differential module"
+DIFFERENTIAL_MODULE_COMPONENT = "differential_modules"
+DIFFERENTIAL_MODULE_COMPONENT_PREFIX = "dm"
 
 MANUFACTURER = "Solarfocus"
 
@@ -101,6 +111,12 @@ COMPONENT_DEVICES: dict[str, ComponentDevice] = {
     BOILER_COMPONENT_PREFIX: ComponentDevice(CONF_BOILER, "boiler", BOILER_PREFIX),
     FRESH_WATER_MODULE_COMPONENT_PREFIX: ComponentDevice(
         CONF_FRESH_WATER_MODULE, "fresh_water_module", FRESH_WATER_MODULE_PREFIX
+    ),
+    CIRCULATION_COMPONENT_PREFIX: ComponentDevice(
+        CONF_CIRCULATION, "circulation", CIRCULATION_PREFIX
+    ),
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX: ComponentDevice(
+        CONF_DIFFERENTIAL_MODULE, "differential_module", DIFFERENTIAL_MODULE_PREFIX
     ),
     SOLAR_COMPONENT_PREFIX: ComponentDevice(CONF_SOLAR, "solar", SOLAR_PREFIX),
     HEAT_PUMP_COMPONENT_PREFIX: ComponentDevice(
@@ -163,6 +179,8 @@ def expected_device_identifiers(entry: ConfigEntry) -> set[tuple[str, str]]:
         BUFFER_COMPONENT_PREFIX: entry.options[CONF_BUFFER],
         BOILER_COMPONENT_PREFIX: entry.options[CONF_BOILER],
         FRESH_WATER_MODULE_COMPONENT_PREFIX: entry.options[CONF_FRESH_WATER_MODULE],
+        CIRCULATION_COMPONENT_PREFIX: entry.options[CONF_CIRCULATION],
+        DIFFERENTIAL_MODULE_COMPONENT_PREFIX: entry.options[CONF_DIFFERENTIAL_MODULE],
         # The count the library was built with, not the one the options hold
         SOLAR_COMPONENT_PREFIX: solar_count(entry),
     }

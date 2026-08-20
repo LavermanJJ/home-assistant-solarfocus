@@ -10,6 +10,8 @@ from custom_components.solarfocus.const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -30,7 +32,7 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 10
+CURRENT_VERSION = 11
 
 
 def build_data(system: Systems = Systems.VAMPAIR) -> dict:
@@ -52,6 +54,8 @@ def build_options(**overrides) -> dict:
         CONF_BUFFER: 0,
         CONF_BOILER: 0,
         CONF_FRESH_WATER_MODULE: 0,
+        CONF_CIRCULATION: 0,
+        CONF_DIFFERENTIAL_MODULE: 0,
         CONF_SOLAR: 0,
         CONF_HEATPUMP: False,
         CONF_BIOMASS_BOILER: False,
@@ -117,6 +121,8 @@ def build_api(system: Systems = Systems.VAMPAIR) -> MagicMock:
         "update_biomassboiler",
         "update_solar",
         "update_fresh_water_modules",
+        "update_circulation",
+        "update_differential_modules",
     ):
         getattr(api, update).return_value = True
     return api

@@ -33,8 +33,10 @@ from custom_components.solarfocus.const import (
     BIOMASS_BOILER_PREFIX,
     BOILER_PREFIX,
     BUFFER_PREFIX,
+    CIRCULATION_PREFIX,
     COMPONENT_DEVICES,
     CONTROLLER_NAME,
+    DIFFERENTIAL_MODULE_PREFIX,
     DOMAIN,
     FRESH_WATER_MODULE_PREFIX,
     HEAT_PUMP_PREFIX,
@@ -158,6 +160,8 @@ async def _translation_keys(hass: HomeAssistant) -> dict[str, set[str]]:
                 buffer=1,
                 boiler=1,
                 fresh_water_module=1,
+                circulation=1,
+                differential_module=1,
                 solar=1,
                 heatpump=True,
                 biomassboiler=True,
@@ -365,6 +369,8 @@ COMPONENT_PREFIXES = {
     "pv": PHOTOVOLTAIC_PREFIX,
     "so": SOLAR_PREFIX,
     "fm": FRESH_WATER_MODULE_PREFIX,
+    "ci": CIRCULATION_PREFIX,
+    "dm": DIFFERENTIAL_MODULE_PREFIX,
 }
 
 
@@ -379,6 +385,8 @@ async def _descriptions(hass: HomeAssistant):
                 buffer=2,
                 boiler=2,
                 fresh_water_module=2,
+                circulation=2,
+                differential_module=2,
                 solar=2,
                 heatpump=True,
                 biomassboiler=True,

@@ -238,6 +238,8 @@ immediately.
 | Buffer | 0 - 4 | Number of buffer cylinders (_Puffer_). |
 | Boiler | 0 - 4 | Number of boilers (_Boiler_). |
 | Fresh water module | 0 - 4 | Number of fresh water modules (_Frischwassermodule_), from version `23.020`. |
+| Circulation | 0 - 4 | Number of circulation groups (_Zirkulation_), one per boiler, from version `25.030`. |
+| Differential control module | 0 - 4 | Number of differential control modules (_Differenzregelmodule_), two control loops each, from version `25.030`. |
 | Solar | 0 - 4 | Number of solar circuits. More than one requires version `25.030`; below that only the first one is built, whatever the count says. |
 | Heat Pump | on / off | vampair systems only. |
 | Biomass boiler | on / off | Every system except the vampair. |
@@ -288,8 +290,9 @@ eco<sup>manager-touch</sup> if you do not want to keep them.
 ## Supported Functionality
 
 The integration creates **one device per component**: every heating circuit, buffer, boiler,
-fresh water module and solar circuit, plus the heat pump, photovoltaic and biomass boiler, all
-of them attached to the eco<sup>manager-touch</sup> as their hub. Multi-instance components are
+fresh water module, solar circuit, circulation group and differential control module, plus the
+heat pump, photovoltaic and biomass boiler, all of them attached to the
+eco<sup>manager-touch</sup> as their hub. Multi-instance components are
 numbered in the name of the device (`Heating circuit 2`), which is why the entities on them are
 called `Supply temperature` rather than `Heating circuit 2 supply temperature`.
 
@@ -321,12 +324,16 @@ reading is always English.
 | `sensor` | Solar | Collector, supply, return and buffer temperatures, flow, current power, yields, state |
 | `sensor` | Photovoltaic | Power, house consumption, heat pump consumption, grid import and export |
 | `sensor` | Fresh water module | State, supply and target temperature, flow rate |
+| `sensor` | Circulation | Temperature |
+| `sensor` | Differential control module | Both temperatures of each of the two control loops |
 | `binary_sensor` | Heating circuit | Limit thermostat, circulator pump |
 | `binary_sensor` | Buffer | Pump |
 | `binary_sensor` | Heat pump | EVU lock active, defrost active, boiler charge |
 | `binary_sensor` | Biomass boiler | Door contact |
 | `binary_sensor` | Photovoltaic | Overcharge possible, overcharge active |
 | `binary_sensor` | Fresh water module | Valve |
+| `binary_sensor` | Circulation | Pump |
+| `binary_sensor` | Differential control module | Relay of each control loop |
 | `climate` | Heating circuit | One thermostat per circuit, see [Climate](#climate) |
 | `water_heater` | Boiler | Domestic hot water |
 | `number` | Heating circuit | Target supply and room temperature, external room temperature and humidity |

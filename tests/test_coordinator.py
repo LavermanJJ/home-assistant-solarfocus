@@ -9,6 +9,8 @@ from custom_components.solarfocus.const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -34,6 +36,8 @@ COMPONENT_UPDATES = [
     (CONF_BIOMASS_BOILER, True, "update_biomassboiler"),
     (CONF_SOLAR, 1, "update_solar"),
     (CONF_FRESH_WATER_MODULE, 1, "update_fresh_water_modules"),
+    (CONF_CIRCULATION, 1, "update_circulation"),
+    (CONF_DIFFERENTIAL_MODULE, 1, "update_differential_modules"),
 ]
 
 ALL_UPDATES = [update for _, _, update in COMPONENT_UPDATES]
