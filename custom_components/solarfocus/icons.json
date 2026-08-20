@@ -7,6 +7,24 @@
           "off": "mdi:pump-off"
         }
       },
+      "ci_pump": {
+        "default": "mdi:pump",
+        "state": {
+          "off": "mdi:pump-off"
+        }
+      },
+      "dm_relay_control_loop_o1": {
+        "default": "mdi:electric-switch",
+        "state": {
+          "on": "mdi:electric-switch-closed"
+        }
+      },
+      "dm_relay_control_loop_o2": {
+        "default": "mdi:electric-switch",
+        "state": {
+          "on": "mdi:electric-switch-closed"
+        }
+      },
       "hc_circulator_pump": {
         "default": "mdi:pump",
         "state": {

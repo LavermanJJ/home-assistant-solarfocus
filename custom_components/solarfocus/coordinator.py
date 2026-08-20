@@ -16,12 +16,15 @@ from .const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     DOMAIN,
+    component_count,
 )
 from .service_menu import DisplayedNumber
 
@@ -37,6 +40,8 @@ COMPONENT_UPDATES: tuple[tuple[str, str], ...] = (
     (CONF_BIOMASS_BOILER, "update_biomassboiler"),
     (CONF_SOLAR, "update_solar"),
     (CONF_FRESH_WATER_MODULE, "update_fresh_water_modules"),
+    (CONF_CIRCULATION, "update_circulation"),
+    (CONF_DIFFERENTIAL_MODULE, "update_differential_modules"),
 )
 
 
@@ -106,7 +111,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         configured = 0
         failed = []
         for option, update in COMPONENT_UPDATES:
-            if not self._entry.options[option]:
+            # What the entry reads, not what the options ask for: a component
+            # the selected api version does not have is read by a library call
+            # that returns success without asking the controller anything, so
+            # counting it as configured would mean a system that answers
+            # nothing at all no longer has every component fail.
+            if not component_count(self._entry, option):
                 continue
             configured += 1
             if not await self.hass.async_add_executor_job(getattr(self.api, update)):

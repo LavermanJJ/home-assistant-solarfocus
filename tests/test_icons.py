@@ -117,6 +117,8 @@ async def _entities(hass: HomeAssistant, module) -> list:
             buffer=1,
             boiler=1,
             fresh_water_module=1,
+            circulation=1,
+            differential_module=1,
             solar=1,
             heatpump=True,
             biomassboiler=True,

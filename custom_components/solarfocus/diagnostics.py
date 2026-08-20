@@ -21,6 +21,8 @@ from .const import (
     BIOMASS_BOILER_COMPONENT,
     BOILER_COMPONENT,
     BUFFER_COMPONENT,
+    CIRCULATION_COMPONENT,
+    DIFFERENTIAL_MODULE_COMPONENT,
     FRESH_WATER_MODULE_COMPONENT,
     HEAT_PUMP_COMPONENT,
     HEATING_CIRCUIT_COMPONENT,
@@ -39,6 +41,8 @@ COMPONENTS: tuple[str, ...] = (
     BIOMASS_BOILER_COMPONENT,
     SOLAR_COMPONENT,
     FRESH_WATER_MODULE_COMPONENT,
+    CIRCULATION_COMPONENT,
+    DIFFERENTIAL_MODULE_COMPONENT,
 )
 
 # The address of the controller is on the user's own network and says little on
@@ -63,9 +67,10 @@ def _registers(component: Any) -> dict[str, Any]:
 def _component_registers(component: Any) -> Any:
     """Return the registers of a component, or of each of them if it is a list.
 
-    A heating circuit, buffer, boiler, solar circuit and fresh water module can
-    exist several times over; the heat pump, photovoltaic and biomass boiler are
-    either there once or not at all.
+    A heating circuit, buffer, boiler, solar circuit, fresh water module,
+    circulation group and differential module can exist several times over; the
+    heat pump, photovoltaic and biomass boiler are either there once or not at
+    all.
     """
     if isinstance(component, list):
         return [_registers(one) for one in component]

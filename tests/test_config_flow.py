@@ -19,6 +19,8 @@ from custom_components.solarfocus.const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -55,6 +57,8 @@ VAMPAIR_COMPONENTS = {
     CONF_BUFFER: 1,
     CONF_BOILER: 1,
     CONF_FRESH_WATER_MODULE: 0,
+    CONF_CIRCULATION: 0,
+    CONF_DIFFERENTIAL_MODULE: 0,
     CONF_HEATPUMP: True,
     CONF_PHOTOVOLTAIC: False,
     CONF_SOLAR: 0,
@@ -65,6 +69,8 @@ THERMINATOR_COMPONENTS = {
     CONF_BUFFER: 1,
     CONF_BOILER: 1,
     CONF_FRESH_WATER_MODULE: 1,
+    CONF_CIRCULATION: 2,
+    CONF_DIFFERENTIAL_MODULE: 1,
     CONF_BIOMASS_BOILER: True,
     CONF_PHOTOVOLTAIC: True,
     CONF_SOLAR: 2,
@@ -181,6 +187,8 @@ async def test_full_flow_vampair(
         CONF_BUFFER: 1,
         CONF_BOILER: 1,
         CONF_FRESH_WATER_MODULE: 0,
+        CONF_CIRCULATION: 0,
+        CONF_DIFFERENTIAL_MODULE: 0,
         CONF_PHOTOVOLTAIC: False,
         CONF_SOLAR: 0,
         CONF_HEATPUMP: True,
@@ -222,6 +230,8 @@ async def test_full_flow_biomass_systems(
     assert result["options"][CONF_HEATPUMP] is False
     assert result["options"][CONF_SOLAR] == 2
     assert result["options"][CONF_FRESH_WATER_MODULE] == 1
+    assert result["options"][CONF_CIRCULATION] == 2
+    assert result["options"][CONF_DIFFERENTIAL_MODULE] == 1
 
 
 async def test_form_cannot_connect(
@@ -415,6 +425,8 @@ OPTIONS_INPUT = {
     CONF_BUFFER: 2,
     CONF_BOILER: 1,
     CONF_FRESH_WATER_MODULE: 1,
+    CONF_CIRCULATION: 1,
+    CONF_DIFFERENTIAL_MODULE: 1,
     CONF_HEATPUMP: True,
     CONF_PHOTOVOLTAIC: True,
     CONF_SOLAR: 1,
@@ -531,6 +543,8 @@ async def test_options_flow_biomass_system_disables_heatpump(
                 CONF_BUFFER: 1,
                 CONF_BOILER: 1,
                 CONF_FRESH_WATER_MODULE: 0,
+                CONF_CIRCULATION: 0,
+                CONF_DIFFERENTIAL_MODULE: 0,
                 CONF_BIOMASS_BOILER: True,
                 CONF_PHOTOVOLTAIC: False,
                 CONF_SOLAR: 0,

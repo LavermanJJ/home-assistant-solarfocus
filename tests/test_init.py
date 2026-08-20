@@ -12,9 +12,12 @@ from custom_components.solarfocus import (
     async_remove_config_entry_device,
 )
 from custom_components.solarfocus.const import (
+    CIRCULATION_COMPONENT_PREFIX,
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -23,6 +26,7 @@ from custom_components.solarfocus.const import (
     CONF_SOLARFOCUS_SYSTEM,
     CONTROLLER_NAME,
     DEFAULT_NAME,
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     DOMAIN,
     MANUFACTURER,
 )
@@ -276,6 +280,45 @@ async def test_migration_from_version_1(hass: HomeAssistant) -> None:
     assert "pelletsboiler" not in entry.options
     assert entry.options[CONF_BIOMASS_BOILER] is False
     assert entry.data[CONF_NAME] == DEFAULT_NAME
+
+
+async def test_migration_from_version_10_adds_the_two_new_module_counts(
+    hass: HomeAssistant,
+) -> None:
+    """Version 10 predates the circulation and the differential module.
+
+    Both are read by option key, in the coordinator and in every platform, so an
+    entry that has never been asked about them fails to load rather than being
+    read as having none.
+    """
+    entry = build_config_entry()
+    options = {
+        setting: value
+        for setting, value in entry.options.items()
+        if setting not in (CONF_CIRCULATION, CONF_DIFFERENTIAL_MODULE)
+    }
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options=options, version=10)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.options[CONF_CIRCULATION] == 0
+    assert entry.options[CONF_DIFFERENTIAL_MODULE] == 0
+
+
+async def test_migration_keeps_the_module_counts_an_entry_already_has(
+    hass: HomeAssistant,
+) -> None:
+    """A count the user configured is not reset by being migrated past."""
+    entry = build_config_entry(circulation=2, differential_module=1)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, version=10)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.options[CONF_CIRCULATION] == 2
+    assert entry.options[CONF_DIFFERENTIAL_MODULE] == 1
 
 
 async def test_migration_from_version_3_moves_options(hass: HomeAssistant) -> None:
@@ -1354,6 +1397,46 @@ async def test_lowering_a_count_removes_the_device_and_its_entities(
     )
     # The ones that are left are untouched
     assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+
+
+@pytest.mark.parametrize("component", ["circulation", "differential_module"])
+async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    component: str,
+) -> None:
+    """A component the selected version lacks is as gone as one switched off.
+
+    The circulation and the differential module arrived in 25.030, so a
+    reconfiguration back to an older version leaves the devices of a count that
+    the entry keeps but no longer builds anything for - a device page of
+    entities that are unavailable for good.
+    """
+    prefix = {
+        "circulation": CIRCULATION_COMPONENT_PREFIX,
+        "differential_module": DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
+    }[component]
+    entry = build_config_entry(
+        Systems.VAMPAIR, api_version=ApiVersions.V_25_030.value, **{component: 2}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_{prefix}2")})
+
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_API_VERSION: ApiVersions.V_23_020.value}
+    )
+    await hass.async_block_till_done()
+
+    assert not [
+        device
+        for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+        if any(
+            identifier.startswith(f"{entry.entry_id}_{prefix}")
+            for _, identifier in device.identifiers
+        )
+    ]
 
 
 async def test_switching_a_component_off_removes_its_device(

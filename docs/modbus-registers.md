@@ -11,7 +11,7 @@ number belongs to, and whether anything reads it yet.
 | Version | **DR-0180-DE / v14-260212** |
 | Source | <https://www.solarfocus.com/partnerbereich/ecomanager-touch_modbus-tcp_registerdaten_anleitung1.pdf> |
 | Transcribed | 2026-08-16, 20 pages |
-| Coverage | 102 of the 110 documented registers are read by the integration |
+| Coverage | all 110 documented registers are read by the integration |
 
 **Solarfocus is the authority, not this file.** It is a machine transcription of
 a PDF, kept for looking things up quickly; where the two disagree the document
@@ -38,8 +38,9 @@ as `→` here.
 - **Gelesen als** is the `pysolarfocus` attribute the integration reads the
   register through, prefixed with the component the entity keys use — `hc` for
   the heating circuit, `bo` boiler, `bu` buffer, `hp` heat pump, `bb` biomass
-  boiler, `pv` photovoltaic, `so` solar, `fm` fresh water module. A dash means
-  the register is documented but nothing reads it.
+  boiler, `pv` photovoltaic, `so` solar, `fm` fresh water module, `ci`
+  circulation, `dm` differential control module. A dash means the register is
+  documented but nothing reads it.
 - The value lists behind each status register are what the `state` sections of
   `strings.json` translate. Where a register documents a second enumeration at
   an offset of +200 (the therminator systems), both are in the list.
@@ -125,8 +126,8 @@ _gehört zum Boiler, 1-4, +25 je Boiler_
 
 | Adr. | Bezeichnung | Typ | Gelesen als |
 | --- | --- | --- | --- |
-| 900 | Zirkulationstemperatur | `int16` | — |
-| 901 | Zirkulationspumpe Ein/Aus | `uint16` | — |
+| 900 | Zirkulationstemperatur | `int16` | `ci_temperature` |
+| 901 | Zirkulationspumpe Ein/Aus | `uint16` | `ci_pump` |
 
 ### Heizkreis — Input
 
@@ -283,16 +284,16 @@ _Solarkreis 1-4, +20 je Kreis_
 
 ### Differenzregelmodul — Input
 
-_Regelkreis 1-4, +10 je Modul_
+_Modul 1-4, +10 je Modul (2200, 2210, 2220, 2230), Regelkreis 1-2 je Modul_
 
 | Adr. | Bezeichnung | Typ | Gelesen als |
 | --- | --- | --- | --- |
-| 2200 | Relais Regelkreis 1 O1 Ein/Aus | `uint16` | — |
-| 2201 | Temperatur 1 Regelkreis 1 | `int16` | — |
-| 2202 | Temperatur 2 Regelkreis 1 | `int16` | — |
-| 2203 | Relais Regelkreis 2 O2 Ein/Aus | `uint16` | — |
-| 2204 | Temperatur 1 Regelkreis 2 | `int16` | — |
-| 2205 | Temperatur 2 Regelkreis 2 | `int16` | — |
+| 2200 | Relais Regelkreis 1 O1 Ein/Aus | `uint16` | `dm_relay_control_loop_o1` |
+| 2201 | Temperatur 1 Regelkreis 1 | `int16` | `dm_temperature_1_control_loop_1` |
+| 2202 | Temperatur 2 Regelkreis 1 | `int16` | `dm_temperature_2_control_loop_1` |
+| 2203 | Relais Regelkreis 2 O2 Ein/Aus | `uint16` | `dm_relay_control_loop_o2` |
+| 2204 | Temperatur 1 Regelkreis 2 | `int16` | `dm_temperature_1_control_loop_2` |
+| 2205 | Temperatur 2 Regelkreis 2 | `int16` | `dm_temperature_2_control_loop_2` |
 
 ### Wärmepumpe — Input
 

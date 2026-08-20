@@ -38,14 +38,20 @@ from .const import (
     BOILER_COMPONENT_PREFIX,
     BUFFER_COMPONENT,
     BUFFER_COMPONENT_PREFIX,
+    CIRCULATION_COMPONENT,
+    CIRCULATION_COMPONENT_PREFIX,
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
+    DIFFERENTIAL_MODULE_COMPONENT,
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     FRESH_WATER_MODULE_COMPONENT,
     FRESH_WATER_MODULE_COMPONENT_PREFIX,
     HEAT_PUMP_COMPONENT,
@@ -56,6 +62,7 @@ from .const import (
     PHOTOVOLTAIC_COMPONENT_PREFIX,
     SOLAR_COMPONENT,
     SOLAR_COMPONENT_PREFIX,
+    component_count,
     solar_count,
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
@@ -207,6 +214,30 @@ async def async_setup_entry(
             _description = create_description(
                 FRESH_WATER_MODULE_COMPONENT,
                 FRESH_WATER_MODULE_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
+            entities.append(entity)
+
+    for i in range(component_count(config_entry, CONF_CIRCULATION)):
+        for description in CIRCULATION_SENSOR_TYPES:
+            _description = create_description(
+                CIRCULATION_COMPONENT,
+                CIRCULATION_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusSensor(coordinator, _description)
+            entities.append(entity)
+
+    for i in range(component_count(config_entry, CONF_DIFFERENTIAL_MODULE)):
+        for description in DIFFERENTIAL_MODULE_SENSOR_TYPES:
+            _description = create_description(
+                DIFFERENTIAL_MODULE_COMPONENT,
+                DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
             )
@@ -848,5 +879,51 @@ FRESH_WATER_MODULE_SENSOR_TYPES = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         min_required_version="23.040",
+    ),
+]
+
+# The circulation of a boiler: its own register block, one per boiler, rather
+# than the `bo_circulation` request that lives on the boiler itself.
+CIRCULATION_SENSOR_TYPES = [
+    SolarfocusSensorEntityDescription(
+        key="temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="25.030",
+    ),
+]
+
+# Two control loops per differential module, each with the two temperatures it
+# compares - which is what a differential controller does: run its relay while
+# the difference between them is wide enough.
+DIFFERENTIAL_MODULE_SENSOR_TYPES = [
+    SolarfocusSensorEntityDescription(
+        key="temperature_1_control_loop_1",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="25.030",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="temperature_2_control_loop_1",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="25.030",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="temperature_1_control_loop_2",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="25.030",
+    ),
+    SolarfocusSensorEntityDescription(
+        key="temperature_2_control_loop_2",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        min_required_version="25.030",
     ),
 ]

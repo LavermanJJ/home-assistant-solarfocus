@@ -19,12 +19,18 @@ from .const import (
     BIOMASS_BOILER_COMPONENT_PREFIX,
     BUFFER_COMPONENT,
     BUFFER_COMPONENT_PREFIX,
+    CIRCULATION_COMPONENT,
+    CIRCULATION_COMPONENT_PREFIX,
     CONF_BIOMASS_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
     CONF_PHOTOVOLTAIC,
+    DIFFERENTIAL_MODULE_COMPONENT,
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     FRESH_WATER_MODULE_COMPONENT,
     FRESH_WATER_MODULE_COMPONENT_PREFIX,
     HEAT_PUMP_COMPONENT,
@@ -33,6 +39,7 @@ from .const import (
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
+    component_count,
 )
 from .coordinator import SolarfocusConfigEntry, SolarfocusDataUpdateCoordinator
 from .entity import (
@@ -124,6 +131,30 @@ async def async_setup_entry(
             _description = create_description(
                 FRESH_WATER_MODULE_COMPONENT,
                 FRESH_WATER_MODULE_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusBinarySensorEntity(coordinator, _description)
+            entities.append(entity)
+
+    for i in range(component_count(config_entry, CONF_CIRCULATION)):
+        for description in CIRCULATION_BINARY_SENSOR_TYPES:
+            _description = create_description(
+                CIRCULATION_COMPONENT,
+                CIRCULATION_COMPONENT_PREFIX,
+                str(i + 1),
+                description,
+            )
+
+            entity = SolarfocusBinarySensorEntity(coordinator, _description)
+            entities.append(entity)
+
+    for i in range(component_count(config_entry, CONF_DIFFERENTIAL_MODULE)):
+        for description in DIFFERENTIAL_MODULE_BINARY_SENSOR_TYPES:
+            _description = create_description(
+                DIFFERENTIAL_MODULE_COMPONENT,
+                DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
                 str(i + 1),
                 description,
             )
@@ -258,5 +289,31 @@ FRESH_WATER_MODULE_BINARY_SENSOR_TYPES = [
         device_class=BinarySensorDeviceClass.OPENING,
         on_state="1",
         min_required_version="23.040",
+    ),
+]
+
+CIRCULATION_BINARY_SENSOR_TYPES = [
+    SolarfocusBinarySensorEntityDescription(
+        key="pump",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        on_state="1",
+        min_required_version="25.030",
+    ),
+]
+
+# The relay each control loop switches, which is the output the differential
+# module exists for - a pump or a valve, whatever the installer wired to it.
+DIFFERENTIAL_MODULE_BINARY_SENSOR_TYPES = [
+    SolarfocusBinarySensorEntityDescription(
+        key="relay_control_loop_o1",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        on_state="1",
+        min_required_version="25.030",
+    ),
+    SolarfocusBinarySensorEntityDescription(
+        key="relay_control_loop_o2",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        on_state="1",
+        min_required_version="25.030",
     ),
 ]

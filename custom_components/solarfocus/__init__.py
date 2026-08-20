@@ -27,6 +27,8 @@ from .const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -37,6 +39,7 @@ from .const import (
     DOMAIN,
     MANUFACTURER,
     build_unique_id,
+    component_count,
     expected_device_identifiers,
     solar_count,
 )
@@ -72,6 +75,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         buffer_count=entry.options[CONF_BUFFER],
         boiler_count=entry.options[CONF_BOILER],
         fresh_water_module_count=entry.options[CONF_FRESH_WATER_MODULE],
+        circulation_count=component_count(entry, CONF_CIRCULATION),
+        differential_module_count=component_count(entry, CONF_DIFFERENTIAL_MODULE),
         solar_count=solar_count(entry),
         system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
         api_version=ApiVersions(entry.data[CONF_API_VERSION]),
@@ -759,6 +764,24 @@ async def async_migrate_entry(
             return False
 
         hass.config_entries.async_update_entry(config_entry, version=10)
+
+    if config_entry.version == 10:
+        # The circulation groups and the differential control module are read
+        # from version 25.030 on, and an entry that predates them has no option
+        # saying how many of each the heating system has. Every platform and the
+        # coordinator read those options by key, so an entry without them fails
+        # to load rather than treating the missing key as none.
+        #
+        # Off, like every component added since the entry was created: a count
+        # the user did not ask for would build devices for hardware that is not
+        # installed, and the registers of a module that is not there answer 0.
+        new_options = {**config_entry.options}
+        new_options.setdefault(CONF_CIRCULATION, 0)
+        new_options.setdefault(CONF_DIFFERENTIAL_MODULE, 0)
+
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, version=11
+        )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(

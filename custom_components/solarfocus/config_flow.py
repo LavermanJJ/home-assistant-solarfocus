@@ -25,6 +25,8 @@ from .const import (
     CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_BUFFER,
+    CONF_CIRCULATION,
+    CONF_DIFFERENTIAL_MODULE,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -184,8 +186,9 @@ STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(
             CONF_FRESH_WATER_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(
-            CONF_FRESH_WATER_MODULE, default=False
+            CONF_DIFFERENTIAL_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_HEATPUMP, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
@@ -202,6 +205,10 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(
             CONF_FRESH_WATER_MODULE, default=0
+        ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        vol.Optional(
+            CONF_DIFFERENTIAL_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         vol.Optional(CONF_BIOMASS_BOILER, default=True): bool,
         vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
@@ -247,7 +254,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 10
+    VERSION = 11
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -337,6 +344,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_HEATPUMP: self.data[CONF_HEATPUMP],
                 CONF_BIOMASS_BOILER: self.data[CONF_BIOMASS_BOILER],
                 CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
+                CONF_CIRCULATION: user_input[CONF_CIRCULATION],
+                CONF_DIFFERENTIAL_MODULE: user_input[CONF_DIFFERENTIAL_MODULE],
             },
         )
 
@@ -486,6 +495,12 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
             vol.Optional(
                 CONF_FRESH_WATER_MODULE, default=current[CONF_FRESH_WATER_MODULE]
+            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+            vol.Optional(
+                CONF_CIRCULATION, default=current[CONF_CIRCULATION]
+            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+            vol.Optional(
+                CONF_DIFFERENTIAL_MODULE, default=current[CONF_DIFFERENTIAL_MODULE]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         }
 

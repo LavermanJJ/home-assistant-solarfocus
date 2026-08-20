@@ -7,6 +7,8 @@ is actually set up.
 """
 
 from pysolarfocus import ApiVersions, Systems
+from pysolarfocus.components.circulation import Circulation
+from pysolarfocus.components.differential_module import DifferentialModule
 import pytest
 
 from custom_components.solarfocus import (
@@ -22,6 +24,8 @@ from custom_components.solarfocus import (
 from custom_components.solarfocus.const import (
     BOILER_COMPONENT_PREFIX,
     BUFFER_COMPONENT_PREFIX,
+    CIRCULATION_COMPONENT_PREFIX,
+    DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
     SOLAR_COMPONENT_PREFIX,
 )
@@ -115,6 +119,8 @@ async def test_entity_keys_are_unique(hass: HomeAssistant, platform) -> None:
         buffer=2,
         boiler=2,
         fresh_water_module=2,
+        circulation=2,
+        differential_module=2,
         solar=2,
         biomassboiler=True,
         photovoltaic=True,
@@ -322,13 +328,15 @@ async def test_binary_sensors_cover_all_configured_components(
         heating_circuit=1,
         buffer=1,
         fresh_water_module=1,
+        circulation=1,
+        differential_module=1,
         biomassboiler=True,
         photovoltaic=True,
     )
 
     keys = _keys(await _setup(hass, binary_sensor, entry))
 
-    for prefix in ("hc1_", "bu1_", "bb_", "pv_", "fm1_"):
+    for prefix in ("hc1_", "bu1_", "bb_", "pv_", "fm1_", "ci1_", "dm1_"):
         assert any(key.startswith(prefix) for key in keys), prefix
 
 
@@ -344,3 +352,111 @@ async def test_entities_read_the_coordinator(hass: HomeAssistant) -> None:
 
     assert added
     assert all(entity.coordinator is coordinator for entity in added)
+
+
+@pytest.mark.parametrize("count", [0, 1, 4])
+async def test_one_set_of_sensors_per_circulation_group(
+    hass: HomeAssistant, count: int
+) -> None:
+    """The circulation of every boiler is read as its own component."""
+    entry = build_config_entry(
+        api_version=ApiVersions.V_26_020.value, circulation=count
+    )
+
+    keys = _keys(await _setup(hass, sensor, entry))
+
+    assert [key for key in keys if key.startswith(CIRCULATION_COMPONENT_PREFIX)] == [
+        f"{CIRCULATION_COMPONENT_PREFIX}{i + 1}_temperature" for i in range(count)
+    ]
+
+
+@pytest.mark.parametrize("count", [0, 1, 4])
+async def test_both_control_loops_of_every_differential_module(
+    hass: HomeAssistant, count: int
+) -> None:
+    """Each module reports the two temperatures of each of its two loops."""
+    entry = build_config_entry(
+        api_version=ApiVersions.V_26_020.value, differential_module=count
+    )
+
+    keys = _keys(await _setup(hass, sensor, entry))
+
+    assert [
+        key for key in keys if key.startswith(DIFFERENTIAL_MODULE_COMPONENT_PREFIX)
+    ] == [
+        f"{DIFFERENTIAL_MODULE_COMPONENT_PREFIX}{i + 1}_temperature_{sensor_idx}"
+        f"_control_loop_{loop}"
+        for i in range(count)
+        for loop in (1, 2)
+        for sensor_idx in (1, 2)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("component", "prefix"),
+    [
+        ("circulation", CIRCULATION_COMPONENT_PREFIX),
+        ("differential_module", DIFFERENTIAL_MODULE_COMPONENT_PREFIX),
+    ],
+)
+async def test_the_new_modules_need_the_version_that_added_them(
+    hass: HomeAssistant, component: str, prefix: str
+) -> None:
+    """Both register blocks are documented from 25.030 on.
+
+    A controller below that answers nothing at those addresses, so an entry
+    configured with a count on an older version builds no entities for it
+    rather than a set that reads zero forever.
+    """
+    entry = build_config_entry(
+        api_version=ApiVersions.V_25_020.value, **{component: 1}
+    )
+
+    keys = _keys(await _setup(hass, sensor, entry)) + _keys(
+        await _setup(hass, binary_sensor, entry)
+    )
+
+    assert not [key for key in keys if key.startswith(prefix)]
+
+
+async def test_the_new_modules_report_what_the_library_read(
+    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+) -> None:
+    """The whole chain, on the components the library really builds.
+
+    Everything above stops at the entity object. This is the part that only
+    fails once an entry is set up: the option, the platform, the component
+    attribute of the description and the register behind it all have to name the
+    same thing for a value to come out the other end.
+    """
+    api.circulations = [Circulation()]
+    api.differential_modules = [DifferentialModule()]
+    # The raw register, which is what the heating system answers with: both
+    # temperatures are scaled by 0.1 on the way out.
+    api.circulations[0].temperature.value = 425
+    api.differential_modules[0].temperature_1_control_loop_2.value = 610
+    api.differential_modules[0].relay_control_loop_o1.value = 1
+
+    entry = build_config_entry(
+        api_version=ApiVersions.V_26_020.value,
+        circulation=1,
+        differential_module=1,
+    )
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.circulation_1_temperature").state == "42.5"
+    assert (
+        hass.states.get(
+            "sensor.differential_module_1_temperature_1_control_loop_2"
+        ).state
+        == "61.0"
+    )
+    assert (
+        hass.states.get(
+            "binary_sensor.differential_module_1_relay_control_loop_o1"
+        ).state
+        == "on"
+    )

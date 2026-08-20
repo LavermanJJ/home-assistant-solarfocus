@@ -13,7 +13,9 @@
           "photovoltaic": "Photovoltaic",
           "biomassboiler": "Biomass boiler",
           "solar": "Solar",
-          "fresh_water_module": "Fresh water module"
+          "fresh_water_module": "Fresh water module",
+          "circulation": "Circulation",
+          "differential_module": "Differential control module"
         },
         "data_description": {
           "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
@@ -24,7 +26,9 @@
           "photovoltaic": "Whether the photovoltaic registers should be read. Only answered if a meter is connected.",
           "biomassboiler": "Whether the biomass boiler of the system should be read.",
           "solar": "How many solar circuits are installed. More than one needs API version 25.030 or newer.",
-          "fresh_water_module": "How many fresh water modules are installed."
+          "fresh_water_module": "How many fresh water modules are installed.",
+          "circulation": "How many circulation groups are installed, one per boiler. Needs API version 25.030 or newer.",
+          "differential_module": "How many differential control modules are installed, each with two control loops. Needs API version 25.030 or newer."
         }
       }
     },
@@ -63,7 +67,9 @@
           "photovoltaic": "Photovoltaic",
           "biomassboiler": "Biomass boiler",
           "solar": "Solar",
-          "fresh_water_module": "Fresh water module"
+          "fresh_water_module": "Fresh water module",
+          "circulation": "Circulation",
+          "differential_module": "Differential control module"
         },
         "data_description": {
           "heating_circuit": "How many heating circuits the controller has. Each one becomes its own set of entities.",
@@ -73,7 +79,9 @@
           "photovoltaic": "Whether the photovoltaic registers should be read. Only answered if a meter is connected.",
           "biomassboiler": "Whether the biomass boiler of the system should be read.",
           "solar": "How many solar circuits are installed. More than one needs API version 25.030 or newer.",
-          "fresh_water_module": "How many fresh water modules are installed."
+          "fresh_water_module": "How many fresh water modules are installed.",
+          "circulation": "How many circulation groups are installed, one per boiler. Needs API version 25.030 or newer.",
+          "differential_module": "How many differential control modules are installed, each with two control loops. Needs API version 25.030 or newer."
         }
       },
       "reconfigure": {
@@ -135,6 +143,15 @@
       },
       "bu_pump": {
         "name": "Pump"
+      },
+      "ci_pump": {
+        "name": "Pump"
+      },
+      "dm_relay_control_loop_o1": {
+        "name": "Relay control loop o1"
+      },
+      "dm_relay_control_loop_o2": {
+        "name": "Relay control loop o2"
       },
       "fm_valve": {
         "name": "Valve"
@@ -695,6 +712,21 @@
       "bu_x35_temperature": {
         "name": "X35 temperature"
       },
+      "ci_temperature": {
+        "name": "Temperature"
+      },
+      "dm_temperature_1_control_loop_1": {
+        "name": "Temperature 1 control loop 1"
+      },
+      "dm_temperature_1_control_loop_2": {
+        "name": "Temperature 1 control loop 2"
+      },
+      "dm_temperature_2_control_loop_1": {
+        "name": "Temperature 2 control loop 1"
+      },
+      "dm_temperature_2_control_loop_2": {
+        "name": "Temperature 2 control loop 2"
+      },
       "fm_flow_rate": {
         "name": "Flow rate"
       },
@@ -1007,6 +1039,12 @@
     },
     "biomassboiler": {
       "name": "Biomass boiler"
+    },
+    "circulation": {
+      "name": "Circulation{idx}"
+    },
+    "differential_module": {
+      "name": "Differential module{idx}"
     }
   }
 }

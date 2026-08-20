@@ -13,7 +13,9 @@
           "photovoltaic": "Photovoltaik",
           "biomassboiler": "Kessel",
           "solar": "Solar",
-          "fresh_water_module": "Frischwassermodule"
+          "fresh_water_module": "Frischwassermodule",
+          "circulation": "Zirkulation",
+          "differential_module": "Differenzregelmodul"
         },
         "data_description": {
           "scan_interval": "Wie oft jede konfigurierte Komponente gelesen wird, in Sekunden. Fünf ist der kleinste akzeptierte Wert.",
@@ -24,7 +26,9 @@
           "photovoltaic": "Ob die Photovoltaik-Register gelesen werden sollen. Sie werden nur beantwortet, wenn ein Zähler angeschlossen ist.",
           "biomassboiler": "Ob der Biomassekessel der Anlage gelesen werden soll.",
           "solar": "Wie viele Solarkreise vorhanden sind. Mehr als einer benötigt API-Version 25.030 oder neuer.",
-          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind."
+          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind.",
+          "circulation": "Wie viele Zirkulationsgruppen installiert sind, eine je Boiler. Ab API-Version 25.030.",
+          "differential_module": "Wie viele Differenzregelmodule installiert sind, jedes mit zwei Regelkreisen. Ab API-Version 25.030."
         }
       }
     },
@@ -73,7 +77,9 @@
           "photovoltaic": "Photovoltaik",
           "biomassboiler": "Kessel",
           "solar": "Solar",
-          "fresh_water_module": "Frischwassermodule"
+          "fresh_water_module": "Frischwassermodule",
+          "circulation": "Zirkulation",
+          "differential_module": "Differenzregelmodul"
         },
         "data_description": {
           "boiler": "Wie viele Boiler vorhanden sind.",
@@ -83,7 +89,9 @@
           "photovoltaic": "Ob die Photovoltaik-Register gelesen werden sollen. Sie werden nur beantwortet, wenn ein Zähler angeschlossen ist.",
           "biomassboiler": "Ob der Biomassekessel der Anlage gelesen werden soll.",
           "solar": "Wie viele Solarkreise vorhanden sind. Mehr als einer benötigt API-Version 25.030 oder neuer.",
-          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind."
+          "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind.",
+          "circulation": "Wie viele Zirkulationsgruppen installiert sind, eine je Boiler. Ab API-Version 25.030.",
+          "differential_module": "Wie viele Differenzregelmodule installiert sind, jedes mit zwei Regelkreisen. Ab API-Version 25.030."
         }
       },
       "reconfigure": {
@@ -134,6 +142,15 @@
       },
       "bu_pump": {
         "name": "Ladepumpe"
+      },
+      "ci_pump": {
+        "name": "Pumpe"
+      },
+      "dm_relay_control_loop_o1": {
+        "name": "Relais Regelkreis 1 O1"
+      },
+      "dm_relay_control_loop_o2": {
+        "name": "Relais Regelkreis 2 O2"
       },
       "fm_valve": {
         "name": "Ventilstellung"
@@ -717,6 +734,21 @@
       "bu_x35_temperature": {
         "name": "Temperatur X35"
       },
+      "ci_temperature": {
+        "name": "Temperatur"
+      },
+      "dm_temperature_1_control_loop_1": {
+        "name": "Temperatur 1 Regelkreis 1"
+      },
+      "dm_temperature_1_control_loop_2": {
+        "name": "Temperatur 1 Regelkreis 2"
+      },
+      "dm_temperature_2_control_loop_1": {
+        "name": "Temperatur 2 Regelkreis 1"
+      },
+      "dm_temperature_2_control_loop_2": {
+        "name": "Temperatur 2 Regelkreis 2"
+      },
       "fm_flow_rate": {
         "name": "WW-Durchfluss"
       },
@@ -1029,6 +1061,12 @@
     },
     "biomassboiler": {
       "name": "Kessel"
+    },
+    "circulation": {
+      "name": "Zirkulation{idx}"
+    },
+    "differential_module": {
+      "name": "Differenzregelmodul{idx}"
     }
   }
 }
