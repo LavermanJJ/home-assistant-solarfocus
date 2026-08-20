@@ -2,9 +2,10 @@
 
 They are the only values this integration reports without reading a register:
 the service code is arithmetic on the date, the installer code multiplies the
-number the display shows by the day of the week. Both belong to the controller,
-both change at midnight rather than with a poll, and the number behind the
-second one is shared between the entity that takes it and the one that uses it.
+cross sum of the number the display shows by the day of the week. Both belong
+to the controller, both change at midnight rather than with a poll, and the
+number behind the second one is shared between the entity that takes it and
+the one that uses it.
 """
 
 from freezegun.api import FrozenDateTimeFactory
@@ -105,11 +106,12 @@ def test_the_service_code_is_the_date_weighted_by_the_weekday(
         ("2026-08-24", 2),
     ],
 )
-def test_the_installer_code_multiplies_the_displayed_number(
+def test_the_installer_code_multiplies_the_cross_sum_of_the_displayed_number(
     date: str, factor: int
 ) -> None:
-    """The number on the display, times the day of the week."""
-    assert installer_code(47, _at(date)) == 47 * factor
+    """The cross sum of the number on the display, times the day of the week."""
+    # cross sum of 1234 is 1 + 2 + 3 + 4 = 10
+    assert installer_code(1234, _at(date)) == 10 * factor
 
 
 def test_sunday_ends_the_week_for_python_and_starts_it_here() -> None:
@@ -120,8 +122,8 @@ def test_sunday_ends_the_week_for_python_and_starts_it_here() -> None:
     on one day in seven.
     """
     assert service_code(_at("2026-08-23")) < service_code(_at("2026-08-22"))
-    assert installer_code(10, _at("2026-08-23")) == 10
-    assert installer_code(10, _at("2026-08-22")) == 70
+    assert installer_code(10, _at("2026-08-23")) == 1
+    assert installer_code(10, _at("2026-08-22")) == 7
 
 
 # --- the number the display shows -------------------------------------------
@@ -139,7 +141,8 @@ def test_the_number_is_shared_with_whoever_reports_the_code(
     coordinator.displayed_number.set(20)
 
     assert number.native_value == 20
-    assert sensor.native_value == 20 * 4
+    # cross sum of 20 is 2 + 0 = 2
+    assert sensor.native_value == 2 * 4
 
 
 def test_a_change_of_the_number_is_reported_to_its_subscribers() -> None:
@@ -179,7 +182,8 @@ async def test_the_number_writes_nothing_to_the_heating_system(
     # written on the way through
     assert not coordinator.api.method_calls
     assert number.native_value == 47
-    assert sensor.native_value == 47 * 4
+    # cross sum of 47 is 4 + 7 = 11
+    assert sensor.native_value == 11 * 4
 
 
 async def test_the_number_survives_a_restart(
@@ -203,7 +207,7 @@ async def test_the_number_survives_a_restart(
             (
                 State(INSTALLER_INPUT, "47"),
                 {
-                    "native_max_value": 99,
+                    "native_max_value": 9999,
                     "native_min_value": 0,
                     "native_step": 1,
                     "native_unit_of_measurement": None,
@@ -217,13 +221,14 @@ async def test_the_number_survives_a_restart(
     await hass.async_block_till_done()
 
     assert hass.states.get(INSTALLER_INPUT).state == "47"
-    assert hass.states.get(INSTALLER_CODE).state == str(47 * 4)
+    # cross sum of 47 is 4 + 7 = 11
+    assert hass.states.get(INSTALLER_CODE).state == str(11 * 4)
 
 
-async def test_the_number_takes_the_two_digits_the_display_shows(
+async def test_the_number_takes_the_four_digits_the_display_shows(
     hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry,
 ) -> None:
-    """The installer menu shows two digits, so 99 is the highest there is."""
+    """The installer menu shows up to four digits, so 9999 is the highest there is."""
     entry = build_config_entry()
     entry.add_to_hass(hass)
     _enable_on_the_controller(entity_registry, entry)
@@ -232,14 +237,14 @@ async def test_the_number_takes_the_two_digits_the_display_shows(
     await hass.async_block_till_done()
 
     await hass.services.async_call(
-        "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 99},
+        "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 9999},
         blocking=True,
     )
-    assert float(hass.states.get(INSTALLER_INPUT).state) == 99
+    assert float(hass.states.get(INSTALLER_INPUT).state) == 9999
 
     with pytest.raises(ServiceValidationError):
         await hass.services.async_call(
-            "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 100},
+            "number", "set_value", {"entity_id": INSTALLER_INPUT, "value": 10000},
             blocking=True,
         )
 
@@ -349,8 +354,9 @@ async def test_the_codes_change_at_midnight(
         blocking=True,
     )
 
+    # cross sum of 47 is 4 + 7 = 11
     assert hass.states.get(SERVICE_CODE).state == "127"
-    assert hass.states.get(INSTALLER_CODE).state == str(47 * 4)
+    assert hass.states.get(INSTALLER_CODE).state == str(11 * 4)
 
     freezer.move_to("2026-08-20 00:00:01+02:00")
     async_fire_time_changed(hass)
@@ -358,4 +364,4 @@ async def test_the_codes_change_at_midnight(
 
     assert hass.states.get(SERVICE_CODE).state == "160"
     # Thursday, the fifth day of a week that starts on Sunday
-    assert hass.states.get(INSTALLER_CODE).state == str(47 * 5)
+    assert hass.states.get(INSTALLER_CODE).state == str(11 * 5)
