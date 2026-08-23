@@ -12,6 +12,7 @@ from custom_components.solarfocus.const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -32,7 +33,7 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 11
+CURRENT_VERSION = 12
 
 
 def build_data(system: Systems = Systems.VAMPAIR) -> dict:
@@ -60,6 +61,7 @@ def build_options(**overrides) -> dict:
         CONF_HEATPUMP: False,
         CONF_BIOMASS_BOILER: False,
         CONF_PHOTOVOLTAIC: False,
+        CONF_DOOR_CONTACT_INVERTED: False,
     }
     options.update(overrides)
     return options

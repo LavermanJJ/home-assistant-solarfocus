@@ -27,6 +27,7 @@ from .const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -254,7 +255,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 11
+    VERSION = 12
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -346,6 +347,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
                 CONF_CIRCULATION: user_input[CONF_CIRCULATION],
                 CONF_DIFFERENTIAL_MODULE: user_input[CONF_DIFFERENTIAL_MODULE],
+                # Not asked here - see #91. Off, the specification's polarity,
+                # until an owner has a reason from the door contact itself to
+                # change it under Configure.
+                CONF_DOOR_CONTACT_INVERTED: False,
             },
         )
 
@@ -459,7 +464,9 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         # Which of the two the system can have is not asked, so it is not in the
-        # form and has to be carried over rather than read back from it.
+        # form and has to be carried over rather than read back from it. A
+        # vampair has no door contact either, and does not ask about it, so
+        # that carries over the same way rather than dropping out of options.
         vampair = self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR
 
         return self.async_create_entry(
@@ -469,6 +476,11 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_HEATPUMP: user_input[CONF_HEATPUMP] if vampair else False,
                 CONF_BIOMASS_BOILER: (
                     False if vampair else user_input[CONF_BIOMASS_BOILER]
+                ),
+                CONF_DOOR_CONTACT_INVERTED: (
+                    self.config_entry.options[CONF_DOOR_CONTACT_INVERTED]
+                    if vampair
+                    else user_input[CONF_DOOR_CONTACT_INVERTED]
                 ),
             },
         )
@@ -509,6 +521,12 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         else:
             schema[
                 vol.Optional(CONF_BIOMASS_BOILER, default=current[CONF_BIOMASS_BOILER])
+            ] = bool
+            schema[
+                vol.Optional(
+                    CONF_DOOR_CONTACT_INVERTED,
+                    default=current[CONF_DOOR_CONTACT_INVERTED],
+                )
             ] = bool
 
         schema[

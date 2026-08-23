@@ -15,7 +15,8 @@
           "solar": "Solar",
           "fresh_water_module": "Frischwassermodule",
           "circulation": "Zirkulation",
-          "differential_module": "Differenzregelmodul"
+          "differential_module": "Differenzregelmodul",
+          "door_contact_inverted": "Türkontakt invertiert lesen"
         },
         "data_description": {
           "scan_interval": "Wie oft jede konfigurierte Komponente gelesen wird, in Sekunden. Fünf ist der kleinste akzeptierte Wert.",
@@ -28,7 +29,8 @@
           "solar": "Wie viele Solarkreise vorhanden sind. Mehr als einer benötigt API-Version 25.030 oder neuer.",
           "fresh_water_module": "Wie viele Frischwassermodule vorhanden sind.",
           "circulation": "Wie viele Zirkulationsgruppen installiert sind, eine je Boiler. Ab API-Version 25.030.",
-          "differential_module": "Wie viele Differenzregelmodule installiert sind, jedes mit zwei Regelkreisen. Ab API-Version 25.030."
+          "differential_module": "Wie viele Differenzregelmodule installiert sind, jedes mit zwei Regelkreisen. Ab API-Version 25.030.",
+          "door_contact_inverted": "Nur aktivieren, wenn der Türkontakt bei geschlossener Kesseltür „offen“ anzeigt. Der Türkontakt hängt an einer Klemme, die sowohl öffnend als auch schließend verdrahtet sein kann - das ist eine Eigenschaft der jeweiligen Installation, nicht des Kesselmodells."
         }
       }
     },

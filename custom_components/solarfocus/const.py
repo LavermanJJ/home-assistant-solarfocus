@@ -28,6 +28,7 @@ CONF_SOLAR = "solar"
 CONF_FRESH_WATER_MODULE = "fresh_water_module"
 CONF_CIRCULATION = "circulation"
 CONF_DIFFERENTIAL_MODULE = "differential_module"
+CONF_DOOR_CONTACT_INVERTED = "door_contact_inverted"
 
 """Entity naming"""
 HEATING_CIRCUIT_PREFIX = "Heating circuit"

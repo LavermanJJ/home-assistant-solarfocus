@@ -21,6 +21,7 @@ from custom_components.solarfocus.const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -194,6 +195,9 @@ async def test_full_flow_vampair(
         CONF_HEATPUMP: True,
         # A heat pump system never has a biomass boiler
         CONF_BIOMASS_BOILER: False,
+        # Not asked in the wizard - see #91. A vampair never has a door
+        # contact either, so this is only ever changed under Configure.
+        CONF_DOOR_CONTACT_INVERTED: False,
     }
     assert len(setup_entry.mock_calls) == 1
 
@@ -232,6 +236,7 @@ async def test_full_flow_biomass_systems(
     assert result["options"][CONF_FRESH_WATER_MODULE] == 1
     assert result["options"][CONF_CIRCULATION] == 2
     assert result["options"][CONF_DIFFERENTIAL_MODULE] == 1
+    assert result["options"][CONF_DOOR_CONTACT_INVERTED] is False
 
 
 async def test_form_cannot_connect(

@@ -340,6 +340,39 @@ async def test_binary_sensors_cover_all_configured_components(
         assert any(key.startswith(prefix) for key in keys), prefix
 
 
+def _door_contact(entities) -> object:
+    return next(e for e in entities if e.entity_description.key == "bb_door_contact")
+
+
+async def test_the_door_contact_reads_the_specifications_polarity_by_default(
+    hass: HomeAssistant,
+) -> None:
+    """Off by default - see #91.
+
+    An entry built before this option existed is migrated straight to the
+    specification's polarity, not to the inverted reading the old EcoTop
+    description had.
+    """
+    entry = build_config_entry(Systems.ECOTOP, biomassboiler=True)
+
+    entities = await _setup(hass, binary_sensor, entry)
+
+    assert _door_contact(entities).entity_description.on_state == "1"
+
+
+async def test_the_door_contact_option_inverts_it_for_one_installation(
+    hass: HomeAssistant,
+) -> None:
+    """The escape hatch from #91, for a door contact wired the other way round."""
+    entry = build_config_entry(
+        Systems.ECOTOP, biomassboiler=True, door_contact_inverted=True
+    )
+
+    entities = await _setup(hass, binary_sensor, entry)
+
+    assert _door_contact(entities).entity_description.on_state == "0"
+
+
 async def test_entities_read_the_coordinator(hass: HomeAssistant) -> None:
     """Created entities are wired to the coordinator of their entry."""
     entry = build_config_entry(boiler=1)
