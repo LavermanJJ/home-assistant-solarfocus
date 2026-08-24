@@ -1,6 +1,6 @@
 """Binary Sensor for Solarfocus integration."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import logging
 from typing import override
 
@@ -25,6 +25,7 @@ from .const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -103,7 +104,16 @@ async def async_setup_entry(
             entities.append(entity)
 
     if config_entry.options[CONF_BIOMASS_BOILER]:
+        # See #91: the door contact reads backwards on an installation wired
+        # the other way round at its 3-pin terminal, which nothing read over
+        # Modbus can tell apart from a correctly wired one. This is the escape
+        # hatch for that installation - every other one leaves it off and
+        # reads register 2405 the way the specification documents it.
+        door_contact_inverted = config_entry.options[CONF_DOOR_CONTACT_INVERTED]
         for description in BIOMASS_BOILER_BINARY_SENSOR_TYPES:
+            if description.key == "door_contact" and door_contact_inverted:
+                description = replace(description, on_state="0")
+
             _description = create_description(
                 BIOMASS_BOILER_COMPONENT,
                 BIOMASS_BOILER_COMPONENT_PREFIX,
@@ -239,17 +249,22 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
     ),
 ]
 
-# Register 2405 is reported the other way round on a therminator than on an
-# EcoTop, which is why the door is described twice. Both descriptions carry the
-# same key, so they build the same `unique_id` and only one of the two may ever
-# survive the system filter: each names the systems it was measured on.
+# Register 2405 answers 1 open, 0 closed - the specification says so, and #91
+# confirmed it by measuring an EcoTop directly (register 2405 on QModMaster,
+# the controller's own display, and pysolarfocus all agreed) after it turned
+# out this integration had the EcoTop the other way round since #79/#80. A
+# Pellet Elegance (15 kW, v25.110) was read at the door for #217 and agrees.
 #
-# A Pellet Elegance (15 kW, v25.110) was read at the door for #217 and answers
-# 1 open, 0 closed - the therminator way round, so it joins that description.
-# The other Pellet Elegance in that thread reads 2 in both positions, on a
-# boiler whose owner reports the contact does not work; 2 is neither state
-# below, so it stays "closed" rather than flapping, which is the right way for
-# an unfitted contact to fail.
+# The other Pellet Elegance in the #217 thread read 2 in both door positions,
+# on a boiler whose owner reports the contact does not work; 2 is neither
+# state, so an unfitted contact reads "closed" rather than flapping, which is
+# the right way for it to fail.
+#
+# `CONF_DOOR_CONTACT_INVERTED` exists because the door contact is wired
+# through a 3-pin terminal - normally-open or normally-closed is an
+# installer's choice, not something a register read can tell apart - so a
+# boiler still reading backwards after this is a wiring fact about one
+# installation, not evidence the specification is wrong again.
 #
 # The Octoplus is still unmeasured and so still has no door contact. Guessing
 # between two polarities gives a sensor that is confidently wrong half the
@@ -260,14 +275,8 @@ BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
         unsupported_systems=every_system_but(
-            Systems.THERMINATOR, Systems.PELLETELEGANCE
+            Systems.THERMINATOR, Systems.PELLETELEGANCE, Systems.ECOTOP
         ),
-    ),
-    SolarfocusBinarySensorEntityDescription(
-        key="door_contact",
-        device_class=BinarySensorDeviceClass.DOOR,
-        on_state="0",
-        unsupported_systems=every_system_but(Systems.ECOTOP),
     ),
 ]
 

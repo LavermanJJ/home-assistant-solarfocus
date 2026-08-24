@@ -18,6 +18,7 @@ from custom_components.solarfocus.const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -319,6 +320,43 @@ async def test_migration_keeps_the_module_counts_an_entry_already_has(
 
     assert entry.options[CONF_CIRCULATION] == 2
     assert entry.options[CONF_DIFFERENTIAL_MODULE] == 1
+
+
+async def test_migration_from_version_11_adds_the_door_contact_option(
+    hass: HomeAssistant,
+) -> None:
+    """Version 11 predates the door contact polarity option from #91.
+
+    `binary_sensor.async_setup_entry` reads it by key, so an entry that has
+    never been asked fails to load rather than reading the specification's
+    polarity by default.
+    """
+    entry = build_config_entry()
+    options = {
+        setting: value
+        for setting, value in entry.options.items()
+        if setting != CONF_DOOR_CONTACT_INVERTED
+    }
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options=options, version=11)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.options[CONF_DOOR_CONTACT_INVERTED] is False
+
+
+async def test_migration_keeps_the_door_contact_option_an_entry_already_has(
+    hass: HomeAssistant,
+) -> None:
+    """An owner who already opted into the inverted reading keeps it."""
+    entry = build_config_entry(door_contact_inverted=True)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, version=11)
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.options[CONF_DOOR_CONTACT_INVERTED] is True
 
 
 async def test_migration_from_version_3_moves_options(hass: HomeAssistant) -> None:

@@ -245,11 +245,15 @@ def test_single_system_biomass_registers_reach_only_that_system(
 
 # What register 2405 was measured to hold, and on which boiler. A door contact
 # is worth pinning down: get the polarity backwards and the entity still works,
-# it just says the opposite of the truth, which is how #91 and #101 have stayed
-# open for two years.
+# it just says the opposite of the truth, which is how #91 and #101 stayed open
+# for two years - this integration had the EcoTop backwards from #79/#80 until
+# #91 measured a real one directly: register 2405 on QModMaster, the
+# controller's own display, and pysolarfocus all agreed on 0 closed / 1 open,
+# the same as the specification and every other system below.
 MEASURED_DOOR_POLARITIES = [
     (Systems.THERMINATOR, "1"),
-    (Systems.ECOTOP, "0"),
+    # 25.100, measured directly for #91 after #79/#80 had this backwards.
+    (Systems.ECOTOP, "1"),
     # 15 kW on v25.110, read at the door for #217: 1 open, 0 closed.
     (Systems.PELLETELEGANCE, "1"),
 ]
@@ -259,7 +263,13 @@ MEASURED_DOOR_POLARITIES = [
 def test_the_door_contact_reads_the_way_it_was_measured(
     system: Systems, on_state: str
 ) -> None:
-    """Exactly one door description reaches a system, with the measured polarity."""
+    """Exactly one door description reaches a system, with the measured polarity.
+
+    `CONF_DOOR_CONTACT_INVERTED` is a per-installation escape hatch layered on
+    top of this in `binary_sensor.async_setup_entry`, for a door contact wired
+    the other way round at its terminal - it does not change what the
+    description itself says here.
+    """
     reaching = [
         d
         for d in binary_sensor.BIOMASS_BOILER_BINARY_SENSOR_TYPES

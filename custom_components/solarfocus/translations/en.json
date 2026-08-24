@@ -15,7 +15,8 @@
           "solar": "Solar",
           "fresh_water_module": "Fresh water module",
           "circulation": "Circulation",
-          "differential_module": "Differential control module"
+          "differential_module": "Differential control module",
+          "door_contact_inverted": "Door contact reads inverted"
         },
         "data_description": {
           "scan_interval": "How often every configured component is read, in seconds. Five is the lowest accepted.",
@@ -28,7 +29,8 @@
           "solar": "How many solar circuits are installed. More than one needs API version 25.030 or newer.",
           "fresh_water_module": "How many fresh water modules are installed.",
           "circulation": "How many circulation groups are installed, one per boiler. Needs API version 25.030 or newer.",
-          "differential_module": "How many differential control modules are installed, each with two control loops. Needs API version 25.030 or newer."
+          "differential_module": "How many differential control modules are installed, each with two control loops. Needs API version 25.030 or newer.",
+          "door_contact_inverted": "Enable only if the door contact shows open while the boiler door is closed. The door contact is wired through a terminal that can be strapped either way round, so this is a fact about one installation, not about the model of boiler."
         }
       }
     },

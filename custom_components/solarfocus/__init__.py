@@ -29,6 +29,7 @@ from .const import (
     CONF_BUFFER,
     CONF_CIRCULATION,
     CONF_DIFFERENTIAL_MODULE,
+    CONF_DOOR_CONTACT_INVERTED,
     CONF_FRESH_WATER_MODULE,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -788,6 +789,23 @@ async def async_migrate_entry(
 
         hass.config_entries.async_update_entry(
             config_entry, options=new_options, version=11
+        )
+
+    if config_entry.version == 11:
+        # The door contact binary sensor read an EcoTop's register the wrong
+        # way round - see #91 - and that is fixed against the specification
+        # regardless of this option. But the door contact is wired through a
+        # 3-pin terminal that could be strapped normally-open or
+        # normally-closed depending on how the installer wired it, which is a
+        # per-installation hardware fact no register read can tell apart from
+        # here, so this stays as an escape hatch for whoever the fix gets
+        # backwards. Off - the specification's polarity - for every entry
+        # until its owner has a reason to say otherwise.
+        new_options = {**config_entry.options}
+        new_options.setdefault(CONF_DOOR_CONTACT_INVERTED, False)
+
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, version=12
         )
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
