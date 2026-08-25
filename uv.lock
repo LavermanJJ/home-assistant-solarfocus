@@ -2441,7 +2441,7 @@ wheels = [
 
 [[package]]
 name = "solarfocus"
-version = "6.0.0rc8"
+version = "6.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "homeassistant" },
