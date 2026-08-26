@@ -545,6 +545,11 @@ ignore = [
 
 ]
 
+[tool.ruff.per-file-ignores]
+# The report *is* the point of this one: it runs against a real controller, by
+# hand, with `-s`, and prints what that controller answered.
+"tests/test_live_controller.py" = ["T201"]
+
 [tool.ruff.flake8-import-conventions.extend-aliases]
 voluptuous = "vol"
 "homeassistant.helpers.area_registry" = "ar"
