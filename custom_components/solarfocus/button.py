@@ -14,7 +14,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
-    filterVersionAndSystem,
+    supported_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ async def async_setup_entry(
             entity = SolarfocusButtonEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -81,7 +81,7 @@ class SolarfocusButtonEntity(SolarfocusEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Update the current value."""
         button = self.entity_description.item
-        return self._set_native_value(button, PRESSED)
+        await self._async_set_native_value(button, PRESSED)
 
 
 BOILER_BUTTON_TYPES = [

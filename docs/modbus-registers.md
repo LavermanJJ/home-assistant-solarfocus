@@ -23,8 +23,8 @@ Redoing it means pulling the text out of the PDF, splitting each row at its type
 column (`int16`, `uint16`, `int32`, `uint32`) into name and remark, rejoining
 the words the layout breaks across lines, and keeping only the first instance of
 each repeated component block. The `Gelesen als` column is joined on the address:
-the base address of a `pysolarfocus` component plus the relative address of its
-`DataValue` is the `Adr.` of the table. The arrows in the document are Wingdings
+the base address of an `aiosolarfocus` component plus the relative address of
+its `Register` is the `Adr.` of the table. The arrows in the document are Wingdings
 and come out in the private use area, where they render as tofu; they are written
 as `→` here.
 
@@ -35,7 +35,7 @@ as `→` here.
   heating circuit 3 supply temperature is `1100 + 2 × 50 = 1200`.
 - **Bezeichnung** is the German name from the `Bezeichnung` column, which is
   what the entity names in `translations/de.json` are taken from.
-- **Gelesen als** is the `pysolarfocus` attribute the integration reads the
+- **Gelesen als** is the `aiosolarfocus` value the integration reads the
   register through, prefixed with the component the entity keys use — `hc` for
   the heating circuit, `bo` boiler, `bu` buffer, `hp` heat pump, `bb` biomass
   boiler, `pv` photovoltaic, `so` solar, `fm` fresh water module, `ci`

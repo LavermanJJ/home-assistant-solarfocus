@@ -126,6 +126,9 @@
     },
     "cannot_set_up": {
       "message": "Cannot read from the Solarfocus system at {address}. It accepted the connection but did not answer the registers."
+    },
+    "invalid_configuration": {
+      "message": "The configured components do not match the Solarfocus system: {reason}. Correct them in the options of the integration."
     }
   },
   "issues": {

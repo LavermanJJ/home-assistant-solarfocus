@@ -16,7 +16,7 @@ import json
 import pathlib
 import re
 
-from pysolarfocus import ApiVersions, Systems
+from aiosolarfocus import ApiVersion, ComponentId, Systems
 import pytest
 
 from custom_components.solarfocus import (
@@ -48,7 +48,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.translation import async_get_translations
 
-from .conftest import build_config_entry, build_coordinator
+from .conftest import (
+    build_config_entry,
+    build_coordinator,
+    every_component,
+    set_reading,
+)
 
 COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
 
@@ -155,17 +160,8 @@ async def _translation_keys(hass: HomeAssistant) -> dict[str, set[str]]:
         for system in Systems:
             entry = build_config_entry(
                 system,
-                api_version=ApiVersions.V_26_020.value,
-                heating_circuit=1,
-                buffer=1,
-                boiler=1,
-                fresh_water_module=1,
-                circulation=1,
-                differential_module=1,
-                solar=1,
-                heatpump=True,
-                biomassboiler=True,
-                photovoltaic=True,
+                api_version=ApiVersion.V_26_020.label,
+                **every_component(system),
             )
             entry.add_to_hass(hass)
             entry.runtime_data = build_coordinator(entry)
@@ -277,6 +273,7 @@ def test_something_raises_a_translated_exception() -> None:
         "cannot_connect",
         "cannot_read",
         "cannot_set_up",
+        "invalid_configuration",
     }
 
 
@@ -380,17 +377,17 @@ async def _descriptions(hass: HomeAssistant):
         for system in Systems:
             entry = build_config_entry(
                 system,
-                api_version=ApiVersions.V_26_020.value,
-                heating_circuit=2,
-                buffer=2,
-                boiler=2,
-                fresh_water_module=2,
-                circulation=2,
-                differential_module=2,
-                solar=2,
-                heatpump=True,
-                biomassboiler=True,
-                photovoltaic=True,
+                api_version=ApiVersion.V_26_020.label,
+                **every_component(
+                    system,
+                    heating_circuit=2,
+                    buffer=2,
+                    boiler=2,
+                    fresh_water_module=2,
+                    circulation=2,
+                    differential_module=2,
+                    solar=2,
+                ),
             )
             entry.add_to_hass(hass)
             entry.runtime_data = build_coordinator(entry)
@@ -483,20 +480,23 @@ async def test_no_entity_name_repeats_its_component(
 
 
 async def test_home_assistant_shows_the_translated_name(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The one that fails if the placeholder never reaches the translation.
 
     Everything above reads the file. This reads the name off a running entity,
     which is where a `{idx}` that nothing substitutes would show up literally.
     """
-    api.heating_circuits[0].room_temperature.scaled_value = 21
-    api.solar[0].collector_temperature_1.scaled_value = 61
-
     entry = build_config_entry(heating_circuit=2, solar=1)
     entry.add_to_hass(hass)
 
     assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    client = mock_client.instance
+    set_reading(client, ComponentId.HEATING_CIRCUITS, "room_temperature", 21)
+    set_reading(client, ComponentId.SOLAR, "collector_temperature_1", 61)
+    await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
 
     second = hass.states.get("sensor.heating_circuit_2_room_temperature")
@@ -513,7 +513,7 @@ async def test_home_assistant_shows_the_translated_name(
 
 
 async def test_a_german_installation_keeps_the_english_entity_ids(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The reading an entity id names stays English in every language.
 
@@ -529,12 +529,16 @@ async def test_a_german_installation_keeps_the_english_entity_ids(
     """
     await hass.config.async_update(language="de")
 
-    api.heating_circuits[0].room_temperature.scaled_value = 21
-
     entry = build_config_entry(heating_circuit=1)
     entry.add_to_hass(hass)
 
     assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    set_reading(
+        mock_client.instance, ComponentId.HEATING_CIRCUITS, "room_temperature", 21
+    )
+    await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
 
     state = hass.states.get("sensor.heizkreis_1_room_temperature")

@@ -11,71 +11,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from pysolarfocus.components.base.part import Part
-
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 
-from .const import (
-    BIOMASS_BOILER_COMPONENT,
-    BOILER_COMPONENT,
-    BUFFER_COMPONENT,
-    CIRCULATION_COMPONENT,
-    DIFFERENTIAL_MODULE_COMPONENT,
-    FRESH_WATER_MODULE_COMPONENT,
-    HEAT_PUMP_COMPONENT,
-    HEATING_CIRCUIT_COMPONENT,
-    PHOTOVOLTAIC_COMPONENT,
-    SOLAR_COMPONENT,
-)
 from .coordinator import SolarfocusConfigEntry
-
-# The components pysolarfocus builds, in the order the coordinator reads them.
-COMPONENTS: tuple[str, ...] = (
-    HEATING_CIRCUIT_COMPONENT,
-    BUFFER_COMPONENT,
-    BOILER_COMPONENT,
-    HEAT_PUMP_COMPONENT,
-    PHOTOVOLTAIC_COMPONENT,
-    BIOMASS_BOILER_COMPONENT,
-    SOLAR_COMPONENT,
-    FRESH_WATER_MODULE_COMPONENT,
-    CIRCULATION_COMPONENT,
-    DIFFERENTIAL_MODULE_COMPONENT,
-)
 
 # The address of the controller is on the user's own network and says little on
 # its own, but a diagnostics download is something people paste into an issue.
 TO_REDACT = {CONF_HOST}
-
-
-def _registers(component: Any) -> dict[str, Any]:
-    """Return every register of one component, the way the entities read it.
-
-    `Part` is what pysolarfocus gives a component for each of its registers, and
-    for the two values it calculates rather than reads, so this is exactly the
-    set of values an entity of that component can show.
-    """
-    return {
-        name: part.scaled_value
-        for name, part in vars(component).items()
-        if isinstance(part, Part)
-    }
-
-
-def _component_registers(component: Any) -> Any:
-    """Return the registers of a component, or of each of them if it is a list.
-
-    A heating circuit, buffer, boiler, solar circuit, fresh water module,
-    circulation group and differential module can exist several times over; the
-    heat pump, photovoltaic and biomass boiler are either there once or not at
-    all.
-    """
-    if isinstance(component, list):
-        return [_registers(one) for one in component]
-
-    return None if component is None else _registers(component)
 
 
 async def async_get_config_entry_diagnostics(
@@ -92,12 +36,19 @@ async def async_get_config_entry_diagnostics(
         },
         "coordinator": {
             "last_update_success": coordinator.last_update_success,
-            # Empty unless a component fails on its own while the others read
-            # fine, which is what an unsupported register range looks like.
-            "failed_components": sorted(coordinator.failed_components),
+            # Empty unless a component instance fails on its own while the
+            # others read fine, which is what an unsupported register range
+            # looks like. Rendered as the library names the instance, so a
+            # report here and a `python -m aiosolarfocus dump` line up.
+            "failed_components": [
+                f"{option}.{idx}" if idx else option
+                for option, idx in sorted(coordinator.failed_components)
+            ],
         },
-        "components": {
-            name: _component_registers(getattr(coordinator.api, name, None))
-            for name in COMPONENTS
-        },
+        # Keyed "heating_circuits.1", and richer than what this used to reach
+        # into the library for: the address each value came from, the raw words
+        # before scaling, and the unit. A sentinel reading has a raw value and
+        # no decoded one, which is how a reader tells "no sensor fitted" from
+        # "never read".
+        "components": coordinator.client.snapshot(),
     }

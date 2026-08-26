@@ -1,10 +1,16 @@
 """Coordinator for Solarfocus integration."""
 
+from collections.abc import Iterable, Mapping
 from datetime import timedelta
 import logging
 from typing import override
 
-from pysolarfocus import SolarfocusAPI
+from aiosolarfocus import (
+    ComponentId,
+    ComponentKey,
+    SolarfocusClient,
+    SolarfocusConnectionError,
+)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
@@ -26,26 +32,45 @@ from .const import (
     CONF_PHOTOVOLTAIC,
     CONF_SOLAR,
     DOMAIN,
-    component_count,
-    component_device_identifiers,
+    SINGLE_COMPONENTS,
+    component_instances,
 )
 from .service_menu import DisplayedNumber
 
 _LOGGER = logging.getLogger(__name__)
 
-# Config option -> the library call that reads the registers of that component.
-COMPONENT_UPDATES: tuple[tuple[str, str], ...] = (
-    (CONF_HEATING_CIRCUIT, "update_heating"),
-    (CONF_BUFFER, "update_buffer"),
-    (CONF_BOILER, "update_boiler"),
-    (CONF_HEATPUMP, "update_heatpump"),
-    (CONF_PHOTOVOLTAIC, "update_photovoltaic"),
-    (CONF_BIOMASS_BOILER, "update_biomassboiler"),
-    (CONF_SOLAR, "update_solar"),
-    (CONF_FRESH_WATER_MODULE, "update_fresh_water_modules"),
-    (CONF_CIRCULATION, "update_circulation"),
-    (CONF_DIFFERENTIAL_MODULE, "update_differential_modules"),
-)
+# The entry option a component is configured under -> what the library calls
+# that component. The option keys are what an entry has stored since long
+# before this library, so they stay as they are and are translated here.
+COMPONENT_IDS: Mapping[str, ComponentId] = {
+    CONF_HEATING_CIRCUIT: ComponentId.HEATING_CIRCUITS,
+    CONF_BUFFER: ComponentId.BUFFERS,
+    CONF_BOILER: ComponentId.BOILERS,
+    CONF_HEATPUMP: ComponentId.HEAT_PUMP,
+    CONF_PHOTOVOLTAIC: ComponentId.PHOTOVOLTAIC,
+    CONF_BIOMASS_BOILER: ComponentId.BIOMASS_BOILER,
+    CONF_SOLAR: ComponentId.SOLAR,
+    CONF_FRESH_WATER_MODULE: ComponentId.FRESH_WATER_MODULES,
+    CONF_CIRCULATION: ComponentId.CIRCULATIONS,
+    CONF_DIFFERENTIAL_MODULE: ComponentId.DIFFERENTIAL_MODULES,
+}
+
+# The other way round, for reading a failure back off an `UpdateResult`.
+COMPONENT_OPTIONS: Mapping[ComponentId, str] = {
+    component_id: option for option, component_id in COMPONENT_IDS.items()
+}
+
+
+def failed_instance(key: ComponentKey) -> tuple[str, str]:
+    """Return the option and index an entity of this component instance carries.
+
+    The library names a component instance by its id and a 1-based number; an
+    entity description carries the entry option and `component_idx`, which is
+    blank for the components a controller only has one of. Availability is
+    matched on the pair, so this is where the two namings meet.
+    """
+    option = COMPONENT_OPTIONS[key.id]
+    return (option, "" if option in SINGLE_COMPONENTS else str(key.number))
 
 
 # Nothing is handed to the entities through the coordinator: an entity reads
@@ -58,14 +83,14 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         self,
         hass: HomeAssistant,
         entry: "SolarfocusConfigEntry",
-        api: SolarfocusAPI,
+        client: SolarfocusClient,
     ) -> None:
         """Init the Solarfocus data object."""
 
-        self.api = api
+        self.client = client
         self._entry = entry
         self.hass = hass
-        self._failed_components: frozenset[str] = frozenset()
+        self._failed_components: frozenset[tuple[str, str]] = frozenset()
         # The controller every component device of this entry hangs off, set by
         # `async_setup_entry` once the device is registered. A component device
         # points at it by id rather than by identifier, which Home Assistant
@@ -84,8 +109,12 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         )
 
     @property
-    def failed_components(self) -> frozenset[str]:
-        """Return the components that could not be read on the last refresh.
+    def failed_components(self) -> frozenset[tuple[str, str]]:
+        """Return the component instances that could not be read last refresh.
+
+        A pair of the entry option and the index, because the library reports a
+        failure per instance: one buffer that answers nothing is one buffer, and
+        the other three carry on. See `failed_instance`.
 
         Every entity of the entry reads this on every state write, so it is
         handed out as it is rather than copied: a frozenset cannot be added to
@@ -102,71 +131,46 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
     async def _async_update_data(self) -> None:
         """Update data via library."""
 
-        if not self.api.is_connected and not await self.hass.async_add_executor_job(
-            self.api.connect
-        ):
+        try:
+            result = await self.client.update()
+        except SolarfocusConnectionError as error:
+            # The one failure that says nothing about any component: there is
+            # no socket, so no component was asked anything. Whatever was
+            # failing on its own before is forgotten rather than left behind to
+            # be reported as still true - named in the diagnostics download, and
+            # raised as an issue saying that every other component reads fine.
+            # The outage itself is what the failed refresh says, and the issue
+            # comes back on the first refresh that reads anything at all.
+            self._failed_components = frozenset()
+            self._report_failed_components([])
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_connect",
                 translation_placeholders={"address": self._address},
-            )
+            ) from error
 
-        configured = 0
-        failed = []
-        for option, update in COMPONENT_UPDATES:
-            # What the entry reads, not what the options ask for: a component
-            # the selected api version does not have is read by a library call
-            # that returns success without asking the controller anything, so
-            # counting it as configured would mean a system that answers
-            # nothing at all no longer has every component fail.
-            if not component_count(self._entry, option):
-                continue
-            configured += 1
-            if not await self.hass.async_add_executor_job(getattr(self.api, update)):
-                failed.append(option)
+        failed = sorted(failed_instance(key) for key in result.failed)
 
-        # A connection that drops part way through the poll fails every
-        # component read after it, whatever those components would have
-        # answered - the library returns False without asking the socket
-        # anything. Calling that a component that does not answer would grey
-        # out an arbitrary tail of the system and raise an issue per component
-        # telling the user to switch it off, for what is one dropped
-        # connection, re-established on the next refresh.
-        connection_lost = bool(failed) and not self.api.is_connected
-
-        if connection_lost or (failed and len(failed) == configured):
+        if failed and len(failed) == len(self.client.components):
             # Nothing could be read: the system is gone rather than one of its
             # components being unhappy. Reporting that as a success would leave
             # every entity available and showing its last value.
-            #
-            # No component is failing on its own any more, so whatever was doing
-            # that is forgotten here rather than left behind to be reported as
-            # still true: named in the diagnostics download, and raised as an
-            # issue saying that every other component reads fine. The outage
-            # itself is what the failed refresh says, and the issue comes back
-            # on the first refresh that reads anything at all.
             self._failed_components = frozenset()
             self._report_failed_components([])
-            if connection_lost:
-                raise UpdateFailed(
-                    translation_domain=DOMAIN,
-                    translation_key="cannot_connect",
-                    translation_placeholders={"address": self._address},
-                )
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="cannot_read",
                 translation_placeholders={
                     "address": self._address,
-                    "components": ", ".join(failed),
+                    "components": ", ".join(_names(failed)),
                 },
             )
 
         self._report_partial_failure(failed)
 
-        _LOGGER.debug("Data updated successfully")
+        _LOGGER.debug("Data updated successfully: %s", result)
 
-    def _report_partial_failure(self, failed: list[str]) -> None:
+    def _report_partial_failure(self, failed: list[tuple[str, str]]) -> None:
         """Log components that could not be read while others could.
 
         Taking the whole entry down for this would be worse than it sounds: a
@@ -190,14 +194,14 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
             _LOGGER.warning(
                 "Could not read %s from %s, its entities are unavailable."
                 " The other components were read successfully",
-                ", ".join(failed),
+                ", ".join(_names(failed)),
                 self._address,
             )
         else:
             _LOGGER.info("Reading all components of %s works again", self._address)
 
-    def _report_failed_components(self, failed: list[str]) -> None:
-        """Raise a repair issue per component that cannot be read, one per entry.
+    def _report_failed_components(self, failed: list[tuple[str, str]]) -> None:
+        """Raise a repair issue per component instance that cannot be read.
 
         A register range a particular firmware does not answer fails on every
         poll and never recovers on its own. The entities of that component are
@@ -209,70 +213,71 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         user should switch it off in the options, or the api version is set
         higher than the controller runs.
 
-        Every component is answered for, not only the ones that changed or are
+        One issue per *instance* rather than per component: the library plans
+        its reads across the whole system and attributes a refused range to the
+        components whose registers were in it, so one buffer that answers
+        nothing is one buffer, and the other three carry on with their entities
+        available and their pages alive.
+
+        Every instance is answered for, not only the ones that changed or are
         configured: switching a component off is what the issue asks the user to
         do, and that reloads the entry into a coordinator that knows nothing
         about the issues the one before it raised.
         """
-        for option, _ in COMPONENT_UPDATES:
-            issue_id = component_issue_id(self._entry.entry_id, option)
-            if option not in failed:
-                ir.async_delete_issue(self.hass, DOMAIN, issue_id)
-                continue
+        for option in COMPONENT_IDS:
+            for instance in component_instances(option):
+                issue_id = component_issue_id(self._entry.entry_id, *instance)
+                if instance not in failed:
+                    ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+                    continue
 
-            devices = self._component_devices(option)
-            # What the device page calls this component's model, for when
-            # there is no device yet to ask - either it is not registered yet,
-            # which is what the report at the end of `async_setup_entry`
-            # catches up with, or the configured api version does not have it
-            # at all. Either way this is never the bare option: that is a
-            # config key, not a word, and leaks into every language's text.
-            fallback = COMPONENT_DEVICES[COMPONENT_PREFIXES[option]].model
-            # What the device page calls this component, which is translated
-            # and is whatever the user renamed it to, and the same names as
-            # links to those pages.
-            names = [
-                device.name_by_user or device.name or fallback for device in devices
-            ]
-            links = [
-                f"[{_escape_markdown_link_text(name)}](/config/devices/device/{device.id})"
-                for name, device in zip(names, devices, strict=True)
-            ]
+                device = self._component_device(*instance)
+                # What the device page calls this component's model, for when
+                # there is no device yet to ask - either it is not registered
+                # yet, which is what the report at the end of
+                # `async_setup_entry` catches up with, or the configured api
+                # version does not have it at all. Either way this is never the
+                # bare option: that is a config key, not a word, and leaks into
+                # every language's text.
+                fallback = _fallback_name(*instance)
+                # What the device page calls this component, which is translated
+                # and is whatever the user renamed it to, and the same name as a
+                # link to that page.
+                if device is None:
+                    name, link = fallback, fallback
+                else:
+                    name = device.name_by_user or device.name or fallback
+                    link = (
+                        f"[{_escape_markdown_link_text(name)}]"
+                        f"(/config/devices/device/{device.id})"
+                    )
 
-            ir.async_create_issue(
-                self.hass,
-                DOMAIN,
-                issue_id,
-                is_fixable=False,
-                severity=ir.IssueSeverity.WARNING,
-                translation_key="component_unavailable",
-                translation_placeholders={
-                    "component": ", ".join(names) or fallback,
-                    "devices": ", ".join(links) or fallback,
-                    "address": self._address,
-                    "title": self._entry.title,
-                },
-            )
+                ir.async_create_issue(
+                    self.hass,
+                    DOMAIN,
+                    issue_id,
+                    is_fixable=False,
+                    severity=ir.IssueSeverity.WARNING,
+                    translation_key="component_unavailable",
+                    translation_placeholders={
+                        "component": name,
+                        "devices": link,
+                        "address": self._address,
+                        "title": self._entry.title,
+                    },
+                )
 
-    def _component_devices(self, option: str) -> list[dr.DeviceEntry]:
-        """Return the registered devices of one component, in order.
-
-        One device per instance of the component, and every one of them is
-        behind the single issue the component raises: the library reads all
-        four buffers in one call, so a buffer that answers nothing is every
-        buffer as far as anything here can tell.
+    def _component_device(self, option: str, idx: str) -> dr.DeviceEntry | None:
+        """Return the registered device of one component instance.
 
         A device is registered by the entities on it, which are built after the
         refresh `async_setup_entry` awaits - so on the first refresh of a new
-        entry there are none yet, and the issue names what it can.
+        entry there is none yet, and the issue names what it can.
         """
-        registry = dr.async_get(self.hass)
-        devices = (
-            registry.async_get_device({identifier})
-            for identifier in component_device_identifiers(self._entry, option)
-        )
+        prefix = COMPONENT_PREFIXES[option]
+        identifier = (DOMAIN, f"{self._entry.entry_id}_{prefix}{idx}")
 
-        return [device for device in devices if device is not None]
+        return dr.async_get(self.hass).async_get_device({identifier})
 
     @callback
     def async_report_failed_components(self) -> None:
@@ -286,6 +291,22 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         self._report_failed_components(sorted(self._failed_components))
 
 
+def _fallback_name(option: str, idx: str) -> str:
+    """Return what to call a component instance with no device to ask.
+
+    The model the device page shows, with the index the device name would carry
+    - `Buffer 2` rather than the bare `buffer`, which is a config key rather
+    than a word and would leak English into every language's text.
+    """
+    model = COMPONENT_DEVICES[COMPONENT_PREFIXES[option]].model
+    return f"{model} {idx}" if idx else model
+
+
+def _names(failed: Iterable[tuple[str, str]]) -> list[str]:
+    """Return what to call each failing instance in a log line or a message."""
+    return [_fallback_name(*instance) for instance in failed]
+
+
 def _escape_markdown_link_text(text: str) -> str:
     """Escape a device name for use as the text span of a markdown link.
 
@@ -296,13 +317,13 @@ def _escape_markdown_link_text(text: str) -> str:
     return text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]")
 
 
-def component_issue_id(entry_id: str, option: str) -> str:
-    """Return the issue id of one component of one entry.
+def component_issue_id(entry_id: str, option: str, idx: str) -> str:
+    """Return the issue id of one component instance of one entry.
 
-    Per component rather than one for all of them, so that a component coming
-    back clears its own issue and leaves the others standing.
+    Per instance rather than one for all of them, so that a buffer coming back
+    clears its own issue and leaves the others standing.
     """
-    return f"component_unavailable_{entry_id}_{option}"
+    return f"component_unavailable_{entry_id}_{option}{idx}"
 
 
 @callback
@@ -315,8 +336,11 @@ def async_delete_component_issues(
     is not there to be configured, so an issue naming it has nothing left to
     say. Neither is noticed by the issue registry on its own.
     """
-    for option, _ in COMPONENT_UPDATES:
-        ir.async_delete_issue(hass, DOMAIN, component_issue_id(entry.entry_id, option))
+    for option in COMPONENT_IDS:
+        for instance in component_instances(option):
+            ir.async_delete_issue(
+                hass, DOMAIN, component_issue_id(entry.entry_id, *instance)
+            )
 
 
 # The coordinator of an entry lives on the entry itself, this spells that out

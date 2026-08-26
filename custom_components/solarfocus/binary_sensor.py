@@ -4,7 +4,7 @@ from dataclasses import dataclass, replace
 import logging
 from typing import override
 
-from pysolarfocus import Systems
+from aiosolarfocus import Systems
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -48,7 +48,7 @@ from .entity import (
     SolarfocusEntityDescription,
     create_description,
     every_system_but,
-    filterVersionAndSystem,
+    supported_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ async def async_setup_entry(
             entity = SolarfocusBinarySensorEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -202,12 +202,20 @@ class SolarfocusBinarySensorEntity(SolarfocusEntity, BinarySensorEntity):
 
     @property
     @override
-    def is_on(self) -> bool:
-        """Return the state of the binary sensor."""
-        binary_sensor = self.entity_description.item
-        value = self._get_native_value(binary_sensor)
-        on_state = self.entity_description.on_state
-        return int(value) == int(on_state)
+    def is_on(self) -> bool | None:
+        """Return the state of the binary sensor, or None if it has none.
+
+        `None` is a real reading now: the register is not on this firmware or
+        system, it has not been read yet, or the controller had nothing to put
+        in a flag and sent 0xFFFF, which used to decode through `bool()` and
+        report every flag as set. Reporting it as `off` would be a claim about
+        a door or a pump that nothing has answered for.
+        """
+        value = self._get_native_value(self.entity_description.item)
+        if value is None:
+            return None
+
+        return int(value) == int(self.entity_description.on_state)
 
 
 HEATING_CIRCUIT_BINARY_SENSOR_TYPES = [
@@ -251,7 +259,7 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
 
 # Register 2405 answers 1 open, 0 closed - the specification says so, and #91
 # confirmed it by measuring an EcoTop directly (register 2405 on QModMaster,
-# the controller's own display, and pysolarfocus all agreed) after it turned
+# the controller's own display, and the library all agreed) after it turned
 # out this integration had the EcoTop the other way round since #79/#80. A
 # Pellet Elegance (15 kW, v25.110) was read at the door for #217 and agrees.
 #
@@ -266,15 +274,19 @@ HEATPUMP_BINARY_SENSOR_TYPES = [
 # boiler still reading backwards after this is a wiring fact about one
 # installation, not evidence the specification is wrong again.
 #
-# The Octoplus is still unmeasured and so still has no door contact. Guessing
-# between two polarities gives a sensor that is confidently wrong half the
-# time, which is worse than not having one.
+# The Octoplus is still unmeasured and so still has no door contact. The
+# library maps register 2405 on every biomass boiler, and it is right to: the
+# register is there and it answers. What has not been established is which way
+# round it answers on an Octoplus, and guessing between two polarities gives a
+# sensor that is confidently wrong half the time, which is worse than not
+# having one. That is what `unverified_systems` says, and it is the only
+# reading in the integration that says it.
 BIOMASS_BOILER_BINARY_SENSOR_TYPES = [
     SolarfocusBinarySensorEntityDescription(
         key="door_contact",
         device_class=BinarySensorDeviceClass.DOOR,
         on_state="1",
-        unsupported_systems=every_system_but(
+        unverified_systems=every_system_but(
             Systems.THERMINATOR, Systems.PELLETELEGANCE, Systems.ECOTOP
         ),
     ),
@@ -297,7 +309,6 @@ FRESH_WATER_MODULE_BINARY_SENSOR_TYPES = [
         key="valve",
         device_class=BinarySensorDeviceClass.OPENING,
         on_state="1",
-        min_required_version="23.040",
     ),
 ]
 
@@ -306,7 +317,6 @@ CIRCULATION_BINARY_SENSOR_TYPES = [
         key="pump",
         device_class=BinarySensorDeviceClass.RUNNING,
         on_state="1",
-        min_required_version="25.030",
     ),
 ]
 
@@ -317,12 +327,10 @@ DIFFERENTIAL_MODULE_BINARY_SENSOR_TYPES = [
         key="relay_control_loop_o1",
         device_class=BinarySensorDeviceClass.RUNNING,
         on_state="1",
-        min_required_version="25.030",
     ),
     SolarfocusBinarySensorEntityDescription(
         key="relay_control_loop_o2",
         device_class=BinarySensorDeviceClass.RUNNING,
         on_state="1",
-        min_required_version="25.030",
     ),
 ]

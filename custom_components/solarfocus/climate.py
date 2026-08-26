@@ -4,7 +4,12 @@ from dataclasses import dataclass
 import logging
 from typing import Any, cast, override
 
-from pysolarfocus import ApiVersions
+from aiosolarfocus import (
+    HeatingCircuitCooling,
+    HeatingCircuitHeatingMode,
+    HeatingCircuitMode,
+)
+from aiosolarfocus.components.heating_circuit import HeatingCircuit
 
 from homeassistant.components.climate import ClimateEntity, ClimateEntityDescription
 from homeassistant.components.climate.const import (
@@ -77,10 +82,6 @@ OPERATING_MODE_OFF = 3
 # Register 32608 "Heizkreismodus"
 HEATING_MODE_HEATING_AND_COOLING = 2
 
-# Register 32608 only exists from this api version on. Without it the circuit
-# cannot be switched to "Heizen + Kühlen", so cooling is not offered below it.
-MIN_COOLING_API_VERSION = ApiVersions.V_22_090.value
-
 # Heating circuit states that mean the circuit is actively cooling.
 COOLING_STATES = [23, 24]
 
@@ -137,6 +138,10 @@ class SolarfocusClimateExtraStoredData(ExtraStoredData):
 
 class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
     """Representation of a Solarfocus number entity."""
+
+    # `thermostat` and `domestic_hot_water` are labels rather than register
+    # names: this entity reads and writes several registers of its component.
+    reads_no_single_register = True
 
     entity_description: SolarfocusClimateEntityDescription
 
@@ -197,10 +202,15 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
 
     @property
     def cooling_supported(self) -> bool:
-        """Return whether the circuit can be switched to "Heizen + Kühlen"."""
-        return cast(
-            bool, self.coordinator.api.api_version.greater_or_equal(MIN_COOLING_API_VERSION)
-        )
+        """Return whether the circuit can be switched to "Heizen + Kühlen".
+
+        Asked of the register that answers it rather than of a version number:
+        `heating_mode` is register 32608, which arrived in 22.090, and the
+        library resolves what this firmware and this system actually have. A
+        version comparison here was the integration keeping a second copy of
+        that fact.
+        """
+        return self.component.supports("heating_mode")
 
     @property
     @override
@@ -337,7 +347,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         _LOGGER.info("Set HVAC Mode: %s", hvac_mode)
 
         if hvac_mode == HVACMode.OFF:
-            self._write_heating_circuit(
+            await self._write_heating_circuit(
                 target_supply_temperature=0,
                 cooling=COOLING_OFF,
                 operating_mode=OPERATING_MODE_OFF,
@@ -348,7 +358,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
             self._log_dew_point_warning()
 
         self._active_mode = hvac_mode
-        self._write_heating_circuit(
+        await self._write_heating_circuit(
             target_supply_temperature=self._remembered_target_temperature(hvac_mode),
             cooling=COOLING_ON if hvac_mode == HVACMode.COOL else COOLING_OFF,
             operating_mode=self._operating_mode(),
@@ -365,21 +375,34 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
             return OPERATING_MODE_CONTINUOUS
         return int(mode)
 
-    def _write_heating_circuit(
+    async def _write_heating_circuit(
         self, target_supply_temperature: float, cooling: int, operating_mode: int
     ) -> None:
         """Write the registers section 6.2 requires to be written together.
 
         Writing only some of them can leave the controller in an undefined state.
+        They go out under one hold of the transport lock now, in the order this
+        entity has always written them, so no poll of the coordinator lands
+        between two of them. It used to be four separate blocking writes, each
+        followed by re-reading the whole component.
+
         Register 32608 does not exist below api version 22.090; a circuit that old
         cannot cool anyway, so heating and off are written without it.
         """
-        self._set_native_value("target_supply_temperature", target_supply_temperature)
-        self._set_native_value("cooling", cooling)
-        self._set_native_value("mode", operating_mode)
+        component = cast(HeatingCircuit, self.component)
 
-        if self.cooling_supported:
-            self._set_native_value("heating_mode", HEATING_MODE_HEATING_AND_COOLING)
+        await component.set_operating_state(
+            target_supply_temperature=target_supply_temperature,
+            cooling=HeatingCircuitCooling(cooling),
+            mode=HeatingCircuitMode(operating_mode),
+            heating_mode=(
+                HeatingCircuitHeatingMode(HEATING_MODE_HEATING_AND_COOLING)
+                if self.cooling_supported
+                else None
+            ),
+        )
+
+        self.async_write_ha_state()
 
     def _log_dew_point_warning(self) -> None:
         """Warn that the controller stops watching the dew point, once."""
@@ -400,7 +423,15 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         """Set new target preset mode."""
         mode = PRESET_TO_SOLARFOCUS_MODE.get(preset_mode)
         _LOGGER.info("Set Preset Mode: %s (mapped mode: %s)", preset_mode, mode)
-        self._set_native_value("mode", mode)
+
+        if mode is None:
+            # Home Assistant only offers the presets this entity declares, so
+            # this is a service call naming one that does not exist. It used to
+            # write the `None` to the register.
+            _LOGGER.warning("Unknown preset mode %s, nothing written", preset_mode)
+            return
+
+        await self._async_set_native_value("mode", HeatingCircuitMode(mode))
 
     @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -420,7 +451,7 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
 
         self._active_mode = hvac_mode
         self._target_temperatures[hvac_mode] = float(temperature)
-        self._set_native_value("target_supply_temperature", temperature)
+        await self._async_set_native_value("target_supply_temperature", temperature)
 
     @override
     async def async_turn_on(self) -> None:

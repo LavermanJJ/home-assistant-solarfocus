@@ -6,7 +6,7 @@ quality scale (issue #125): every step, every error path and the options flow.
 
 from unittest.mock import patch
 
-from pysolarfocus import ApiVersions, Systems
+from aiosolarfocus import ApiVersion, Systems
 import pytest
 
 from custom_components.solarfocus.config_flow import (
@@ -50,7 +50,7 @@ USER_INPUT = {
     CONF_PORT: 502,
     CONF_SCAN_INTERVAL: 10,
     CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR,
-    CONF_API_VERSION: ApiVersions.V_23_020.value,
+    CONF_API_VERSION: ApiVersion.V_23_020.label,
 }
 
 VAMPAIR_COMPONENTS = {
@@ -103,7 +103,7 @@ async def test_form_shown_without_input(
 
 @pytest.mark.parametrize("step", ["user", "reconfigure"])
 async def test_every_api_version_of_the_library_is_offered(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, step: str
+    hass: HomeAssistant, enable_custom_integrations, mock_client, step: str
 ) -> None:
     """Regression test for #218: 25.100 was missing from the hand-kept list.
 
@@ -123,8 +123,11 @@ async def test_every_api_version_of_the_library_is_offered(
 
     versions = _offered_api_versions(result)
 
-    assert versions == [api_version.value for api_version in reversed(ApiVersions)]
-    assert ApiVersions.V_25_100.value in versions
+    # `label`, not `value`: an `ApiVersion` is numbered so that `>=` is the
+    # comparison the register table needs, and the entry stores the version
+    # the way the controller prints it on its own screen.
+    assert versions == [api_version.label for api_version in reversed(ApiVersion)]
+    assert ApiVersion.V_25_100.label in versions
 
 
 def _offered_api_versions(result) -> list[str]:
@@ -137,11 +140,11 @@ def _offered_api_versions(result) -> list[str]:
 
 
 async def test_a_newly_offered_api_version_can_be_chosen(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The version the selector gained is the version the entry ends up on."""
     result = await _start_user_step(
-        hass, {**USER_INPUT, CONF_API_VERSION: ApiVersions.V_25_100.value}
+        hass, {**USER_INPUT, CONF_API_VERSION: ApiVersion.V_25_100.label}
     )
 
     with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
@@ -151,11 +154,11 @@ async def test_a_newly_offered_api_version_can_be_chosen(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_API_VERSION] == ApiVersions.V_25_100.value
+    assert result["data"][CONF_API_VERSION] == ApiVersion.V_25_100.label
 
 
 async def test_full_flow_vampair(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A vampair system is stored with the heat pump enabled."""
     result = await _start_user_step(hass, USER_INPUT)
@@ -180,7 +183,7 @@ async def test_full_flow_vampair(
         CONF_SOLARFOCUS_SYSTEM: Systems.VAMPAIR,
         CONF_HOST: "solarfocus.local",
         CONF_PORT: 502,
-        CONF_API_VERSION: ApiVersions.V_23_020.value,
+        CONF_API_VERSION: ApiVersion.V_23_020.label,
     }
     assert result["options"] == {
         CONF_SCAN_INTERVAL: 10,
@@ -215,7 +218,7 @@ async def test_full_flow_vampair(
     ],
 )
 async def test_full_flow_biomass_systems(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, system: Systems
+    hass: HomeAssistant, enable_custom_integrations, mock_client, system: Systems
 ) -> None:
     """Biomass systems are stored with the heat pump disabled."""
     result = await _start_user_step(hass, {**USER_INPUT, CONF_SOLARFOCUS_SYSTEM: system})
@@ -240,10 +243,10 @@ async def test_full_flow_biomass_systems(
 
 
 async def test_form_cannot_connect(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A device that does not answer keeps the user on the first step."""
-    api.connect.return_value = False
+    mock_client.offline()
 
     result = await _start_user_step(hass, USER_INPUT)
 
@@ -253,14 +256,14 @@ async def test_form_cannot_connect(
 
 
 async def test_form_recovers_after_connection_error(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The user can retry once the device is reachable."""
-    api.connect.return_value = False
+    mock_client.offline()
     result = await _start_user_step(hass, USER_INPUT)
     assert result["errors"] == {"base": "cannot_connect"}
 
-    api.connect.return_value = True
+    mock_client.online()
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], USER_INPUT
     )
@@ -296,7 +299,7 @@ async def test_form_unknown_error(
 
 
 async def test_form_scan_interval_below_minimum(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A scan interval below five seconds is reported on the field it is in.
 
@@ -311,7 +314,7 @@ async def test_form_scan_interval_below_minimum(
 
 
 async def test_entry_is_identified_by_its_address(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The address the controller is reached at identifies the entry."""
     result = await _start_user_step(hass, USER_INPUT)
@@ -327,7 +330,7 @@ async def test_entry_is_identified_by_its_address(
 
 
 async def test_the_same_system_cannot_be_added_twice(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A second entry for the same address would poll one system twice."""
     build_config_entry().add_to_hass(hass)
@@ -339,7 +342,7 @@ async def test_the_same_system_cannot_be_added_twice(
 
 
 async def test_a_second_system_can_be_added(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A different address is a different heating system."""
     build_config_entry().add_to_hass(hass)
@@ -353,7 +356,7 @@ async def test_a_second_system_can_be_added(
 
 
 async def test_a_second_system_may_share_the_name_of_the_first(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Nothing of an entry is identified by its name any more.
 
@@ -371,7 +374,7 @@ async def test_a_second_system_may_share_the_name_of_the_first(
 
 
 async def test_a_different_port_is_a_different_system(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Two controllers can sit behind one address on different ports."""
     build_config_entry().add_to_hass(hass)
@@ -385,24 +388,24 @@ async def test_a_different_port_is_a_different_system(
 
 
 async def test_validate_input_raises_cannot_connect(
-    hass: HomeAssistant, mock_api, api
+    hass: HomeAssistant, mock_client
 ) -> None:
     """Validate_input surfaces a failed connection."""
-    api.connect.return_value = False
+    mock_client.offline()
 
     with pytest.raises(CannotConnect):
         await validate_input(hass, USER_INPUT)
 
 
 async def test_validate_input_raises_invalid_scan_interval(
-    hass: HomeAssistant, mock_api
+    hass: HomeAssistant, mock_client
 ) -> None:
     """Validate_input enforces the minimum scan interval."""
     with pytest.raises(InvalidScanInterval):
         await validate_input(hass, {**USER_INPUT, CONF_SCAN_INTERVAL: 4})
 
 
-async def test_validate_input_returns_title(hass: HomeAssistant, mock_api) -> None:
+async def test_validate_input_returns_title(hass: HomeAssistant, mock_client) -> None:
     """Validate_input returns the entry title on success."""
     assert await validate_input(hass, USER_INPUT) == {"title": DEFAULT_NAME}
 
@@ -411,7 +414,7 @@ async def test_validate_input_returns_title(hass: HomeAssistant, mock_api) -> No
     "system", [Systems.VAMPAIR, Systems.THERMINATOR, Systems.ECOTOP]
 )
 async def test_options_flow_form(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, system: Systems
+    hass: HomeAssistant, enable_custom_integrations, mock_client, system: Systems
 ) -> None:
     """Each system gets an options form prefilled from the stored options."""
     entry = build_config_entry(system, heating_circuit=1, buffer=1, boiler=1)
@@ -439,7 +442,7 @@ OPTIONS_INPUT = {
 
 
 async def test_options_flow_updates_options(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Submitting the options form stores the new values."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -461,7 +464,7 @@ async def test_options_flow_updates_options(
 
 
 async def test_the_options_form_does_not_ask_for_the_connection(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Where the system is belongs to the entry data and the reconfigure flow.
 
@@ -482,7 +485,7 @@ async def test_the_options_form_does_not_ask_for_the_connection(
 
 
 async def test_saving_options_leaves_the_connection_alone(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The data of the entry is not the options flow's to write."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -502,7 +505,7 @@ async def test_saving_options_leaves_the_connection_alone(
 
 
 async def test_a_legacy_duplicate_can_still_edit_its_options(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The migration leaves one of two entries for a system without a unique id.
 
@@ -529,7 +532,7 @@ async def test_a_legacy_duplicate_can_still_edit_its_options(
 
 
 async def test_options_flow_biomass_system_disables_heatpump(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A therminator keeps the biomass boiler flag and never enables the heat pump."""
     entry = build_config_entry(
@@ -568,7 +571,7 @@ RECONFIGURE_INPUT = {
     CONF_HOST: "10.0.0.5",
     CONF_PORT: 503,
     CONF_SCAN_INTERVAL: 30,
-    CONF_API_VERSION: ApiVersions.V_25_030.value,
+    CONF_API_VERSION: ApiVersion.V_25_030.label,
 }
 
 
@@ -581,7 +584,7 @@ async def _start_reconfigure(hass: HomeAssistant, entry) -> dict:
 
 
 async def test_reconfigure_form_starts_from_the_current_connection(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The form is for correcting an address, so it starts at the current one."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -601,7 +604,7 @@ async def test_reconfigure_form_starts_from_the_current_connection(
 
 
 async def test_reconfigure_moves_the_entry_and_its_unique_id(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The address is the unique id, so changing one changes the other."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -621,12 +624,12 @@ async def test_reconfigure_moves_the_entry_and_its_unique_id(
     assert entry.data[CONF_HOST] == "10.0.0.5"
     assert entry.data[CONF_PORT] == 503
     assert entry.options[CONF_SCAN_INTERVAL] == 30
-    assert entry.data[CONF_API_VERSION] == ApiVersions.V_25_030.value
+    assert entry.data[CONF_API_VERSION] == ApiVersion.V_25_030.label
     assert entry.unique_id == "10.0.0.5:503"
 
 
 async def test_reconfigure_reloads_the_entry_once(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Saving the new address is what reloads the entry, and only that.
 
@@ -652,7 +655,7 @@ async def test_reconfigure_reloads_the_entry_once(
 
 
 async def test_reconfigure_leaves_the_components_alone(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The component layout belongs to the other form.
 
@@ -676,7 +679,7 @@ async def test_reconfigure_leaves_the_components_alone(
 
 
 async def test_reconfigure_changes_the_system(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Regression test for #217.
 
@@ -702,7 +705,7 @@ async def test_reconfigure_changes_the_system(
 
 
 async def test_reconfigure_starts_from_the_current_system(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The system is being corrected, not chosen again from scratch."""
     entry = build_config_entry(Systems.ECOTOP, biomassboiler=True)
@@ -718,7 +721,7 @@ async def test_reconfigure_starts_from_the_current_system(
 
 
 async def test_reconfigure_between_biomass_systems_keeps_the_heat_source(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Both have a biomass boiler, so there is nothing to switch over.
 
@@ -742,7 +745,7 @@ async def test_reconfigure_between_biomass_systems_keeps_the_heat_source(
 
 
 async def test_reconfigure_to_a_heat_pump_switches_the_heat_source(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The component step only ever offers the heat source the system has.
 
@@ -766,7 +769,7 @@ async def test_reconfigure_to_a_heat_pump_switches_the_heat_source(
 
 
 async def test_reconfigure_to_a_biomass_system_switches_the_heat_source(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """And the same crossing the other way."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -784,7 +787,7 @@ async def test_reconfigure_to_a_biomass_system_switches_the_heat_source(
 
 
 async def test_reconfigure_refuses_the_address_of_another_entry(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Two entries on one controller is what the unique id is there to stop."""
     other = build_config_entry(Systems.VAMPAIR, host="10.0.0.5", port=503)
@@ -803,13 +806,13 @@ async def test_reconfigure_refuses_the_address_of_another_entry(
 
 
 async def test_reconfigure_reports_a_system_it_cannot_reach(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """An address that answers nothing is the mistake this form is for."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
     entry.add_to_hass(hass)
 
-    api.connect.return_value = False
+    mock_client.offline()
 
     result = await _start_reconfigure(hass, entry)
     result = await hass.config_entries.flow.async_configure(
@@ -822,7 +825,7 @@ async def test_reconfigure_reports_a_system_it_cannot_reach(
 
 
 async def test_reconfigure_rejects_a_polling_interval_below_five(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The same floor the user step enforces, reported on the field itself."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -838,7 +841,7 @@ async def test_reconfigure_rejects_a_polling_interval_below_five(
 
 
 async def test_reconfigure_keeps_a_duplicate_entry_without_a_unique_id(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The migration left it without one on purpose, see #185.
 
@@ -862,7 +865,7 @@ async def test_reconfigure_keeps_a_duplicate_entry_without_a_unique_id(
 
 
 async def test_reconfigure_reports_an_unexpected_failure(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Anything the library raises is the user's problem to see, not a traceback."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)
@@ -884,7 +887,7 @@ async def test_reconfigure_reports_an_unexpected_failure(
 
 
 async def test_options_flow_scan_interval_below_minimum(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The options form has the same floor, and reports it the same way."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, heatpump=True)

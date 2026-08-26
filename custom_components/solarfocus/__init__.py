@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections import Counter
 import logging
 
-from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
+from aiosolarfocus import (
+    ApiVersion,
+    SolarfocusClient,
+    SolarfocusConfig,
+    SolarfocusConfigError,
+    Systems,
+)
 
 from homeassistant.const import (
     CONF_API_VERSION,
@@ -16,7 +22,7 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import (
     device_registry as dr,
     entity_registry as er,
@@ -69,20 +75,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
     _async_sync_unique_id(hass, entry)
     _async_report_duplicate_entry(hass, entry)
 
-    api = SolarfocusAPI(
-        ip=entry.data[CONF_HOST],
-        port=entry.data[CONF_PORT],
-        heating_circuit_count=entry.options[CONF_HEATING_CIRCUIT],
-        buffer_count=entry.options[CONF_BUFFER],
-        boiler_count=entry.options[CONF_BOILER],
-        fresh_water_module_count=entry.options[CONF_FRESH_WATER_MODULE],
-        circulation_count=component_count(entry, CONF_CIRCULATION),
-        differential_module_count=component_count(entry, CONF_DIFFERENTIAL_MODULE),
-        solar_count=solar_count(entry),
-        system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
-        api_version=ApiVersions(entry.data[CONF_API_VERSION]),
-    )
-    coordinator = SolarfocusDataUpdateCoordinator(hass, entry, api)
+    try:
+        config = SolarfocusConfig(
+            host=entry.data[CONF_HOST],
+            port=entry.data[CONF_PORT],
+            system=Systems(entry.data[CONF_SOLARFOCUS_SYSTEM]),
+            # `parse` rather than the constructor: the entry holds the version
+            # as the controller prints it, and a controller newer than this
+            # library knows clamps to the newest it does rather than raising.
+            api_version=ApiVersion.parse(entry.data[CONF_API_VERSION]),
+            heating_circuits=entry.options[CONF_HEATING_CIRCUIT],
+            buffers=entry.options[CONF_BUFFER],
+            boilers=entry.options[CONF_BOILER],
+            fresh_water_modules=entry.options[CONF_FRESH_WATER_MODULE],
+            circulations=component_count(entry, CONF_CIRCULATION),
+            differential_modules=component_count(entry, CONF_DIFFERENTIAL_MODULE),
+            solar=solar_count(entry),
+            heat_pump=entry.options[CONF_HEATPUMP],
+            biomass_boiler=entry.options[CONF_BIOMASS_BOILER],
+            photovoltaic=entry.options[CONF_PHOTOVOLTAIC],
+        )
+    except SolarfocusConfigError as error:
+        # A combination no controller can have - a heat pump on an Ecotop, more
+        # solar circuits than the firmware addresses. The options are what say
+        # so, and only the user can correct them, so this is not something to
+        # retry.
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="invalid_configuration",
+            translation_placeholders={"reason": str(error)},
+        ) from error
+
+    client = SolarfocusClient(config)
+    coordinator = SolarfocusDataUpdateCoordinator(hass, entry, client)
 
     await coordinator.async_refresh()
 
@@ -95,7 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         # a controller that answered the connection and then none of the
         # registers. Whether the library is still connected is what says which.
         address = f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}"
-        if not api.is_connected:
+        if not client.connected:
             raise ConfigEntryNotReady(
                 translation_domain=DOMAIN,
                 translation_key="cannot_connect",
@@ -108,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
             translation_placeholders={"address": address},
         ) from coordinator.last_exception
 
-    hub = _async_hub_device(hass, entry, api)
+    hub = _async_hub_device(hass, entry, client)
     coordinator.hub_device_id = hub.id
     entry.runtime_data = coordinator
 
@@ -333,7 +358,7 @@ def _async_remove_gone_components(
 
 @callback
 def _async_hub_device(
-    hass: HomeAssistant, entry: SolarfocusConfigEntry, api: SolarfocusAPI
+    hass: HomeAssistant, entry: SolarfocusConfigEntry, client: SolarfocusClient
 ) -> dr.DeviceEntry:
     """Register the controller every component of this entry hangs off.
 
@@ -355,8 +380,8 @@ def _async_hub_device(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, entry.entry_id)},
         name=CONTROLLER_NAME,
-        model=api.system.value,
-        sw_version=api.api_version.value,
+        model=client.config.system.value,
+        sw_version=client.config.api_version.label,
         manufacturer=MANUFACTURER,
     )
 
@@ -589,11 +614,23 @@ async def async_update_options(
 async def async_unload_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -> bool:
     """Unload a config entry.
 
-    The coordinator lives on the entry, so the platforms are all there is to
-    unload. The repair issues are not on the entry and outlive it, including
-    the removal of the entry they name, so they are deleted here.
+    The coordinator lives on the entry, so the platforms are the only thing
+    there is to unload - but the client owns a socket to the controller, and an
+    entry that is unloaded has no business holding one open. The repair issues
+    are not on the entry and outlive it, including the removal of the entry
+    they name, so they are deleted here.
     """
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    # After the platforms, not before: an entity that refuses to unload keeps
+    # reading, and closing the socket underneath it would be the entry breaking
+    # itself on the way out of a failed unload.
+    #
+    # An entry whose setup never finished has no coordinator to ask, and
+    # Home Assistant unloads one of those too - `runtime_data` is set at the
+    # end of `async_setup_entry`, after the first refresh has to have worked.
+    if unloaded and (coordinator := getattr(entry, "runtime_data", None)):
+        await coordinator.client.disconnect()
 
     ir.async_delete_issue(hass, DOMAIN, _duplicate_issue_id(entry))
     async_delete_component_issues(hass, entry)

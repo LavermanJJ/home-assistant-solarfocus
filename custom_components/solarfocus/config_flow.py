@@ -5,7 +5,13 @@ from collections.abc import Mapping
 import logging
 from typing import Any, override
 
-from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
+from aiosolarfocus import (
+    ApiVersion,
+    SolarfocusClient,
+    SolarfocusConfig,
+    SolarfocusConnectionError,
+    Systems,
+)
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -67,8 +73,13 @@ SOLARFOCUS_SYSTEMS = [
 # is too low, which silently drops the registers added since. Newest first,
 # which is the declaration order of the enum reversed.
 SOLARFOCUS_API_VERSIONS = [
-    selector.SelectOptionDict(value=api_version.value, label=f"v{api_version.value}")
-    for api_version in reversed(ApiVersions)
+    selector.SelectOptionDict(
+        value=api_version.label, label=f"v{api_version.label}"
+    )
+    # `label`, not `value`: an `ApiVersion` is ordered by construction, so its
+    # value is the printed version with the dot taken out - 25030, not the
+    # "25.030" an entry has always stored and a controller shows on its screen.
+    for api_version in reversed(ApiVersion)
 ]
 
 _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = vol.All(
@@ -218,32 +229,30 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
 )
 
 
-class Solarfocus:
-    """Solarfocus Configflow."""
-
-    def __init__(self, hass: HomeAssistant, data: dict[str, Any]) -> None:
-        """Initialize."""
-        self.host = data[CONF_HOST]
-        self.port = data[CONF_PORT]
-        self.hass = hass
-
-        self.api = SolarfocusAPI(
-            ip=data[CONF_HOST],
-            port=data[CONF_PORT],
-            system=Systems(data[CONF_SOLARFOCUS_SYSTEM]),
-            api_version=ApiVersions(data[CONF_API_VERSION]),
-        )
-
-
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect.
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-    client = Solarfocus(hass, data=data)
 
-    if not await hass.async_add_executor_job(client.api.connect):
-        raise CannotConnect
+    Only the connection is checked here, so the component counts are left at
+    whatever the configuration defaults to - what this asks is whether there is
+    an eco manager-touch at that address, and the component step comes later.
+
+    The client is closed on the way out whatever happens: this used to build one
+    and drop it on the floor with its socket still open.
+    """
+    config = SolarfocusConfig(
+        host=data[CONF_HOST],
+        port=data[CONF_PORT],
+        system=Systems(data[CONF_SOLARFOCUS_SYSTEM]),
+        api_version=ApiVersion.parse(data[CONF_API_VERSION]),
+    )
+
+    try:
+        async with SolarfocusClient(config):
+            pass
+    except SolarfocusConnectionError as error:
+        raise CannotConnect from error
 
     if data[CONF_SCAN_INTERVAL] < MINIMUM_SCAN_INTERVAL:
         raise InvalidScanInterval

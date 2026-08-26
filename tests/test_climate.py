@@ -19,8 +19,11 @@ switches a circuit that is off back on, see the module docstring of climate.py.
 
 from unittest.mock import MagicMock, patch
 
-from pysolarfocus import ApiVersions
+from aiosolarfocus import ApiVersion, ComponentId
 import pytest
+from pytest_homeassistant_custom_component.common import (
+    mock_restore_cache_with_extra_data,
+)
 
 from custom_components.solarfocus.climate import (
     CLIMATE_TYPES,
@@ -32,7 +35,6 @@ from custom_components.solarfocus.climate import (
 from custom_components.solarfocus.const import (
     HEATING_CIRCUIT_COMPONENT,
     HEATING_CIRCUIT_COMPONENT_PREFIX,
-    HEATING_CIRCUIT_PREFIX,
 )
 from custom_components.solarfocus.entity import SolarfocusEntity, create_description
 from homeassistant.components.climate.const import (
@@ -45,9 +47,13 @@ from homeassistant.components.climate.const import (
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import State
 
-from pytest_homeassistant_custom_component.common import mock_restore_cache_with_extra_data
-
-from .conftest import build_api, build_config_entry, build_coordinator
+from .conftest import (
+    build_client,
+    build_config_entry,
+    build_coordinator,
+    set_reading,
+    written_by_name,
+)
 
 # The registers the specification requires to be written together.
 REGISTERS = ("target_supply_temperature", "cooling", "mode", "heating_mode")
@@ -62,27 +68,31 @@ MODE_OFF = 3
 
 
 def build_climate(
-    api_version: ApiVersions = ApiVersions.V_23_020,
+    api_version: ApiVersion = ApiVersion.V_23_020,
     state: int = STATE_HEATING,
     mode: int = MODE_CONTINUOUS,
     cooling: int = 0,
     target_supply_temperature: float = 38.0,
 ) -> SolarfocusClimateEntity:
-    """Return a thermostat for heating circuit 1 over a mocked heating circuit."""
-    api = build_api()
-    api.api_version = api_version
+    """Return a thermostat for heating circuit 1 over a fake controller."""
+    entry = build_config_entry(api_version=api_version.label, heating_circuit=1)
+    client = build_client(entry)
 
-    circuit = api.heating_circuits[0]
-    circuit.state.scaled_value = state
-    circuit.mode.scaled_value = mode
-    circuit.cooling.scaled_value = cooling
-    circuit.target_supply_temperature.scaled_value = target_supply_temperature
-    circuit.supply_temperature.scaled_value = 36.5
+    set_reading(client, ComponentId.HEATING_CIRCUITS, "state", state)
+    set_reading(client, ComponentId.HEATING_CIRCUITS, "mode", mode)
+    set_reading(client, ComponentId.HEATING_CIRCUITS, "cooling", cooling)
+    set_reading(
+        client,
+        ComponentId.HEATING_CIRCUITS,
+        "target_supply_temperature",
+        target_supply_temperature,
+    )
+    set_reading(client, ComponentId.HEATING_CIRCUITS, "supply_temperature", 36.5)
 
     entity = SolarfocusClimateEntity(
-        build_coordinator(build_config_entry(), api),
+        build_coordinator(entry, client),
         create_description(
-                        HEATING_CIRCUIT_COMPONENT,
+            HEATING_CIRCUIT_COMPONENT,
             HEATING_CIRCUIT_COMPONENT_PREFIX,
             "1",
             CLIMATE_TYPES[0],
@@ -92,9 +102,13 @@ def build_climate(
     return entity
 
 
-def written(set_value: MagicMock) -> dict[str, float]:
-    """Return the registers a call wrote, keyed by their item name."""
-    return {call.args[0]: call.args[1] for call in set_value.call_args_list}
+def written(climate: SolarfocusClimateEntity) -> dict[str, float]:
+    """Return the registers the thermostat wrote, keyed by their name.
+
+    They go out as one grouped write now, so what a test watches is the wire
+    rather than a call of the entity's own setter per register.
+    """
+    return written_by_name(climate.coordinator.client, ComponentId.HEATING_CIRCUITS)
 
 
 @pytest.fixture(name="climate")
@@ -108,10 +122,9 @@ def climate_fixture() -> SolarfocusClimateEntity:
 
 async def test_heating_writes_every_register(climate) -> None:
     """6.2.1, the circuit is switched to heating."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.HEAT)
+    await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-    assert written(set_value) == {
+    assert written(climate) == {
         "target_supply_temperature": 38.0,
         "cooling": 0,
         "mode": MODE_CONTINUOUS,
@@ -121,10 +134,9 @@ async def test_heating_writes_every_register(climate) -> None:
 
 async def test_cooling_writes_every_register(climate) -> None:
     """6.2.2, the circuit is switched to cooling."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
 
-    assert written(set_value) == {
+    assert written(climate) == {
         # No cooling setpoint has been set yet, a heating one must not be reused
         "target_supply_temperature": DEFAULT_TARGET_TEMPERATURE[HVACMode.COOL],
         "cooling": 1,
@@ -135,10 +147,9 @@ async def test_cooling_writes_every_register(climate) -> None:
 
 async def test_off_writes_every_register(climate) -> None:
     """6.2.3, the circuit is switched off, including the setpoint of 0."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.OFF)
+    await climate.async_set_hvac_mode(HVACMode.OFF)
 
-    assert written(set_value) == {
+    assert written(climate) == {
         "target_supply_temperature": 0,
         "cooling": 0,
         "mode": MODE_OFF,
@@ -151,10 +162,9 @@ async def test_off_writes_every_register(climate) -> None:
 )
 async def test_no_register_is_left_out(climate, hvac_mode: HVACMode) -> None:
     """The specification requires all four registers on every transition."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(hvac_mode)
+    await climate.async_set_hvac_mode(hvac_mode)
 
-    assert set(written(set_value)) == set(REGISTERS)
+    assert set(written(climate)) == set(REGISTERS)
 
 
 # --- the preset deviation ----------------------------------------------------
@@ -164,20 +174,18 @@ async def test_switching_on_keeps_the_configured_preset() -> None:
     """A circuit on an auto schedule keeps it when the mode is switched."""
     climate = build_climate(mode=MODE_AUTO)
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
 
-    assert written(set_value)["mode"] == MODE_AUTO
+    assert written(climate)["mode"] == MODE_AUTO
 
 
 async def test_switching_on_a_circuit_that_is_off_selects_continuous() -> None:
     """A circuit that is switched off has to be switched back on."""
     climate = build_climate(state=STATE_OFF, mode=MODE_OFF)
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.HEAT)
+    await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-    assert written(set_value)["mode"] == MODE_CONTINUOUS
+    assert written(climate)["mode"] == MODE_CONTINUOUS
 
 
 # --- api versions ------------------------------------------------------------
@@ -185,8 +193,8 @@ async def test_switching_on_a_circuit_that_is_off_selects_continuous() -> None:
 
 async def test_cooling_needs_api_version_22_090() -> None:
     """Register 32608 does not exist below 22.090, so cooling is not offered."""
-    old = build_climate(api_version=ApiVersions.V_21_140)
-    new = build_climate(api_version=ApiVersions.V_22_090)
+    old = build_climate(api_version=ApiVersion.V_21_140)
+    new = build_climate(api_version=ApiVersion.V_22_090)
 
     assert old.hvac_modes == [HVACMode.OFF, HVACMode.HEAT]
     assert new.hvac_modes == [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
@@ -194,12 +202,11 @@ async def test_cooling_needs_api_version_22_090() -> None:
 
 async def test_heating_mode_is_not_written_below_22_090() -> None:
     """Writing a register the api version does not have raises AttributeError."""
-    climate = build_climate(api_version=ApiVersions.V_21_140)
+    climate = build_climate(api_version=ApiVersion.V_21_140)
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.HEAT)
+    await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-    assert "heating_mode" not in written(set_value)
+    assert "heating_mode" not in written(climate)
 
 
 async def test_a_cooling_circuit_reports_cooling() -> None:
@@ -211,7 +218,7 @@ async def test_a_cooling_circuit_reports_cooling() -> None:
 
 async def test_an_old_circuit_never_reports_cooling() -> None:
     """Below 22.090 the cooling register is not part of the mode."""
-    climate = build_climate(api_version=ApiVersions.V_21_140, cooling=1)
+    climate = build_climate(api_version=ApiVersion.V_21_140, cooling=1)
 
     assert climate.hvac_mode == HVACMode.HEAT
 
@@ -221,64 +228,55 @@ async def test_an_old_circuit_never_reports_cooling() -> None:
 
 async def test_the_setpoint_survives_being_switched_off(climate) -> None:
     """Switching off writes 0, switching back on restores the setpoint."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
 
     # The circuit is off, register 32600 reads 0
     climate.coordinator.api.heating_circuits[0].target_supply_temperature.scaled_value = 0
     climate.coordinator.api.heating_circuits[0].state.scaled_value = STATE_OFF
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.HEAT)
+    await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-    assert written(set_value)["target_supply_temperature"] == 41.5
+    assert written(climate)["target_supply_temperature"] == 41.5
 
 
 async def test_each_mode_keeps_its_own_setpoint(climate) -> None:
     """A heating setpoint is far outside the cooling range and vice versa."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.COOL)
-    assert written(set_value)["target_supply_temperature"] == 19.0
+    await climate.async_set_hvac_mode(HVACMode.COOL)
+    assert written(climate)["target_supply_temperature"] == 19.0
 
     climate.coordinator.api.heating_circuits[0].cooling.scaled_value = 1
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 18.0})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 18.0})
 
     climate.coordinator.api.heating_circuits[0].cooling.scaled_value = 0
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
 
-    assert written(set_value)["target_supply_temperature"] == 18.0
+    assert written(climate)["target_supply_temperature"] == 18.0
 
 
 async def test_setting_a_temperature_while_off_only_remembers_it() -> None:
     """Register 32600 has to stay 0 while the circuit is switched off."""
     climate = build_climate(state=STATE_OFF, target_supply_temperature=0)
 
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 40.0})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 40.0})
 
-    assert not set_value.called
+    assert not written(climate)
     assert climate.target_temperature == 40.0
 
 
 async def test_setting_a_temperature_writes_the_setpoint(climate) -> None:
     """A running circuit takes the setpoint immediately."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 42.0})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 42.0})
 
-    assert written(set_value) == {"target_supply_temperature": 42.0}
+    assert written(climate) == {"target_supply_temperature": 42.0}
 
 
 async def test_a_call_without_a_temperature_writes_nothing(climate) -> None:
     """The service can be called with other attributes only."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_temperature(hvac_mode=HVACMode.HEAT)
+    await climate.async_set_temperature(hvac_mode=HVACMode.HEAT)
 
-    assert not set_value.called
+    assert not written(climate)
 
 
 async def test_the_setpoint_of_a_switched_off_circuit_is_the_remembered_one() -> None:
@@ -295,8 +293,7 @@ async def test_switching_to_cooling_warns_about_the_dew_point(
     climate, caplog: pytest.LogCaptureFixture
 ) -> None:
     """The controller stops watching the dew point once 32602 is written."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
 
     assert "dew point" in caplog.text
     assert "condensation" in caplog.text
@@ -306,9 +303,8 @@ async def test_the_dew_point_warning_is_logged_once(
     climate, caplog: pytest.LogCaptureFixture
 ) -> None:
     """A thermostat in cooling mode must not warn on every service call."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_hvac_mode(HVACMode.COOL)
-        await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
+    await climate.async_set_hvac_mode(HVACMode.COOL)
 
     warnings = [record for record in caplog.records if record.levelname == "WARNING"]
     assert len(warnings) == 1
@@ -316,8 +312,7 @@ async def test_the_dew_point_warning_is_logged_once(
 
 async def test_heating_does_not_warn(climate, caplog: pytest.LogCaptureFixture) -> None:
     """Heating leaves the dew point monitoring of the controller alone."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_hvac_mode(HVACMode.HEAT)
+    await climate.async_set_hvac_mode(HVACMode.HEAT)
 
     assert "dew point" not in caplog.text
 
@@ -360,10 +355,9 @@ def test_preset_mode(mode: int, preset: str) -> None:
 )
 async def test_set_preset_mode(climate, preset: str, expected: int) -> None:
     """Selecting a preset writes the numeric mode."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_set_preset_mode(preset)
+    await climate.async_set_preset_mode(preset)
 
-    assert set_value.call_args_list == [(("mode", expected),)]
+    assert written(climate) == {"mode": expected}
 
 
 @pytest.mark.parametrize(
@@ -380,11 +374,17 @@ def test_temperature_range_follows_cooling(
 
 
 def test_temperatures() -> None:
-    """The thermostat works on the supply temperature."""
+    """The thermostat works on the supply temperature.
+
+    Register 32600 holds tenths of a degree, so 40.123 is not a reading it can
+    give: the library rounds to the precision the scale carries, where the
+    predecessor passed `40.123000000000005` through for Home Assistant to
+    record.
+    """
     climate = build_climate(target_supply_temperature=40.123)
 
     assert climate.current_temperature == 36.5
-    assert climate.target_temperature == 40.12
+    assert climate.target_temperature == 40.1
     assert climate.temperature_unit == UnitOfTemperature.CELSIUS
 
 
@@ -398,8 +398,7 @@ def test_supported_features_include_the_setpoint(climate) -> None:
 
 async def test_setpoints_are_stored_for_a_restart(climate) -> None:
     """The remembered setpoints are written to the restore state."""
-    with patch.object(climate, "_set_native_value"):
-        await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
+    await climate.async_set_temperature(**{ATTR_TEMPERATURE: 41.5})
 
     assert climate.extra_restore_state_data.as_dict() == {
         "target_temperatures": {"heat": 41.5},
@@ -445,39 +444,37 @@ async def test_a_first_start_has_nothing_to_restore(climate) -> None:
 
 async def test_turn_off(climate) -> None:
     """Turning off is the off state of the specification."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_turn_off()
+    await climate.async_turn_off()
 
-    assert written(set_value)["mode"] == MODE_OFF
-    assert written(set_value)["target_supply_temperature"] == 0
+    assert written(climate)["mode"] == MODE_OFF
+    assert written(climate)["target_supply_temperature"] == 0
 
 
 async def test_turn_on_heats(climate) -> None:
     """Turning on never starts cooling on its own."""
-    with patch.object(climate, "_set_native_value") as set_value:
-        await climate.async_turn_on()
+    await climate.async_turn_on()
 
-    assert written(set_value)["cooling"] == 0
+    assert written(climate)["cooling"] == 0
 
 
 # --- wiring ------------------------------------------------------------------
 
 
 async def test_the_thermostat_restores_its_setpoint_from_storage(
-    hass, enable_custom_integrations, mock_api, api
+    hass, enable_custom_integrations, mock_client
 ) -> None:
     """A restart must not lose the setpoint of a circuit that is switched off.
 
     Goes through the platform rather than calling async_added_to_hass directly,
     so that the restore is exercised the way Home Assistant drives it.
     """
-    circuit = api.heating_circuits[0]
-    circuit.state.scaled_value = STATE_OFF
-    circuit.mode.scaled_value = MODE_OFF
-    circuit.cooling.scaled_value = 0
+    circuit = ComponentId.HEATING_CIRCUITS
+    mock_client.reads(circuit, "state", STATE_OFF)
+    mock_client.reads(circuit, "mode", MODE_OFF)
+    mock_client.reads(circuit, "cooling", 0)
     # The circuit is switched off, so register 32600 reads 0
-    circuit.target_supply_temperature.scaled_value = 0
-    circuit.supply_temperature.scaled_value = 21.0
+    mock_client.reads(circuit, "target_supply_temperature", 0)
+    mock_client.reads(circuit, "supply_temperature", 21.0)
 
     mock_restore_cache_with_extra_data(
         hass,

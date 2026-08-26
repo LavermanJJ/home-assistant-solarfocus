@@ -18,7 +18,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
-    filterVersionAndSystem,
+    supported_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ async def async_setup_entry(
             entity = SolarfocusSwitchEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -93,13 +93,13 @@ class SolarfocusSwitchEntity(SolarfocusEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         switch = self.entity_description.item
-        return self._set_native_value(switch, ON)
+        await self._async_set_native_value(switch, ON)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         switch = self.entity_description.item
-        return self._set_native_value(switch, OFF)
+        await self._async_set_native_value(switch, OFF)
 
 
 HEATPUMP_SWITCH_TYPES = [

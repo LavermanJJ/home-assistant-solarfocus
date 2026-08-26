@@ -27,7 +27,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
-    filterVersionAndSystem,
+    supported_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ async def async_setup_entry(
             entity = SolarfocusSelectEntity(coordinator, _description)
             entities.append(entity)
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -117,17 +117,29 @@ class SolarfocusSelectEntity(SolarfocusEntity, SelectEntity):
 
     @override
     async def async_select_option(self, option: str) -> None:
-        """Update the current selected option."""
+        """Update the current selected option.
+
+        The options are the strings of the numbers the controller works in, so
+        the number is what goes to the register: the library encodes an int or
+        a member of the register's own enumeration, and refuses a string.
+        """
         self._attr_current_option = option
         select = self.entity_description.item
-        return self._set_native_value(select, option)
+        await self._async_set_native_value(select, int(option))
 
     @property
     @override
-    def current_option(self) -> str:
-        """Return current option."""
-        select = self.entity_description.item
-        return str(self._get_native_value(select))
+    def current_option(self) -> str | None:
+        """Return current option, or None while the register has no reading.
+
+        A closed set of values decodes to a member of the library's enumeration,
+        which is an `IntEnum` and so prints as its number - which is what the
+        options are. `int()` first regardless, so a register that decodes to
+        something else does not report an option that is not on the list.
+        """
+        value = self._get_native_value(self.entity_description.item)
+
+        return None if value is None else str(int(value))
 
 
 HEATPUMP_SELECT_TYPES = [
@@ -175,7 +187,6 @@ HEATING_CIRCUIT_SELECT_TYPES = [
             "1",
             "2",
         ],
-        min_required_version="22.090",
     ),
 ]
 

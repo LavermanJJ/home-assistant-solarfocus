@@ -272,11 +272,11 @@ Checked against the codebase and confirmed no impact:
 [2026-07-05 — Modernizing Modbus](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus)
 introduces a `modbus_connection` integration and a backend-neutral `modbus-connection` PyPI library,
 so several integrations can share one bus. That is directly on-topic for this integration, which
-talks Modbus TCP to the Solarfocus controller through `pysolarfocus`.
+talks Modbus TCP to the Solarfocus controller through `aiosolarfocus`.
 
 **Do nothing yet.** The post explicitly says: *"If you are working on a device integration, hold off
 on wiring it up to the `modbus_connection` integration described below — we will share the updated
-approach here soon."* Worth tracking for a future `pysolarfocus` refactor, since a shared connection
+approach here soon."* Worth tracking for a future `aiosolarfocus` change, since a shared connection
 would fix the case where a user runs both this integration and the core `modbus` integration against
 the same controller.
 

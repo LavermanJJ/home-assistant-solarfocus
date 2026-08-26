@@ -6,9 +6,7 @@ one too few means a silently missing entity, and both only show up once an entry
 is actually set up.
 """
 
-from pysolarfocus import ApiVersions, Systems
-from pysolarfocus.components.circulation import Circulation
-from pysolarfocus.components.differential_module import DifferentialModule
+from aiosolarfocus import ApiVersion, ComponentId, Systems
 import pytest
 
 from custom_components.solarfocus import (
@@ -114,7 +112,7 @@ async def test_entity_keys_are_unique(hass: HomeAssistant, platform) -> None:
     """Duplicate keys would collide on the same unique id."""
     entry = build_config_entry(
         Systems.THERMINATOR,
-        api_version=ApiVersions.V_26_020.value,
+        api_version=ApiVersion.V_26_020.label,
         heating_circuit=3,
         buffer=2,
         boiler=2,
@@ -230,12 +228,17 @@ async def test_version_specific_entities_are_filtered(hass: HomeAssistant) -> No
 
 
 async def test_system_specific_entities_are_filtered(hass: HomeAssistant) -> None:
-    """Entities excluded for a system are not created for it (issue #163)."""
+    """Entities the library says a system does not have are not created (#163).
+
+    Which those are is the library's answer now rather than a list carried on
+    the description: a Therminator buffer has none of the external X44/X36/X35
+    holding registers, and the entities for them used to be built anyway and
+    raise on the first read.
+    """
     unsupported = {
         description.key
         for description in sensor.BUFFER_SENSOR_TYPES
-        if description.unsupported_systems
-        and Systems.THERMINATOR in description.unsupported_systems
+        if description.key.startswith("external_")
     }
     assert unsupported, "expected at least one system specific buffer sensor"
 
@@ -324,7 +327,7 @@ async def test_binary_sensors_cover_all_configured_components(
     entry = build_config_entry(
         Systems.THERMINATOR,
         # The fresh water module binary sensors need at least 23.040
-        api_version=ApiVersions.V_26_020.value,
+        api_version=ApiVersion.V_26_020.label,
         heating_circuit=1,
         buffer=1,
         fresh_water_module=1,
@@ -393,7 +396,7 @@ async def test_one_set_of_sensors_per_circulation_group(
 ) -> None:
     """The circulation of every boiler is read as its own component."""
     entry = build_config_entry(
-        api_version=ApiVersions.V_26_020.value, circulation=count
+        api_version=ApiVersion.V_26_020.label, circulation=count
     )
 
     keys = _keys(await _setup(hass, sensor, entry))
@@ -409,7 +412,7 @@ async def test_both_control_loops_of_every_differential_module(
 ) -> None:
     """Each module reports the two temperatures of each of its two loops."""
     entry = build_config_entry(
-        api_version=ApiVersions.V_26_020.value, differential_module=count
+        api_version=ApiVersion.V_26_020.label, differential_module=count
     )
 
     keys = _keys(await _setup(hass, sensor, entry))
@@ -442,7 +445,7 @@ async def test_the_new_modules_need_the_version_that_added_them(
     rather than a set that reads zero forever.
     """
     entry = build_config_entry(
-        api_version=ApiVersions.V_25_020.value, **{component: 1}
+        api_version=ApiVersion.V_25_020.label, **{component: 1}
     )
 
     keys = _keys(await _setup(hass, sensor, entry)) + _keys(
@@ -453,7 +456,7 @@ async def test_the_new_modules_need_the_version_that_added_them(
 
 
 async def test_the_new_modules_report_what_the_library_read(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The whole chain, on the components the library really builds.
 
@@ -462,16 +465,16 @@ async def test_the_new_modules_report_what_the_library_read(
     attribute of the description and the register behind it all have to name the
     same thing for a value to come out the other end.
     """
-    api.circulations = [Circulation()]
-    api.differential_modules = [DifferentialModule()]
     # The raw register, which is what the heating system answers with: both
     # temperatures are scaled by 0.1 on the way out.
-    api.circulations[0].temperature.value = 425
-    api.differential_modules[0].temperature_1_control_loop_2.value = 610
-    api.differential_modules[0].relay_control_loop_o1.value = 1
+    mock_client.reads(ComponentId.CIRCULATIONS, "temperature", 42.5)
+    mock_client.reads(
+        ComponentId.DIFFERENTIAL_MODULES, "temperature_1_control_loop_2", 61.0
+    )
+    mock_client.reads(ComponentId.DIFFERENTIAL_MODULES, "relay_control_loop_o1", 1)
 
     entry = build_config_entry(
-        api_version=ApiVersions.V_26_020.value,
+        api_version=ApiVersion.V_26_020.label,
         circulation=1,
         differential_module=1,
     )

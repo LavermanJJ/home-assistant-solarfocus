@@ -5,6 +5,8 @@ are otherwise invisible: one is a log line written once at migration, the other
 is a component that has gone unavailable for good.
 """
 
+from aiosolarfocus import ComponentId
+
 from custom_components.solarfocus.const import (
     CONF_BOILER,
     CONF_BUFFER,
@@ -15,7 +17,7 @@ from custom_components.solarfocus.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
 
-from .conftest import build_config_entry
+from .conftest import build_config_entry, revive
 
 
 def _issue(hass: HomeAssistant, issue_id: str):
@@ -31,7 +33,7 @@ async def _setup(hass: HomeAssistant, **options):
 
 
 async def test_no_issue_for_an_entry_that_is_fine(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A working entry raises nothing, which is what makes the rest mean something."""
     entry = await _setup(hass, heating_circuit=1, boiler=1)
@@ -41,7 +43,7 @@ async def test_no_issue_for_an_entry_that_is_fine(
 
 
 async def test_the_duplicate_the_migration_left_behind_is_reported(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Two entries on one controller, from before the address identified one.
 
@@ -67,7 +69,7 @@ async def test_the_duplicate_the_migration_left_behind_is_reported(
 
 
 async def test_an_entry_alone_on_its_address_is_not_a_duplicate(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Having no unique id is only worth reporting while something else has it.
 
@@ -87,7 +89,7 @@ async def test_an_entry_alone_on_its_address_is_not_a_duplicate(
 
 
 async def test_the_duplicate_issue_clears_once_the_other_entry_is_gone(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Doing what the issue asks has to be what clears it.
 
@@ -116,7 +118,7 @@ async def test_the_duplicate_issue_clears_once_the_other_entry_is_gone(
 
 
 async def test_removing_an_entry_takes_its_issues_with_it(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """An issue outlives the entry it names, which the registry does not notice.
 
@@ -124,12 +126,12 @@ async def test_removing_an_entry_takes_its_issues_with_it(
     configured, naming an entry the user cannot open, until Home Assistant is
     restarted.
     """
-    api.update_heating.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
 
     assert _issue(
-        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
     ) is not None
 
     await hass.config_entries.async_remove(entry.entry_id)
@@ -139,7 +141,7 @@ async def test_removing_an_entry_takes_its_issues_with_it(
 
 
 async def test_switching_a_failing_component_off_clears_its_issue(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The issue asks the user to switch the component off, so that has to work.
 
@@ -147,10 +149,10 @@ async def test_switching_a_failing_component_off_clears_its_issue(
     has never seen the component fail - and one that never reads it again, so
     nothing about the failure changes for it to notice.
     """
-    api.update_boiler.return_value = False
+    mock_client.silence(ComponentId.BOILERS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
-    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}"
+    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}1"
 
     assert _issue(hass, issue_id) is not None
 
@@ -163,30 +165,30 @@ async def test_switching_a_failing_component_off_clears_its_issue(
 
 
 async def test_a_component_that_answers_nothing_is_reported(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A register range the firmware does not answer fails on every poll.
 
     The entities of that component are unavailable while it lasts, and nothing
     in the entry says why: the log line that does is written once.
     """
-    api.update_heating.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
 
     issue = _issue(
-        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
     )
 
     assert issue is not None
     assert issue.translation_placeholders["component"] == "Heating circuit 1"
     assert issue.translation_placeholders["address"] == "solarfocus.local:502"
     # The component that reads fine has nothing raised against it
-    assert _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}") is None
+    assert _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}1") is None
 
 
 async def test_the_issue_names_the_component_the_way_the_device_page_does(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The option is what the coordinator calls a component, not what a user does.
 
@@ -195,26 +197,33 @@ async def test_the_issue_names_the_component_the_way_the_device_page_does(
     issue naming the option asks the user to recognise their heating system in
     a configuration key.
 
-    Every instance is named, because every instance is behind the issue: the
-    library reads both fresh water modules in one call, so one that answers
-    nothing is both of them as far as anything here can tell.
+    One instance is named, because one instance is what failed. The
+    predecessor read both fresh water modules in one call and stopped at the
+    first that failed, so one that answered nothing was both of them as far as
+    anything here could tell; the library attributes a refused read to the
+    instances whose registers were in it.
     """
-    api.update_fresh_water_modules.return_value = False
+    mock_client.silence(ComponentId.FRESH_WATER_MODULES)
 
     entry = await _setup(hass, heating_circuit=1, fresh_water_module=2)
 
     issue = _issue(
-        hass, f"component_unavailable_{entry.entry_id}_{CONF_FRESH_WATER_MODULE}"
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_FRESH_WATER_MODULE}1"
     )
 
     assert issue is not None
-    assert issue.translation_placeholders["component"] == (
-        "Fresh water module 1, Fresh water module 2"
+    assert issue.translation_placeholders["component"] == "Fresh water module 1"
+    # The other one reads, so it has no issue of its own.
+    assert (
+        _issue(
+            hass, f"component_unavailable_{entry.entry_id}_{CONF_FRESH_WATER_MODULE}2"
+        )
+        is None
     )
 
 
 async def test_the_issue_names_the_component_in_the_language_of_the_system(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The device name is translated, so the issue that borrows it is too.
 
@@ -224,12 +233,12 @@ async def test_the_issue_names_the_component_in_the_language_of_the_system(
     """
     await hass.config.async_update(language="de")
 
-    api.update_heating.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
 
     issue = _issue(
-        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
     )
 
     assert issue is not None
@@ -237,14 +246,14 @@ async def test_the_issue_names_the_component_in_the_language_of_the_system(
 
 
 async def test_the_issue_calls_the_component_what_the_user_renamed_it_to(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A renamed device is the name the user knows that component by.
 
     Nothing else they read says `Boiler 1` any more, so an issue that does is
     about a component they cannot place.
     """
-    api.update_boiler.return_value = False
+    mock_client.silence(ComponentId.BOILERS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
     registry = dr.async_get(hass)
@@ -254,45 +263,43 @@ async def test_the_issue_calls_the_component_what_the_user_renamed_it_to(
     registry.async_update_device(device.id, name_by_user="Dusche")
     await entry.runtime_data.async_refresh()
 
-    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}")
+    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BOILER}1")
 
     assert issue is not None
     assert issue.translation_placeholders["component"] == "Dusche"
 
 
 async def test_the_issue_links_the_device_pages_of_the_component(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The issue is about a device and there is no device field to say so.
 
     A repair issue takes placeholders and nothing that binds it to a device, so
-    the link is markdown in the description - one per instance, because the
-    issue covers all of them. What it has to point at is a device that is in
-    the registry: a link to a page that does not exist is worse than no link.
+    the link is markdown in the description - one per issue, and an issue is
+    about one instance. What it has to point at is a device that is in the
+    registry: a link to a page that does not exist is worse than no link.
     """
-    api.update_buffer.return_value = False
+    mock_client.silence(ComponentId.BUFFERS, index=2)
 
     entry = await _setup(hass, heating_circuit=1, buffer=2)
     registry = dr.async_get(hass)
 
-    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BUFFER}")
+    issue = _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BUFFER}2")
 
     assert issue is not None
 
-    devices = [
-        registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bu{index}")})
-        for index in (1, 2)
-    ]
+    device = registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bu2")})
 
-    assert all(device is not None for device in devices)
-    assert issue.translation_placeholders["devices"] == ", ".join(
-        f"[Buffer {index}](/config/devices/device/{device.id})"
-        for index, device in enumerate(devices, start=1)
+    assert device is not None
+    assert issue.translation_placeholders["devices"] == (
+        f"[Buffer 2](/config/devices/device/{device.id})"
     )
+    # The buffer that reads is not linked from anywhere.
+    assert _issue(hass, f"component_unavailable_{entry.entry_id}_{CONF_BUFFER}1") is None
 
 
 async def test_an_issue_raised_before_the_devices_exist_is_named_once_they_do(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The first refresh of a new entry is the one that has no devices to name.
 
@@ -301,12 +308,12 @@ async def test_an_issue_raised_before_the_devices_exist_is_named_once_they_do(
     that register the devices exist. Without a second look the user would be
     left with the option name and no link until the next poll.
     """
-    api.update_heating.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
 
     issue = _issue(
-        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
+        hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
     )
     device = dr.async_get(hass).async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
 
@@ -319,25 +326,25 @@ async def test_an_issue_raised_before_the_devices_exist_is_named_once_they_do(
 
 
 async def test_a_component_coming_back_clears_only_its_own_issue(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """One issue per component, so a recovery leaves the others standing.
 
     The buffer reads fine throughout: every configured component failing is an
     outage rather than a partial failure, and fails the refresh instead.
     """
-    api.update_heating.return_value = False
-    api.update_boiler.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
+    mock_client.silence(ComponentId.BOILERS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1, buffer=1)
 
-    heating = f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}"
-    boiler = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}"
+    heating = f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
+    boiler = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}1"
 
     assert _issue(hass, heating) is not None
     assert _issue(hass, boiler) is not None
 
-    api.update_heating.return_value = True
+    revive(mock_client.instance, ComponentId.HEATING_CIRCUITS)
     await entry.runtime_data.async_refresh()
 
     assert _issue(hass, heating) is None
@@ -345,7 +352,7 @@ async def test_a_component_coming_back_clears_only_its_own_issue(
 
 
 async def test_an_outage_takes_the_component_issues_down_with_it(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The issue says every other component reads fine, so it has to go.
 
@@ -353,26 +360,26 @@ async def test_an_outage_takes_the_component_issues_down_with_it(
     Assistant is retrying, which is not a component the user should be asked
     to check their configuration for. It comes back with the system.
     """
-    api.update_boiler.return_value = False
+    mock_client.silence(ComponentId.BOILERS)
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
-    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}"
+    issue_id = f"component_unavailable_{entry.entry_id}_{CONF_BOILER}1"
 
     assert _issue(hass, issue_id) is not None
 
-    api.update_heating.return_value = False
+    mock_client.silence(ComponentId.HEATING_CIRCUITS)
     await entry.runtime_data.async_refresh()
 
     assert _issue(hass, issue_id) is None
 
-    api.update_heating.return_value = True
+    revive(mock_client.instance, ComponentId.HEATING_CIRCUITS)
     await entry.runtime_data.async_refresh()
 
     assert _issue(hass, issue_id) is not None
 
 
 async def test_nothing_is_raised_when_the_whole_system_is_unreachable(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """That is not a repair, it is an outage.
 
@@ -380,9 +387,7 @@ async def test_nothing_is_raised_when_the_whole_system_is_unreachable(
     the entities unavailable and has Home Assistant retry. Asking the user to
     check their component selection for it would be wrong.
     """
-    api.update_heating.return_value = False
-    api.connect.return_value = False
-    api.is_connected = False
+    mock_client.offline()
 
     entry = build_config_entry(heating_circuit=1)
     entry.add_to_hass(hass)

@@ -125,6 +125,9 @@
     },
     "cannot_set_up": {
       "message": "Von der Solarfocus-Anlage unter {address} kann nicht gelesen werden. Sie nimmt die Verbindung an, antwortet aber nicht auf die Register."
+    },
+    "invalid_configuration": {
+      "message": "Die konfigurierten Komponenten passen nicht zur Solarfocus-Anlage: {reason}. Korrigiere sie in den Optionen der Integration."
     }
   },
   "issues": {
