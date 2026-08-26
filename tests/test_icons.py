@@ -18,7 +18,7 @@ import json
 import pathlib
 import re
 
-from pysolarfocus import ApiVersions, Systems
+from aiosolarfocus import ApiVersion, Systems
 import pytest
 
 from custom_components.solarfocus import (
@@ -35,7 +35,7 @@ from custom_components.solarfocus.const import DOMAIN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.icon import async_get_icons
 
-from .conftest import build_config_entry, build_coordinator
+from .conftest import build_config_entry, build_coordinator, every_component
 
 COMPONENT_DIR = pathlib.Path(sensor.__file__).parent
 
@@ -112,17 +112,8 @@ async def _entities(hass: HomeAssistant, module) -> list:
     for system in Systems:
         entry = build_config_entry(
             system,
-            api_version=ApiVersions.V_26_020.value,
-            heating_circuit=1,
-            buffer=1,
-            boiler=1,
-            fresh_water_module=1,
-            circulation=1,
-            differential_module=1,
-            solar=1,
-            heatpump=True,
-            biomassboiler=True,
-            photovoltaic=True,
+            api_version=ApiVersion.V_26_020.label,
+            **every_component(system),
         )
         entry.add_to_hass(hass)
         entry.runtime_data = build_coordinator(entry)

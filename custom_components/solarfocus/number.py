@@ -33,7 +33,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
-    filterVersionAndSystem,
+    supported_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ async def async_setup_entry(
         SolarfocusDisplayedNumberEntity(coordinator, DISPLAYED_NUMBER_TYPE)
     )
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -128,7 +128,7 @@ class SolarfocusNumberEntity(SolarfocusEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         number = self.entity_description.item
-        return self._set_native_value(number, value)
+        await self._async_set_native_value(number, value)
 
     @property
     @override
@@ -291,6 +291,5 @@ PHOTOVOLTAIC_NUMBER_TYPES = [
         native_max_value=32767,
         native_step=1,
         mode=NumberMode.BOX,
-        min_required_version="26.020",
     ),
 ]

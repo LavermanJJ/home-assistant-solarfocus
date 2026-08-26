@@ -44,11 +44,11 @@ BUFFER_COMPONENT = "buffers"
 BUFFER_COMPONENT_PREFIX = "bu"
 
 HEAT_PUMP_PREFIX = "Heat pump"
-HEAT_PUMP_COMPONENT = "heatpump"
+HEAT_PUMP_COMPONENT = "heat_pump"
 HEAT_PUMP_COMPONENT_PREFIX = "hp"
 
 BIOMASS_BOILER_PREFIX = "Biomass boiler"
-BIOMASS_BOILER_COMPONENT = "biomassboiler"
+BIOMASS_BOILER_COMPONENT = "biomass_boiler"
 BIOMASS_BOILER_COMPONENT_PREFIX = "bb"
 
 PHOTOVOLTAIC_PREFIX = "Photovoltaic"
@@ -143,7 +143,39 @@ COMPONENT_PREFIXES: dict[str, str] = {
 # identifier carries no index where every other component's does.
 SINGLE_COMPONENTS = frozenset({CONF_HEATPUMP, CONF_PHOTOVOLTAIC, CONF_BIOMASS_BOILER})
 
-"""Version from which several solar circuits exist"""
+# How many of each component an entry can ever have been configured with, which
+# is what the options form offers. It is not what this entry has: a repair issue
+# has to be answered for every instance a *previous* configuration could have
+# raised one for, or lowering a count would leave the issue of the instance that
+# is gone standing forever with nothing left to clear it.
+COMPONENT_MAX_COUNT: dict[str, int] = {
+    CONF_HEATING_CIRCUIT: 8,
+    CONF_BUFFER: 4,
+    CONF_BOILER: 4,
+    CONF_FRESH_WATER_MODULE: 4,
+    CONF_CIRCULATION: 4,
+    CONF_DIFFERENTIAL_MODULE: 4,
+    CONF_SOLAR: 4,
+    CONF_HEATPUMP: 1,
+    CONF_PHOTOVOLTAIC: 1,
+    CONF_BIOMASS_BOILER: 1,
+}
+
+
+def component_instances(option: str) -> list[tuple[str, str]]:
+    """Return every instance of one component an entry could have configured.
+
+    The pair an entity carries and a failed read is reported as: the option and
+    the index as a string, blank for the components that exist once.
+    """
+    if option in SINGLE_COMPONENTS:
+        return [(option, "")]
+
+    return [
+        (option, str(index + 1)) for index in range(COMPONENT_MAX_COUNT[option])
+    ]
+
+# Version from which several solar circuits exist.
 MULTI_SOLAR_MIN_VERSION = "25.030"
 
 
@@ -151,7 +183,7 @@ def solar_count(entry: ConfigEntry) -> int:
     """Return how many solar circuits to build for this entry.
 
     Solar was a boolean before it became a count, and several circuits only
-    exist from api version 25.030 on - pysolarfocus rejects a higher count
+    exist from api version 25.030 on - the library rejects a higher count
     below that and the whole entry fails to load. The options let the count be
     raised regardless of the selected version, so it is capped here.
 
@@ -170,7 +202,7 @@ def solar_count(entry: ConfigEntry) -> int:
 
 
 # The api version a component's registers arrived in, for those that are not in
-# every version the integration offers. Below it pysolarfocus builds no such
+# every version the integration offers. Below it the library builds no such
 # component at all - the attribute the entities would read is not there - and
 # its update call returns success without asking the controller anything.
 COMPONENT_MIN_VERSION: dict[str, str] = {

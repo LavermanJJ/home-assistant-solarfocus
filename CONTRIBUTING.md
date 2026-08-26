@@ -50,8 +50,8 @@ Copy your changes manually (see [README.md -> Installation](README.md)) to your 
 
 - [hacs.json](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/hacs.json): name, version definition for the hacs integration (see [HACS Integrations](https://hacs.xyz/docs/publish/integration/)), modify if you plan to install the integration from your fork, don't use this branch to make a pull request to the original repository.
 
-- [custom_components/solafocus/manifest.json](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/custom_components/solarfocus/manifest.json): if you go deeper into the development you might need to update the used pysolarfocus python package. To test you can modifiy the requirements to used your own version: e.g.,
-  `"requirements": ["git+https://github.com/lein1013/pysolarfocus.git@develop#pysolarfocus==3.4.2", "pymodbus==3.1.2"],`
+- [custom_components/solafocus/manifest.json](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/custom_components/solarfocus/manifest.json): if you go deeper into the development you might need to update the used aiosolarfocus python package. To test you can modifiy the requirements to used your own version: e.g.,
+  `"requirements": ["git+https://github.com/LavermanJJ/aiosolarfocus.git@main#aiosolarfocus==0.2.0"],`
 
 - [strings.json](https://github.com/LavermanJJ/home-assistant-solarfocus/blob/main/custom_components/solarfocus/strings.json): relevant for enums and translation (see the related translations folder). Keep consistent. Some guides:
     - First letter is capital

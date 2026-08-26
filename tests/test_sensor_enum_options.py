@@ -16,6 +16,7 @@ option without a translation merely renders as a raw number.
 import json
 import pathlib
 
+from aiosolarfocus import ComponentId
 import pytest
 
 from custom_components.solarfocus import sensor
@@ -125,7 +126,7 @@ def test_options_are_strings(translation_key: str, options: list[str]) -> None:
 
 
 async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """Regression test for #193.
 
@@ -134,7 +135,7 @@ async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
     options were numbers and the state was the string of one, no condition built
     that way could ever match.
     """
-    api.heatpump.vampair_state.scaled_value = 3
+    mock_client.reads(ComponentId.HEAT_PUMP, "vampair_state", 3)
     entry = build_config_entry(heatpump=True)
     entry.add_to_hass(hass)
 
@@ -148,7 +149,7 @@ async def test_the_state_of_an_enum_sensor_is_one_of_its_options(
 
 
 async def test_an_enum_sensor_survives_a_register_holding_a_bool(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A bool left in a register must not cost the entity its state.
 
@@ -157,7 +158,7 @@ async def test_an_enum_sensor_survives_a_register_holding_a_bool(
     the coordinator tolerates on purpose, whatever was written stays in the
     component until the next poll: str(True) is "True", not an option.
     """
-    api.boilers[0].single_charge.scaled_value = True
+    mock_client.reads(ComponentId.BOILERS, "single_charge", 1)
     entry = build_config_entry(boiler=1)
     entry.add_to_hass(hass)
 

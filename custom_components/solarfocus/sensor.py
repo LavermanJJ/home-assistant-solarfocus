@@ -6,8 +6,6 @@ from datetime import datetime
 import logging
 from typing import cast, override
 
-from pysolarfocus import Systems
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -71,8 +69,7 @@ from .entity import (
     SolarfocusEntity,
     SolarfocusEntityDescription,
     create_description,
-    every_system_but,
-    filterVersionAndSystem,
+    supported_entities,
 )
 from .service_menu import installer_code, service_code
 
@@ -186,7 +183,8 @@ async def async_setup_entry(
 
         for i in range(count):
             for description in SOLAR_SENSOR_TYPES:
-                # Always use index since solar is now always a list in pysolarfocus
+                # Always use index: solar is one of the components a controller
+                # can have several of, so the library addresses it by number
                 # But for single instance, don't show the number in the entity name
                 idx = str(i + 1)
                 _description = create_description(
@@ -253,7 +251,7 @@ async def async_setup_entry(
         SolarfocusInstallerCodeSensor(coordinator, INSTALLER_CODE_SENSOR_TYPE)
     )
 
-    async_add_entities(filterVersionAndSystem(config_entry, entities))
+    async_add_entities(supported_entities(config_entry, entities))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -451,38 +449,27 @@ BUFFER_SENSOR_TYPES = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        unsupported_systems=[
-            Systems.VAMPAIR,
-            Systems.PELLETELEGANCE,
-            Systems.OCTOPLUS,
-        ],
     ),
     SolarfocusSensorEntityDescription(
         key="external_top_temperature_x44",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="22.090",
         entity_registry_enabled_default=False,
-        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="external_middle_temperature_x36",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="22.090",
         entity_registry_enabled_default=False,
-        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
     SolarfocusSensorEntityDescription(
         key="external_bottom_temperature_x35",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="22.090",
         entity_registry_enabled_default=False,
-        unsupported_systems=[Systems.THERMINATOR, Systems.ECOTOP],
     ),
 ]
 
@@ -628,18 +615,26 @@ HEATPUMP_SENSOR_TYPES = [
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
     ),
+    # The three the library renamed. A "performance overall" that is a seasonal
+    # figure reads better as one, but the key is what the entity id, the
+    # history behind it and the translation of its name are built from, so the
+    # key stays and the register is named beside it. `item` is the only place
+    # in the integration where the two differ.
     SolarfocusSensorEntityDescription(
         key="performance_overall",
+        item="seasonal_performance",
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="performance_overall_heating",
+        item="seasonal_performance_heating",
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
     ),
     SolarfocusSensorEntityDescription(
         key="performance_overall_drinking_water",
+        item="seasonal_performance_drinking_water",
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
     ),
@@ -716,7 +711,6 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         key="boiler_operating_mode",
         device_class=SensorDeviceClass.ENUM,
         options=enum_options(range(0, 6)),
-        unsupported_systems=every_system_but(Systems.THERMINATOR),
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_bottom",
@@ -727,7 +721,6 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         # Sigmatek boiler bar the vampair it is the return flow temperature -
         # a different measurement at the same address, which has an entity of
         # its own below rather than this one under a name that would misread it.
-        unsupported_systems=every_system_but(Systems.OCTOPLUS),
     ),
     SolarfocusSensorEntityDescription(
         key="return_temperature",
@@ -740,43 +733,35 @@ BIOMASS_BOILER_SENSOR_TYPES = [
         # back under its own. The document grants it to "alle anderen Sigmatek
         # Kessel (ohne vampair)" bar the therminator, where 2410 is nicht
         # belegt - which leaves the EcoTop and the Pellet Elegance.
-        unsupported_systems=every_system_but(
-            Systems.ECOTOP, Systems.PELLETELEGANCE
-        ),
     ),
     SolarfocusSensorEntityDescription(
         key="octoplus_buffer_temperature_top",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        unsupported_systems=every_system_but(Systems.OCTOPLUS),
     ),
     SolarfocusSensorEntityDescription(
         key="log_wood",
         device_class=SensorDeviceClass.ENUM,
         options=enum_options(range(0, 2)),
-        unsupported_systems=every_system_but(Systems.THERMINATOR),
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_last_fill",
         native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="23.010",
     ),
     SolarfocusSensorEntityDescription(
         key="pellet_usage_total",
         native_unit_of_measurement=UnitOfMass.KILOGRAMS,
         device_class=SensorDeviceClass.WEIGHT,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="23.010",
     ),
     SolarfocusSensorEntityDescription(
         key="heat_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        min_required_version="23.010",
     ),
 ]
 
@@ -858,27 +843,23 @@ FRESH_WATER_MODULE_SENSOR_TYPES = [
         key="state",
         device_class=SensorDeviceClass.ENUM,
         options=enum_options(range(0, 5)),
-        min_required_version="23.020",
     ),
     SolarfocusSensorEntityDescription(
         key="supply_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="23.040",
     ),
     SolarfocusSensorEntityDescription(
         key="flow_rate",
         native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="23.040",
     ),
     SolarfocusSensorEntityDescription(
         key="target_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="23.040",
     ),
 ]
 
@@ -890,7 +871,6 @@ CIRCULATION_SENSOR_TYPES = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="25.030",
     ),
 ]
 
@@ -903,27 +883,23 @@ DIFFERENTIAL_MODULE_SENSOR_TYPES = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="25.030",
     ),
     SolarfocusSensorEntityDescription(
         key="temperature_2_control_loop_1",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="25.030",
     ),
     SolarfocusSensorEntityDescription(
         key="temperature_1_control_loop_2",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="25.030",
     ),
     SolarfocusSensorEntityDescription(
         key="temperature_2_control_loop_2",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        min_required_version="25.030",
     ),
 ]

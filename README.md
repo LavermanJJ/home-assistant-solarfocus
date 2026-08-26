@@ -50,7 +50,7 @@ This Home Assistant custom component is a community driven effort to integrate S
 > **Warning**
 > Use with caution, in case of doubt check with Solarfocus or your installer if a feature / functionality (e.g. cooling) is supported by your installation to avoid damages to your heating system or the building.
 
-The project uses the Python library [pysolarfocus](https://github.com/LavermanJJ/pysolarfocus) for retrieving values via Modbus TCP from the heating system.
+The project uses the Python library [aiosolarfocus](https://github.com/LavermanJJ/aiosolarfocus) for retrieving values via Modbus TCP from the heating system. It is the async successor of [pysolarfocus](https://github.com/LavermanJJ/pysolarfocus), which the integration used up to version 6.
 
 ## Home Assistant Device Types
 
@@ -528,7 +528,7 @@ logger:
   default: info
   logs:
     custom_components.solarfocus: debug
-    pysolarfocus: debug
+    aiosolarfocus: debug
 ```
 
 The debug log contains the registers being read and written, which is what an issue report

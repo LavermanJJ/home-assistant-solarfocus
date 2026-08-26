@@ -187,6 +187,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aiosolarfocus"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pymodbus" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/ec/240b5bf10ea14261007e4ac2c28cb05de31e14f7222ebcef4a1bc8253474/aiosolarfocus-0.2.0.tar.gz", hash = "sha256:34f3f13fef90ad35dd4f5ec5abd55bcabffde250a38f56ab23cbe500f55b22c7", size = 99793, upload-time = "2026-08-24T05:15:42.853Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/de/b364f34a76c482d9c8c8047ddffa9acf83816bcdd312d62af69ff8723c3e/aiosolarfocus-0.2.0-py3-none-any.whl", hash = "sha256:a23e3e023bced6e651675cecad1de4ad5f66eb8e13dc40a47f4db93910d019e4", size = 83658, upload-time = "2026-08-24T05:15:41.89Z" },
+]
+
+[[package]]
 name = "aiozoneinfo"
 version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2015,19 +2027,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/08/64/a99f27d3b4347486c7bfc0aa516016c46dc4c0f380ffccbd742a61af1eda/PyRIC-0.1.6.3.tar.gz", hash = "sha256:b539b01cafebd2406c00097f94525ea0f8ecd1dd92f7731f43eac0ef16c2ccc9", size = 870401, upload-time = "2016-12-04T07:54:48.374Z" }
 
 [[package]]
-name = "pysolarfocus"
-version = "5.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging" },
-    { name = "pymodbus" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/30/b9/a9e046eb721ea90be3e1938143fa52162134ecb4c09f3ffed85e805ae933/pysolarfocus-5.3.0.tar.gz", hash = "sha256:979f56d37d7f3ddcc37ad75c03bcc4626b2a9c57767356ad78f3c6bd40e1166b", size = 744343, upload-time = "2026-08-20T09:38:25.064Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/be/d53e744fbd2dc60823c94e22e5a926688bd082cdcda33b60829ec1e03278/pysolarfocus-5.3.0-py3-none-any.whl", hash = "sha256:43d5be978a6d66bd48335011bd50c9c9d22d58ebad8a022722d73def7f6e4c68", size = 32351, upload-time = "2026-08-20T09:38:23.961Z" },
-]
-
-[[package]]
 name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2441,14 +2440,14 @@ wheels = [
 
 [[package]]
 name = "solarfocus"
-version = "6.0.0"
+version = "7.0.0rc1"
 source = { editable = "." }
 dependencies = [
+    { name = "aiosolarfocus" },
     { name = "homeassistant" },
     { name = "packaging" },
     { name = "pydantic-settings" },
     { name = "pylint" },
-    { name = "pysolarfocus" },
     { name = "pytest-homeassistant-custom-component" },
     { name = "pytest-socket" },
 ]
@@ -2461,11 +2460,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiosolarfocus", specifier = ">=0.2.0,<1" },
     { name = "homeassistant", specifier = ">=2026.8.0,<2027" },
     { name = "packaging", specifier = "~=24.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
     { name = "pylint", specifier = ">=3.3.3" },
-    { name = "pysolarfocus", specifier = ">=5.3.0,<6" },
     { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.355,<0.14" },
     { name = "pytest-socket", specifier = ">=0.8.0,<0.9" },
 ]

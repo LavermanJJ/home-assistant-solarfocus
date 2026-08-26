@@ -6,10 +6,9 @@ from dataclasses import dataclass, replace
 import logging
 from typing import Any, override
 
-from packaging import version
-from pysolarfocus import Systems
+from aiosolarfocus import ComponentId, Systems
+from aiosolarfocus.components.base import Component
 
-from homeassistant.const import CONF_API_VERSION
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
@@ -40,8 +39,13 @@ class SolarfocusEntityDescription(EntityDescription):
     object_id_name: str = ""
     # The index as a device name shows it, " 1" or blank - see `create_description`
     device_idx: str = ""
-    min_required_version: str = "21.140"
-    unsupported_systems: list[Systems] | None = None
+    # The systems whose reading of this register nobody has checked. Not a
+    # claim about the register map - the library owns that, and knows exactly
+    # what a firmware and a system have. This is the narrower thing it cannot
+    # know: that the register is there and answers, and that what it means on
+    # that system has never been measured. See the biomass boiler's door
+    # contact, the only one.
+    unverified_systems: list[Systems] | None = None
 
 
 def create_description[_DescriptionT: SolarfocusEntityDescription](
@@ -76,7 +80,11 @@ def create_description[_DescriptionT: SolarfocusEntityDescription](
     # in every language.
     return replace(
         description,
-        item=description.key,
+        # The key with no override, which is all but three of them. An entity
+        # whose register the library renamed keeps the key its entity id, its
+        # history and its translation are built from, and names the register
+        # separately - see the heat pump's seasonal performance figures.
+        item=description.item or description.key,
         component=component,
         component_prefix=prefix,
         component_idx=idx,
@@ -90,34 +98,46 @@ def create_description[_DescriptionT: SolarfocusEntityDescription](
 def every_system_but(*supported: Systems) -> list[Systems]:
     """Return every system except the ones given.
 
-    Some registers are documented for a single system - the register document
-    writes them "Kesselbetriebsart therminator" or "Speichertemperatur Oben
-    octoplus". Naming the system that has the register says that far more
-    plainly than listing the four that do not, and it keeps a system added to
-    the enum later out of a register the document never granted it.
+    Naming the systems a reading has been checked on says far more plainly than
+    listing the ones it has not, and it keeps a system added to the enum later
+    out of a reading nobody has measured on it.
     """
     return [system for system in Systems if system not in supported]
 
 
-def filterVersionAndSystem[_EntityT: SolarfocusEntity](
+def supported_entities[_EntityT: SolarfocusEntity](
     config_entry: SolarfocusConfigEntry, entities: list[_EntityT]
 ) -> Generator[_EntityT]:
-    """Filter entities not compatible to version or system."""
-    api_version = version.parse(config_entry.data[CONF_API_VERSION])
+    """Drop the entities this controller has nothing behind.
 
-    filtered_entities = filter(
-        lambda entity: version.parse(entity.entity_description.min_required_version)
-        <= api_version,
-        entities,
-    )
+    The library resolves the register map against the firmware and the system,
+    so `supports` is the whole answer to what this controller has: it replaces a
+    `min_required_version` and an `unsupported_systems` list carried on every
+    description, which were a second copy of the register document and drifted
+    from it - a Therminator on 21.140 was offered a `log_wood` sensor for a
+    register that firmware does not map, and an Ecotop a buffer `x35_temperature`
+    the document gives to the Therminator alone.
 
-    current_system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+    A derived value counts as supported when the registers it is worked out from
+    are, which is why this asks the component rather than the register map.
 
-    for entity in filtered_entities:
-        unsupported_systems = entity.entity_description.unsupported_systems
-        if unsupported_systems is None:
+    Two kinds of entity are passed through rather than asked about: the ones
+    that read no single register - the climate entity, the water heater - and
+    the ones that read no register at all, on the controller rather than on a
+    component. `component` is blank on the latter, and there is nothing to ask.
+    """
+    system = config_entry.data[CONF_SOLARFOCUS_SYSTEM]
+
+    for entity in entities:
+        description = entity.entity_description
+
+        unverified = description.unverified_systems
+        if unverified is not None and system in unverified:
+            continue
+
+        if not description.component or entity.reads_no_single_register:
             yield entity
-        elif current_system not in unsupported_systems:
+        elif entity.component.supports(description.item):
             yield entity
 
 
@@ -126,6 +146,13 @@ class SolarfocusEntity(Entity):
 
     _attr_should_poll = True
     has_entity_name = True
+
+    #: Whether this entity's `item` names one register of its component. The
+    #: climate entity and the water heater read and write several under a key
+    #: that is a label rather than a register name, so what they need is the
+    #: component, not a register on it - and there is nothing for
+    #: `supported_entities` to ask about.
+    reads_no_single_register = False
 
     entity_description: SolarfocusEntityDescription
 
@@ -207,9 +234,15 @@ class SolarfocusEntity(Entity):
         `select` on it stops accepting writes - the entities of every component
         that does answer keep taking them.
         """
-        return self.coordinator.last_update_success and (
-            COMPONENT_DEVICES[self.entity_description.component_prefix].option
-            not in self.coordinator.failed_components
+        description = self.entity_description
+        instance = (
+            COMPONENT_DEVICES[description.component_prefix].option,
+            description.component_idx,
+        )
+
+        return (
+            self.coordinator.last_update_success
+            and instance not in self.coordinator.failed_components
         )
 
     @property
@@ -274,63 +307,59 @@ class SolarfocusEntity(Entity):
         """Update entity."""
         await self.coordinator.async_request_refresh()
 
-    def _set_native_value(self, item: str, value: Any) -> None:
-        """Write a value to one register of the component this entity is on."""
-        # The library builds its components at runtime, so what a component and
-        # its registers are is only known to it - `Any` is the honest type here.
-        component: Any
-        idx = -1
+    @property
+    def component(self) -> Component:
+        """Return the component instance this entity reads and writes.
 
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
+        `of` answers with a list whatever the component is, including the ones
+        a controller only has one of, so which of the two an entity is on stops
+        being something this has to know: an index the description does not
+        carry is the first and only one.
+        """
+        description = self.entity_description
+        index = int(description.component_idx or 1) - 1
+
+        return self.coordinator.client.of(ComponentId(description.component))[index]
+
+    async def _async_set_native_value(self, item: str, value: Any) -> None:
+        """Write a value to one register of the component this entity is on.
+
+        Class access on a register gives its specification, instance access
+        gives the reading - so this is the register named by the description,
+        handed back to the component it was declared on.
+
+        Everything that used to be here has moved into the library: the two's
+        complement of a negative value, and the re-read of the whole component
+        afterwards. A write that the controller took updates the component's
+        own cache, so the new value is readable straight away.
+        """
+        component = self.component
         _LOGGER.debug(
-            "_set_native_value - idx: %s, component: %s, entity: %s",
-            idx,
+            "_async_set_native_value - component: %s, entity: %s, value: %s",
             self.entity_description.component,
             item,
+            value,
         )
-        entity = getattr(component, item)
-        entity.set_unscaled_value(value)
 
-        raw_value = entity.value
-        if isinstance(raw_value, (int, float)) and raw_value < 0:
-            # Modbus transmits registers as unsigned words, negative values have
-            # to be written as two's complement (16 bit per register). The signed
-            # value is restored afterwards, reading the register turns it back
-            # into a signed one.
-            entity.value = raw_value + (1 << (16 * entity.count))
-            entity.commit()
-            entity.value = raw_value
-        else:
-            entity.commit()
-
-        component.update()
+        await component.write(getattr(type(component), item), value)
 
         self.async_write_ha_state()
 
     def _get_native_value(self, item: str) -> Any:
-        """Read the value of one register of the component this entity is on."""
-        component: Any
-        idx = -1
+        """Read the value of one register of the component this entity is on.
 
-        if self.entity_description.component_idx:
-            idx = int(self.entity_description.component_idx) - 1
-            component = getattr(
-                self.coordinator.api, self.entity_description.component
-            )[idx]
-        else:
-            component = getattr(self.coordinator.api, self.entity_description.component)
+        Not a coroutine: the reading is already decoded and in hand, and only
+        the calls that talk to the controller are awaited.
 
-        native_value = getattr(component, item).scaled_value
+        `None` is a real answer - the register is not on this firmware or
+        system, it has not been read yet or its last read failed, or the channel
+        is reporting an open sensor rather than a measurement. Every caller here
+        wants the same thing for all three.
+        """
+        native_value = getattr(self.component, item)
 
         _LOGGER.debug(
-            "_get_native_value - idx: %s, component: %s, entity: %s, value: %s",
-            idx,
+            "_get_native_value - component: %s, entity: %s, value: %s",
             self.entity_description.component,
             item,
             native_value,

@@ -1,0 +1,410 @@
+{
+  "meta": {
+    "system": "Ecotop",
+    "api_version": "26.020"
+  },
+  "components": {
+    "heating_circuits.1": {
+      "supply_temperature": {
+        "address": 1100,
+        "kind": "input",
+        "raw": 280,
+        "value": 28.0,
+        "unit": "°C"
+      },
+      "room_temperature": {
+        "address": 1101,
+        "kind": "input",
+        "raw": 277,
+        "value": 27.7,
+        "unit": "°C"
+      },
+      "humidity": {
+        "address": 1102,
+        "kind": "input",
+        "raw": -1,
+        "value": null,
+        "unit": "%"
+      },
+      "limit_thermostat": {
+        "address": 1103,
+        "kind": "input",
+        "raw": 1,
+        "value": true,
+        "unit": null
+      },
+      "circulator_pump": {
+        "address": 1105,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "mixer_valve": {
+        "address": 1106,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": "%"
+      },
+      "state": {
+        "address": 1107,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "target_supply_temperature": {
+        "address": 32600,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "cooling": {
+        "address": 32602,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "mode": {
+        "address": 32603,
+        "kind": "holding",
+        "raw": 3,
+        "value": 3,
+        "unit": null
+      },
+      "target_room_temperature": {
+        "address": 32605,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "indoor_temperature_external": {
+        "address": 32606,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "indoor_humidity_external": {
+        "address": 32607,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "%"
+      },
+      "heating_mode": {
+        "address": 32608,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      }
+    },
+    "heating_circuits.2": {
+      "supply_temperature": {
+        "address": 1150,
+        "kind": "input",
+        "raw": 281,
+        "value": 28.1,
+        "unit": "°C"
+      },
+      "room_temperature": {
+        "address": 1151,
+        "kind": "input",
+        "raw": 196,
+        "value": 19.6,
+        "unit": "°C"
+      },
+      "humidity": {
+        "address": 1152,
+        "kind": "input",
+        "raw": -1,
+        "value": null,
+        "unit": "%"
+      },
+      "limit_thermostat": {
+        "address": 1153,
+        "kind": "input",
+        "raw": 1,
+        "value": true,
+        "unit": null
+      },
+      "circulator_pump": {
+        "address": 1155,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "mixer_valve": {
+        "address": 1156,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": "%"
+      },
+      "state": {
+        "address": 1157,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "target_supply_temperature": {
+        "address": 32650,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "cooling": {
+        "address": 32652,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "mode": {
+        "address": 32653,
+        "kind": "holding",
+        "raw": 3,
+        "value": 3,
+        "unit": null
+      },
+      "target_room_temperature": {
+        "address": 32655,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "indoor_temperature_external": {
+        "address": 32656,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "°C"
+      },
+      "indoor_humidity_external": {
+        "address": 32657,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "%"
+      },
+      "heating_mode": {
+        "address": 32658,
+        "kind": "holding",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      }
+    },
+    "buffers.1": {
+      "top_temperature": {
+        "address": 1900,
+        "kind": "input",
+        "raw": 719,
+        "value": 71.9,
+        "unit": "°C"
+      },
+      "bottom_temperature": {
+        "address": 1901,
+        "kind": "input",
+        "raw": 540,
+        "value": 54.0,
+        "unit": "°C"
+      },
+      "pump": {
+        "address": 1903,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "state": {
+        "address": 1904,
+        "kind": "input",
+        "raw": 1,
+        "value": 1,
+        "unit": null
+      },
+      "mode": {
+        "address": 1905,
+        "kind": "input",
+        "raw": 1,
+        "value": 1,
+        "unit": null
+      }
+    },
+    "boilers.1": {
+      "temperature": {
+        "address": 500,
+        "kind": "input",
+        "raw": 651,
+        "value": 65.1,
+        "unit": "°C"
+      },
+      "state": {
+        "address": 501,
+        "kind": "input",
+        "raw": 1,
+        "value": 1,
+        "unit": null
+      },
+      "mode": {
+        "address": 502,
+        "kind": "input",
+        "raw": 2,
+        "value": 2,
+        "unit": null
+      },
+      "target_temperature": {
+        "address": 32000,
+        "kind": "holding",
+        "raw": 750,
+        "value": 75.0,
+        "unit": "°C"
+      },
+      "single_charge": {
+        "address": 32001,
+        "kind": "holding",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "holding_mode": {
+        "address": 32002,
+        "kind": "holding",
+        "raw": 2,
+        "value": 2,
+        "unit": null
+      },
+      "circulation": {
+        "address": 32003,
+        "kind": "holding",
+        "raw": -1,
+        "value": null,
+        "unit": null
+      }
+    },
+    "biomass_boiler": {
+      "temperature": {
+        "address": 2400,
+        "kind": "input",
+        "raw": 302,
+        "value": 30.2,
+        "unit": "°C"
+      },
+      "status": {
+        "address": 2401,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "time_of_operation_at_maintenance": {
+        "address": 2402,
+        "kind": "input",
+        "raw": 340595,
+        "value": 340595,
+        "unit": "min"
+      },
+      "message_number": {
+        "address": 2404,
+        "kind": "input",
+        "raw": 0,
+        "value": 0,
+        "unit": null
+      },
+      "door_contact": {
+        "address": 2405,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "cleaning": {
+        "address": 2406,
+        "kind": "input",
+        "raw": -1,
+        "value": null,
+        "unit": "%"
+      },
+      "ash_container": {
+        "address": 2407,
+        "kind": "input",
+        "raw": 8,
+        "value": 8,
+        "unit": "%"
+      },
+      "outdoor_temperature": {
+        "address": 2408,
+        "kind": "input",
+        "raw": 197,
+        "value": 19.7,
+        "unit": "°C"
+      },
+      "return_temperature": {
+        "address": 2410,
+        "kind": "input",
+        "raw": 304,
+        "value": 30.4,
+        "unit": "°C"
+      },
+      "pellet_usage_last_fill": {
+        "address": 2414,
+        "kind": "input",
+        "raw": 0,
+        "value": 0.0,
+        "unit": "kg"
+      },
+      "pellet_usage_total": {
+        "address": 2416,
+        "kind": "input",
+        "raw": 233237,
+        "value": 23323.7,
+        "unit": "kg"
+      },
+      "heat_energy_total": {
+        "address": 2418,
+        "kind": "input",
+        "raw": 1065282,
+        "value": 106528.2,
+        "unit": "kWh"
+      },
+      "sweep_almost_done": {
+        "address": 2420,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "residual_oxygen_level": {
+        "address": 2421,
+        "kind": "input",
+        "raw": 210,
+        "value": 21.0,
+        "unit": "%"
+      },
+      "return_flow_booster_pump": {
+        "address": 2422,
+        "kind": "input",
+        "raw": 0,
+        "value": false,
+        "unit": null
+      },
+      "outdoor_temperature_external": {
+        "address": 33406,
+        "kind": "holding",
+        "raw": -9999,
+        "value": null,
+        "unit": "°C"
+      }
+    }
+  }
+}

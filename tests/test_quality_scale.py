@@ -10,6 +10,7 @@ fail this file and be answered for, which is exactly what a list that has to be
 updated by hand does.
 """
 
+import importlib.resources
 import json
 import pathlib
 
@@ -244,11 +245,20 @@ def test_every_error_a_form_shows_is_a_string(strings_file: str) -> None:
     assert not unused
 
 
-def test_the_platinum_rules_are_still_open() -> None:
-    """Typing and the library, the two that need work outside the checklist."""
-    assert _status("strict-typing") == "todo"
-    assert not (COMPONENT_DIR / "py.typed").exists()
+def test_the_platinum_rules_are_closed() -> None:
+    """The two the migration to `aiosolarfocus` was for.
 
-    assert _status("async-dependency") == "todo"
-    # The library is synchronous, which is what the executor calls are for
-    assert "async_add_executor_job" in _source("coordinator")
+    `async-dependency` wants a library that does not block, and
+    `strict-typing` wants one that is PEP 561 compliant. `pysolarfocus` was
+    neither, which is why both rules named it rather than anything here.
+    """
+    assert _status("async-dependency") == "done"
+    # Nothing goes through a thread pool any more: the library is awaited.
+    assert "async_add_executor_job" not in _source("coordinator")
+    assert "async_add_executor_job" not in _source("entity")
+    assert "async_add_executor_job" not in _source("config_flow")
+
+    assert _status("strict-typing") == "done"
+    assert (
+        importlib.resources.files("aiosolarfocus").joinpath("py.typed").is_file()
+    ), "the rule wants the dependency to ship a py.typed marker"

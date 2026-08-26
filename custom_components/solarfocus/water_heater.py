@@ -92,6 +92,10 @@ class SolarfocusWaterHeaterEntityDescription(
 class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     """Representation of a Solarfocus number entity."""
 
+    # `thermostat` and `domestic_hot_water` are labels rather than register
+    # names: this entity reads and writes several registers of its component.
+    reads_no_single_register = True
+
     entity_description: SolarfocusWaterHeaterEntityDescription
 
     _attr_has_entity_name = True
@@ -164,14 +168,14 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
-            self._set_native_value("target_temperature", temp)
+            await self._async_set_native_value("target_temperature", temp)
             _LOGGER.debug("Set Temperature: %s", temp)
 
     @override
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target temperature."""
         mapped_mode = HA_MODE_TO_SOLARFOCUS.get(operation_mode)
-        self._set_native_value("holding_mode", mapped_mode)
+        await self._async_set_native_value("holding_mode", mapped_mode)
         _LOGGER.debug(
             "Set Operation Mode: %s (mapped to: %s)", operation_mode, mapped_mode
         )
@@ -179,13 +183,13 @@ class SolarfocusWaterHeaterEntity(SolarfocusEntity, WaterHeaterEntity):
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn water heater on."""
-        self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
+        await self._async_set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_ON)
         _LOGGER.debug("async_turn_on")
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn water heater off."""
-        self._set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
+        await self._async_set_native_value("holding_mode", SOLARFOCUS_MODE_ALWAYS_OFF)
         _LOGGER.debug("async_turn_off")
 
 

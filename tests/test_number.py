@@ -1,62 +1,64 @@
 """Test the Solarfocus number entities."""
 
-from types import SimpleNamespace
-
-from pysolarfocus import ApiVersions, Systems
-from pysolarfocus.components.photovoltaic import Photovoltaic
+from aiosolarfocus import ApiVersion, ComponentId
 
 from custom_components.solarfocus.const import (
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
-    PHOTOVOLTAIC_PREFIX,
 )
-from custom_components.solarfocus.entity import (
-    create_description,
-    filterVersionAndSystem,
+from custom_components.solarfocus.entity import create_description, supported_entities
+from custom_components.solarfocus.number import (
+    PHOTOVOLTAIC_NUMBER_TYPES,
+    SolarfocusNumberEntity,
 )
-from custom_components.solarfocus.number import PHOTOVOLTAIC_NUMBER_TYPES
-from homeassistant.const import CONF_API_VERSION
+
+from .conftest import build_client, build_config_entry, build_coordinator
 
 
-def _config_entry(api_version: str):
-    """Create a minimal config entry stub for entity filtering."""
-    return SimpleNamespace(
-        data={CONF_API_VERSION: api_version, "system": Systems.VAMPAIR},
-        options={},
-    )
+def _entities(api_version: str) -> list[str]:
+    """Return the photovoltaic numbers an entry on this firmware would build."""
+    entry = build_config_entry(api_version=api_version, photovoltaic=True)
+    coordinator = build_coordinator(entry, build_client(entry))
 
-
-def _entities(api_version: str):
-    """Create the photovoltaic number entities for the given api version."""
     entities = [
-        SimpleNamespace(
-            entity_description=create_description(
-                                PHOTOVOLTAIC_COMPONENT,
+        SolarfocusNumberEntity(
+            coordinator,
+            create_description(
+                PHOTOVOLTAIC_COMPONENT,
                 PHOTOVOLTAIC_COMPONENT_PREFIX,
                 "",
                 description,
-            )
+            ),
         )
         for description in PHOTOVOLTAIC_NUMBER_TYPES
     ]
+
     return [
         entity.entity_description.item
-        for entity in filterVersionAndSystem(_config_entry(api_version), entities)
+        for entity in supported_entities(entry, entities)
     ]
 
 
 def test_photovoltaic_numbers_match_library_holding_registers():
     """Every number entity has to map to a writable value of the library."""
-    photovoltaic = Photovoltaic(api_version=ApiVersions.V_26_020)
+    entry = build_config_entry(
+        api_version=ApiVersion.V_26_020.label, photovoltaic=True
+    )
+    photovoltaic = build_client(entry).of(ComponentId.PHOTOVOLTAIC)[0]
 
     for description in PHOTOVOLTAIC_NUMBER_TYPES:
-        assert hasattr(photovoltaic, description.key)
+        item = description.item or description.key
+        assert photovoltaic.supports(item)
+        # A number entity writes, so the register has to take a write - which
+        # the library says outright rather than leaving to be inferred from
+        # which block the register is in.
+        assert photovoltaic.info(item).writable
 
 
 def test_photovoltaic_number_keys_and_names():
     """Entity keys and translation keys are prefixed with the component."""
     description = create_description(
-                PHOTOVOLTAIC_COMPONENT,
+        PHOTOVOLTAIC_COMPONENT,
         PHOTOVOLTAIC_COMPONENT_PREFIX,
         "",
         PHOTOVOLTAIC_NUMBER_TYPES[0],

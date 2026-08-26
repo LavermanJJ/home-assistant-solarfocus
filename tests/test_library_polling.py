@@ -1,27 +1,23 @@
-"""Check what the integration offers against what pysolarfocus actually reads.
+"""Check what the integration offers against what the library actually reads.
 
-An entity is only as good as the poll behind it, and the library's `update_*`
-methods return True both when they read a component and when they decided the
-system has none to read. A component the library quietly skips therefore
-produces entities that sit at their default value forever and a refresh that
-reports success: no exception, no unavailable entity, no repair issue, and
-nothing in the rest of this suite notices.
+An entity is only as good as the poll behind it. The predecessor's `update_*`
+methods returned True both when they read a component and when they decided the
+system had none to read, so a component the library quietly skipped produced
+entities that sat at their default value forever and a refresh that reported
+success: no exception, no unavailable entity, no repair issue, and nothing in
+the rest of this suite noticed.
 
 That is what happened when Pellet Elegance and Octoplus were first added to the
 dropdown - `update_biomassboiler` named THERMINATOR and ECOTOP, so both new
-systems showed a boiler at 0.0 degrees and called it fine. These tests tie the
-dropdown to the library, so offering a system the library does not poll fails
-here instead of in somebody's dashboard.
+systems showed a boiler at 0.0 degrees and called it fine.
 
-The same goes for the registers under a component. An entity reads its value by
-`getattr`-ing its key off the pysolarfocus component, so a description whose key
-the library does not carry for that system raises an `AttributeError` on the
-first read - which is why register 2410 could not simply be renamed here and
-needed the library to name it first (issue #223).
+`aiosolarfocus` closes that hole by construction: a component the system does
+not have is not built, and a read that fails is attributed rather than
+swallowed. These tests hold the dropdown to it anyway, because the failure they
+guard against is silent and the cost of asking is one client per system.
 """
 
-from packaging import version
-from pysolarfocus import ApiVersions, SolarfocusAPI, Systems
+from aiosolarfocus import ApiVersion, ComponentId, Systems
 import pytest
 
 from custom_components.solarfocus.binary_sensor import (
@@ -29,21 +25,16 @@ from custom_components.solarfocus.binary_sensor import (
 )
 from custom_components.solarfocus.config_flow import SOLARFOCUS_SYSTEMS
 from custom_components.solarfocus.const import CONF_BIOMASS_BOILER, CONF_HEATPUMP
-from custom_components.solarfocus.coordinator import COMPONENT_UPDATES
+from custom_components.solarfocus.coordinator import COMPONENT_IDS
 from custom_components.solarfocus.sensor import BIOMASS_BOILER_SENSOR_TYPES
+
+from .conftest import build_client, build_config_entry, controller_of
 
 # The systems a user can actually pick, read off the dropdown itself so that
 # adding one to the form brings it under these tests with it.
 OFFERED_SYSTEMS = [Systems(option["value"]) for option in SOLARFOCUS_SYSTEMS]
 
-# The heat source the config flow switches on for a system, and the attribute on
-# the API that the matching `update_*` call is supposed to read.
-HEAT_SOURCE_COMPONENTS = {
-    CONF_HEATPUMP: "heatpump",
-    CONF_BIOMASS_BOILER: "biomassboiler",
-}
-
-LATEST_API_VERSION = list(ApiVersions)[-1]
+LATEST_API_VERSION = list(ApiVersion)[-1]
 
 
 def _heat_source_of(system: Systems) -> str:
@@ -51,61 +42,53 @@ def _heat_source_of(system: Systems) -> str:
     return CONF_HEATPUMP if system == Systems.VAMPAIR else CONF_BIOMASS_BOILER
 
 
-def _update_method(flag: str) -> str:
-    """Return the API method the coordinator calls for a component flag."""
-    return next(method for conf, method in COMPONENT_UPDATES if conf == flag)
+def _client(system: Systems, **options):
+    """Return a client for a system, on the newest firmware the library knows."""
+    entry = build_config_entry(
+        system, api_version=LATEST_API_VERSION.label, **options
+    )
+
+    return build_client(entry)
 
 
 @pytest.mark.parametrize("system", OFFERED_SYSTEMS, ids=lambda s: s.name)
-def test_the_heat_source_of_every_offered_system_is_read(
-    system: Systems, monkeypatch: pytest.MonkeyPatch
+async def test_the_heat_source_of_every_offered_system_is_read(
+    system: Systems,
 ) -> None:
     """Whichever heat source a system is set up with has to actually be polled."""
-    api = SolarfocusAPI(
-        ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
-    )
     flag = _heat_source_of(system)
-    component = getattr(api, HEAT_SOURCE_COMPONENTS[flag])
+    component_id = COMPONENT_IDS[flag]
+    client = _client(system, **{flag: True})
 
-    reads: list[str] = []
-    monkeypatch.setattr(
-        type(component), "update", lambda self: reads.append(system.name) or True
-    )
+    result = await client.update()
 
-    assert getattr(api, _update_method(flag))() is True
-    assert reads, (
-        f"{system.name} is offered in the dropdown and set up with "
-        f"{flag}, but pysolarfocus never reads its {HEAT_SOURCE_COMPONENTS[flag]}. "
-        f"Every entity on it would sit at its default value and the refresh "
-        f"would still report success."
+    assert client.of(component_id), (
+        f"{system.name} is offered in the dropdown and set up with {flag}, "
+        f"but the library builds no {component_id.value} for it. Every entity "
+        f"on it would sit at its default value."
     )
+    assert controller_of(client).reads, f"{system.name} read nothing at all"
+    assert result.ok
 
 
 @pytest.mark.parametrize("system", OFFERED_SYSTEMS, ids=lambda s: s.name)
-def test_the_heat_source_a_system_does_not_have_is_skipped(
-    system: Systems, monkeypatch: pytest.MonkeyPatch
+def test_the_heat_source_a_system_does_not_have_is_refused(
+    system: Systems,
 ) -> None:
-    """And the other one is left alone, rather than read and reported as real."""
-    api = SolarfocusAPI(
-        ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
-    )
+    """And the other one is refused outright rather than built and read.
+
+    The predecessor built it and read nothing into it. The library will not
+    take the configuration at all, which is the difference between a boiler
+    reporting 0.0 degrees and an entry that says why it cannot be set up.
+    """
     absent = (
         CONF_BIOMASS_BOILER
         if _heat_source_of(system) == CONF_HEATPUMP
         else CONF_HEATPUMP
     )
-    component = getattr(api, HEAT_SOURCE_COMPONENTS[absent])
 
-    reads: list[str] = []
-    monkeypatch.setattr(
-        type(component), "update", lambda self: reads.append(system.name) or True
-    )
-
-    assert getattr(api, _update_method(absent))() is True
-    assert not reads, (
-        f"{system.name} has no {HEAT_SOURCE_COMPONENTS[absent]}, but pysolarfocus "
-        f"reads one for it."
-    )
+    with pytest.raises(Exception, match="has no"):
+        _client(system, **{absent: True})
 
 
 # Every description of the biomass boiler, whichever platform reports it.
@@ -115,42 +98,46 @@ BIOMASS_BOILER_DESCRIPTIONS = [
 ]
 
 
-def _reaches(system: Systems, description) -> bool:
-    """Return whether a description survives the system and version filter."""
-    return system not in (
-        description.unsupported_systems or []
-    ) and version.parse(description.min_required_version) <= version.parse(
-        LATEST_API_VERSION.value
-    )
-
-
 @pytest.mark.parametrize("system", OFFERED_SYSTEMS, ids=lambda s: s.name)
 def test_every_biomass_boiler_entity_has_a_register_behind_it(
     system: Systems,
 ) -> None:
-    """A description the library has no attribute for cannot be read at all.
+    """A description the library has no value for cannot be read at all.
 
-    `_get_native_value` does `getattr(component, key).scaled_value`, so the
-    entity is built, added, and raises on the first refresh. Nothing else in
-    this suite notices: the platform tests build their components from mocks,
-    which answer to any name.
+    The entities are built from `supports` now, so this is less a guard against
+    a broken entity than a check that every description this integration
+    carries still names something - a description the library has never heard
+    of would simply never be built, and would sit here unnoticed instead.
     """
     if _heat_source_of(system) != CONF_BIOMASS_BOILER:
         pytest.skip(f"{system.name} has no biomass boiler")
 
-    boiler = SolarfocusAPI(
-        ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
-    ).biomassboiler
+    boiler = _client(system, biomassboiler=True).of(ComponentId.BIOMASS_BOILER)[0]
+    available = set(boiler.available_values())
 
-    missing = [
+    unknown = [
         description.key
         for description in BIOMASS_BOILER_DESCRIPTIONS
-        if _reaches(system, description) and not hasattr(boiler, description.key)
+        if (description.item or description.key) not in available
     ]
 
-    assert not missing, (
-        f"{system.name} would build {sorted(missing)} on its biomass boiler, "
-        f"but pysolarfocus carries no such register for that system."
+    # Only what no system has: a register the document grants to one system is
+    # legitimately absent on the others, and the entity is not built there.
+    everything = set()
+    for other in OFFERED_SYSTEMS:
+        if _heat_source_of(other) != CONF_BIOMASS_BOILER:
+            continue
+        everything |= set(
+            _client(other, biomassboiler=True)
+            .of(ComponentId.BIOMASS_BOILER)[0]
+            .available_values()
+        )
+
+    orphaned = [key for key in unknown if key not in everything]
+
+    assert not orphaned, (
+        f"the biomass boiler describes {sorted(orphaned)}, which the library "
+        f"carries no value of that name for on any system."
     )
 
 
@@ -187,15 +174,10 @@ def test_register_2410_is_reported_under_one_name_per_system(
         f"and both of {sorted(REGISTER_2410)} have to be there."
     )
 
-    reached = [key for key in REGISTER_2410 if _reaches(system, described[key])]
-    expected = [
-        key for key, systems in REGISTER_2410.items() if system in systems
-    ]
+    if _heat_source_of(system) != CONF_BIOMASS_BOILER:
+        pytest.skip(f"{system.name} has no biomass boiler")
 
-    assert reached == expected
+    boiler = _client(system, biomassboiler=True).of(ComponentId.BIOMASS_BOILER)[0]
+    expected = [key for key, systems in REGISTER_2410.items() if system in systems]
 
-    if _heat_source_of(system) == CONF_BIOMASS_BOILER:
-        boiler = SolarfocusAPI(
-            ip="127.0.0.1", system=system, api_version=LATEST_API_VERSION
-        ).biomassboiler
-        assert [key for key in REGISTER_2410 if hasattr(boiler, key)] == expected
+    assert [key for key in REGISTER_2410 if boiler.supports(key)] == expected

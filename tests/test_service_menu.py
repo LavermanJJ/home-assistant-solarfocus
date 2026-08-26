@@ -187,7 +187,7 @@ async def test_the_number_writes_nothing_to_the_heating_system(
 
 
 async def test_the_number_survives_a_restart(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry,
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """The display keeps showing the number, so Home Assistant keeps it too.
@@ -226,7 +226,7 @@ async def test_the_number_survives_a_restart(
 
 
 async def test_the_number_takes_the_four_digits_the_display_shows(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry,
 ) -> None:
     """The installer menu shows up to four digits, so 9999 is the highest there is."""
     entry = build_config_entry()
@@ -321,7 +321,7 @@ def test_they_stay_available_when_a_component_cannot_be_read(
 
 
 async def test_the_registry_agrees_where_they_belong(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     entity_registry,
 ) -> None:
     """The registry is what puts them on the page of the controller.
@@ -355,7 +355,7 @@ async def test_the_registry_agrees_where_they_belong(
 
 
 async def test_the_codes_change_at_midnight(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry,
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """A code a day old opens nothing, and nothing polls these entities."""

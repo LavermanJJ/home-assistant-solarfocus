@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from pysolarfocus import ApiVersions, Systems
+from aiosolarfocus import ApiVersion, ComponentId, Systems
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -46,7 +46,7 @@ from .conftest import CURRENT_VERSION, build_config_entry, build_options
 
 
 async def test_setup_and_unload_entry(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """A reachable device sets up the entry and unloading cleans up again."""
     config_entry.add_to_hass(hass)
@@ -64,12 +64,12 @@ async def test_setup_and_unload_entry(
 
 
 async def test_setup_passes_component_counts_to_the_library(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
-    """The configured component counts are handed to pysolarfocus."""
+    """The configured component counts are handed to the library."""
     entry = build_config_entry(
         Systems.THERMINATOR,
-        api_version=ApiVersions.V_25_030.value,
+        api_version=ApiVersion.V_25_030.label,
         heating_circuit=3,
         buffer=2,
         boiler=1,
@@ -82,16 +82,17 @@ async def test_setup_passes_component_counts_to_the_library(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    kwargs = mock_api.call_args.kwargs
-    assert kwargs["heating_circuit_count"] == 3
-    assert kwargs["buffer_count"] == 2
-    assert kwargs["boiler_count"] == 1
+    config = mock_client.instance.config
+
+    assert config.heating_circuits == 3
+    assert config.buffers == 2
+    assert config.boilers == 1
     # Was never passed, so the library built its default of one module and
     # every entity of a second one raised IndexError on read.
-    assert kwargs["fresh_water_module_count"] == 2
-    assert kwargs["solar_count"] == 2
-    assert kwargs["system"] is Systems.THERMINATOR
-    assert kwargs["api_version"] is ApiVersions.V_25_030
+    assert config.fresh_water_modules == 2
+    assert config.solar == 2
+    assert config.system is Systems.THERMINATOR
+    assert config.api_version is ApiVersion.V_25_030
 
 
 @pytest.mark.parametrize(
@@ -100,14 +101,14 @@ async def test_setup_passes_component_counts_to_the_library(
 async def test_setup_accepts_legacy_boolean_solar_option(
     hass: HomeAssistant,
     enable_custom_integrations,
-    mock_api,
+    mock_client,
     stored_solar,
     expected_count: int,
 ) -> None:
     """Entries written before solar became a count still set up."""
     entry = build_config_entry(
         Systems.VAMPAIR,
-        api_version=ApiVersions.V_25_030.value,
+        api_version=ApiVersion.V_25_030.label,
         heating_circuit=1,
         solar=stored_solar,
     )
@@ -116,12 +117,12 @@ async def test_setup_accepts_legacy_boolean_solar_option(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert mock_api.call_args.kwargs["solar_count"] == expected_count
+    assert mock_client.instance.config.solar == expected_count
 
 
 @pytest.mark.parametrize("stored_solar", [2, 4])
 async def test_setup_caps_solar_below_the_version_that_supports_several(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, stored_solar: int
+    hass: HomeAssistant, enable_custom_integrations, mock_client, stored_solar: int
 ) -> None:
     """The options allow a count the selected api version cannot have.
 
@@ -131,7 +132,7 @@ async def test_setup_caps_solar_below_the_version_that_supports_several(
     """
     entry = build_config_entry(
         Systems.VAMPAIR,
-        api_version=ApiVersions.V_23_020.value,
+        api_version=ApiVersion.V_23_020.label,
         heating_circuit=1,
         solar=stored_solar,
     )
@@ -140,16 +141,14 @@ async def test_setup_caps_solar_below_the_version_that_supports_several(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert mock_api.call_args.kwargs["solar_count"] == 1
+    assert mock_client.instance.config.solar == 1
 
 
 async def test_setup_retries_when_the_device_is_unreachable(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """A failing first refresh raises ConfigEntryNotReady."""
-    api.connect.return_value = False
-    api.is_connected = False
-    api.update_heating.side_effect = OSError("no route to host")
+    mock_client.offline()
     config_entry.add_to_hass(hass)
 
     await hass.config_entries.async_setup(config_entry.entry_id)
@@ -159,15 +158,14 @@ async def test_setup_retries_when_the_device_is_unreachable(
 
 
 async def test_a_refused_connection_says_so(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """Nothing to talk to at the address is the common half of a failed setup.
 
     Telling that user their controller answered and then went quiet sends them
     looking at the heating system for a problem that is in the network.
     """
-    api.connect.return_value = False
-    api.is_connected = False
+    mock_client.offline()
     config_entry.add_to_hass(hass)
 
     await hass.config_entries.async_setup(config_entry.entry_id)
@@ -178,12 +176,16 @@ async def test_a_refused_connection_says_so(
 
 
 async def test_a_controller_that_answers_nothing_says_that_instead(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """A connection that is accepted and read from anyway is the other half."""
-    api.is_connected = True
-    for component in ("heating", "buffer", "boiler", "heatpump"):
-        getattr(api, f"update_{component}").return_value = False
+    for component in (
+        ComponentId.HEATING_CIRCUITS,
+        ComponentId.BUFFERS,
+        ComponentId.BOILERS,
+        ComponentId.HEAT_PUMP,
+    ):
+        mock_client.silence(component)
     config_entry.add_to_hass(hass)
 
     await hass.config_entries.async_setup(config_entry.entry_id)
@@ -194,7 +196,7 @@ async def test_a_controller_that_answers_nothing_says_that_instead(
 
 
 async def test_updating_options_reloads_the_entry(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """The update listener reloads the entry so entities follow the new options."""
     config_entry.add_to_hass(hass)
@@ -224,7 +226,7 @@ async def test_unload_without_setup_is_a_noop(hass: HomeAssistant) -> None:
 
 
 async def test_reload_entry(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, config_entry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
     """Reloading tears the entry down and sets it up again."""
     config_entry.add_to_hass(hass)
@@ -495,7 +497,7 @@ async def test_migration_from_version_4_renames_the_pellets_boiler(
 
 @pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
 async def test_migrated_entries_can_be_set_up(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, version: int
+    hass: HomeAssistant, enable_custom_integrations, mock_client, version: int
 ) -> None:
     """Every supported old entry ends up in the layout async_setup_entry reads.
 
@@ -541,12 +543,14 @@ async def test_migrated_entries_can_be_set_up(
 
 
 def _version_6_entry(**option_overrides) -> MockConfigEntry:
-    """Return an entry as version 6 stored one: no unique id, and the
-    connection still among the options."""
+    """Return an entry as version 6 stored one.
+
+    No unique id, and the connection still among the options.
+    """
     options = {
         CONF_HOST: "solarfocus.local",
         CONF_PORT: 502,
-        CONF_API_VERSION: ApiVersions.V_23_020.value,
+        CONF_API_VERSION: ApiVersion.V_23_020.label,
         **build_options(**option_overrides),
     }
     return MockConfigEntry(
@@ -560,7 +564,7 @@ def _version_6_entry(**option_overrides) -> MockConfigEntry:
 
 
 async def test_setup_moves_the_unique_id_to_the_configured_address(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """The address can change, and the unique id follows it on the next load."""
     entry = build_config_entry(heating_circuit=1)
@@ -574,7 +578,7 @@ async def test_setup_moves_the_unique_id_to_the_configured_address(
 
 
 async def test_setup_leaves_a_unique_id_less_entry_alone(
-    hass: HomeAssistant, enable_custom_integrations, mock_api
+    hass: HomeAssistant, enable_custom_integrations, mock_client
 ) -> None:
     """A duplicate the migration left without a unique id keeps it that way."""
     first = build_config_entry()
@@ -593,7 +597,7 @@ async def test_setup_leaves_a_unique_id_less_entry_alone(
 async def test_setup_does_not_move_a_unique_id_onto_another_entry(
     hass: HomeAssistant,
     enable_custom_integrations,
-    mock_api,
+    mock_client,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """The options flow refuses this, a hand-edited entry can still get here."""
@@ -1165,7 +1169,7 @@ async def test_migration_leaves_the_entities_of_another_entry_alone(
 
 
 async def test_a_migrated_entry_sets_up_on_the_entities_it_already_had(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry
 ) -> None:
     """The whole point of rewriting the ids rather than registering new ones.
 
@@ -1198,7 +1202,7 @@ async def test_a_migrated_entry_sets_up_on_the_entities_it_already_had(
 
 
 async def test_a_renamed_entry_keeps_its_device(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """What the whole migration is for.
 
@@ -1227,7 +1231,7 @@ async def test_a_renamed_entry_keeps_its_device(
 
 
 async def test_a_renamed_entry_keeps_its_entities(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry
 ) -> None:
     """The other half of what the rename used to cost, and the point of #212.
 
@@ -1259,7 +1263,7 @@ async def test_a_renamed_entry_keeps_its_entities(
 
 
 async def test_every_component_is_its_own_device_under_the_hub(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """The layout a user sees: a controller, and the components of it.
 
@@ -1293,7 +1297,7 @@ async def test_every_component_is_its_own_device_under_the_hub(
 
 
 async def test_the_hub_is_the_controller(
-    hass: HomeAssistant, enable_custom_integrations, api, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """The device every component hangs off is the box they are wired to.
 
@@ -1301,8 +1305,6 @@ async def test_the_hub_is_the_controller(
     does not vary with the system - `Solarfocus` is the make, and the model of
     the device says which system it is.
     """
-    api.system = Systems.THERMINATOR
-
     entry = build_config_entry(Systems.THERMINATOR, biomassboiler=True)
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -1316,7 +1318,7 @@ async def test_the_hub_is_the_controller(
 
 
 async def test_the_hub_keeps_the_name_the_user_gave_it(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """Telling two heating systems apart by name is renaming their controllers.
 
@@ -1342,7 +1344,7 @@ async def test_the_hub_keeps_the_name_the_user_gave_it(
 
 
 async def test_every_entity_sits_on_the_component_it_reads(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     entity_registry,
 ) -> None:
     """An entity of heating circuit 2 belongs to the device of heating circuit 2."""
@@ -1370,7 +1372,7 @@ async def test_every_entity_sits_on_the_component_it_reads(
 
 
 async def test_the_entity_id_is_the_device_and_the_english_key(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry
 ) -> None:
     """Home Assistant composes the id; the integration only supplies half of it.
 
@@ -1406,7 +1408,7 @@ async def test_the_entity_id_is_the_device_and_the_english_key(
 
 
 async def test_lowering_a_count_removes_the_device_and_its_entities(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     entity_registry,
 ) -> None:
     """A component a user takes away must not leave anything behind.
@@ -1439,7 +1441,7 @@ async def test_lowering_a_count_removes_the_device_and_its_entities(
 
 @pytest.mark.parametrize("component", ["circulation", "differential_module"])
 async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     component: str,
 ) -> None:
     """A component the selected version lacks is as gone as one switched off.
@@ -1454,7 +1456,7 @@ async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
         "differential_module": DIFFERENTIAL_MODULE_COMPONENT_PREFIX,
     }[component]
     entry = build_config_entry(
-        Systems.VAMPAIR, api_version=ApiVersions.V_25_030.value, **{component: 2}
+        Systems.VAMPAIR, api_version=ApiVersion.V_25_030.label, **{component: 2}
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -1463,7 +1465,7 @@ async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
     assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_{prefix}2")})
 
     hass.config_entries.async_update_entry(
-        entry, data={**entry.data, CONF_API_VERSION: ApiVersions.V_23_020.value}
+        entry, data={**entry.data, CONF_API_VERSION: ApiVersion.V_23_020.label}
     )
     await hass.async_block_till_done()
 
@@ -1478,7 +1480,7 @@ async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
 
 
 async def test_switching_a_component_off_removes_its_device(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """The same for the components that are a switch rather than a count."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1, photovoltaic=True)
@@ -1497,7 +1499,7 @@ async def test_switching_a_component_off_removes_its_device(
 
 
 async def test_raising_a_count_adds_a_device(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """The other direction, and the hub keeps every one of them."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=1)
@@ -1518,7 +1520,7 @@ async def test_raising_a_count_adds_a_device(
 
 
 async def test_removing_the_entry_removes_every_device(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """The components go with the controller they hang off."""
     entry = build_config_entry(Systems.VAMPAIR, heating_circuit=2, heatpump=True)
@@ -1535,7 +1537,7 @@ async def test_removing_the_entry_removes_every_device(
 
 
 async def test_a_device_can_only_be_deleted_once_its_component_is_gone(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry
 ) -> None:
     """Deleting a configured device by hand would only have it built again.
 
@@ -1560,7 +1562,7 @@ async def test_a_device_can_only_be_deleted_once_its_component_is_gone(
 
 
 async def test_a_new_component_device_lands_in_the_area_of_its_controller(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     area_registry,
 ) -> None:
     """Splitting the components off must not take them out of their room.
@@ -1591,7 +1593,7 @@ async def test_a_new_component_device_lands_in_the_area_of_its_controller(
 
 
 async def test_a_component_the_user_moved_stays_where_they_put_it(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, device_registry,
+    hass: HomeAssistant, enable_custom_integrations, mock_client, device_registry,
     area_registry,
 ) -> None:
     """Inheriting the area is for devices that are new, and only then."""
@@ -1617,7 +1619,7 @@ async def test_a_component_the_user_moved_stays_where_they_put_it(
 
 
 async def test_the_solar_entities_follow_the_key_the_count_uses(
-    hass: HomeAssistant, enable_custom_integrations, mock_api, entity_registry
+    hass: HomeAssistant, enable_custom_integrations, mock_client, entity_registry
 ) -> None:
     """One solar circuit is keyed without its index, several are keyed with it.
 
@@ -1627,7 +1629,7 @@ async def test_the_solar_entities_follow_the_key_the_count_uses(
     value it had when the count changed.
     """
     entry = build_config_entry(
-        Systems.VAMPAIR, api_version=ApiVersions.V_25_030.value, solar=1
+        Systems.VAMPAIR, api_version=ApiVersion.V_25_030.label, solar=1
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)

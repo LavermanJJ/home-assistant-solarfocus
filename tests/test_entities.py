@@ -1,12 +1,14 @@
 """Test what the entity classes read from and write to the device.
 
 Every entity reads its value through `_get_native_value` and writes it through
-`_set_native_value`, which address a pysolarfocus component by name and index.
+`_async_set_native_value`, which address a component of the library by name and
+index.
 These tests pin the mapping down for one entity of every platform.
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from aiosolarfocus import ComponentId, RegisterKind
 import pytest
 
 from custom_components.solarfocus.binary_sensor import (
@@ -31,7 +33,7 @@ from custom_components.solarfocus.const import (
     MANUFACTURER,
     ComponentDevice,
 )
-from custom_components.solarfocus.coordinator import COMPONENT_UPDATES
+from custom_components.solarfocus.coordinator import COMPONENT_IDS
 from custom_components.solarfocus.entity import create_description
 from custom_components.solarfocus.number import (
     BOILER_NUMBER_TYPES,
@@ -65,12 +67,30 @@ from custom_components.solarfocus.water_heater import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, STATE_OFF, UnitOfTemperature
 
-from .conftest import build_config_entry, build_coordinator
+from .conftest import (
+    build_client,
+    build_config_entry,
+    build_coordinator,
+    controller_of,
+    set_reading,
+    written,
+)
+
+# Enough of everything that any index a test asks for exists. What a component
+# is configured as is the entry's business; these tests are about the entity.
+FULLY_EQUIPPED = {
+    "heating_circuit": 4,
+    "buffer": 4,
+    "boiler": 4,
+    "heatpump": True,
+    "photovoltaic": True,
+}
 
 
 def _make(entity_class, description, component, component_prefix, idx="1"):
-    """Create an entity of the given class on a mocked coordinator."""
-    coordinator = build_coordinator(build_config_entry())
+    """Create an entity of the given class over a controller that is not real."""
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     entity = entity_class(
         coordinator,
         create_description(component, component_prefix, idx, description),
@@ -119,8 +139,8 @@ def test_device_info_puts_the_entity_on_its_own_component() -> None:
     device drops the index - so raising the count of a component renames its
     first device rather than orphaning it.
     """
-    entry = build_config_entry()
-    coordinator = build_coordinator(entry)
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     coordinator.hub_device_id = "hub"
     entity = SolarfocusSensor(
         coordinator,
@@ -145,7 +165,8 @@ def test_device_info_puts_the_entity_on_its_own_component() -> None:
 
 def test_a_component_that_exists_once_is_not_numbered() -> None:
     """There is one heat pump, so its device is `Heat pump`, not `Heat pump 1`."""
-    coordinator = build_coordinator(build_config_entry())
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     coordinator.hub_device_id = "hub"
     entity = SolarfocusSwitchEntity(
         coordinator,
@@ -207,7 +228,8 @@ def test_only_the_component_that_failed_goes_unavailable() -> None:
     instead. One device per component is what makes that visible: the boiler
     greys out its own page and the rest of the system carries on.
     """
-    coordinator = build_coordinator(build_config_entry())
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     boiler = SolarfocusSensor(
         coordinator,
         create_description(
@@ -221,7 +243,7 @@ def test_only_the_component_that_failed_goes_unavailable() -> None:
         ),
     )
 
-    coordinator.failed_components = {CONF_BOILER}
+    coordinator.failed_components = {(CONF_BOILER, "1")}
 
     assert boiler.available is False
     assert heat_pump.available is True
@@ -239,16 +261,17 @@ def test_every_component_goes_unavailable_under_its_own_option(
     is pinned here rather than the boiler alone, because a mismatch is one
     component with entities that never go unavailable and nothing else.
     """
-    coordinator = build_coordinator(build_config_entry())
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     entity = SolarfocusSensor(
         coordinator,
         create_description(BOILER_COMPONENT, prefix, "1", BOILER_SENSOR_TYPES[0]),
     )
 
-    coordinator.failed_components = {device.option}
+    coordinator.failed_components = {(device.option, "1")}
     assert entity.available is False
 
-    coordinator.failed_components = {device.translation_key + "_renamed"}
+    coordinator.failed_components = {(device.translation_key + "_renamed", "1")}
     assert entity.available is True
 
 
@@ -260,13 +283,20 @@ def test_every_component_device_names_an_option_the_coordinator_polls() -> None:
     """
     assert (
         {device.option for device in COMPONENT_DEVICES.values()}
-        == {option for option, _ in COMPONENT_UPDATES}
+        == set(COMPONENT_IDS)
     )
 
 
-def test_a_failing_component_takes_every_instance_of_it() -> None:
-    """The library reads all boilers in one call, so all of them failed."""
-    coordinator = build_coordinator(build_config_entry())
+def test_a_failing_instance_leaves_the_others_alone() -> None:
+    """One boiler that answers nothing is one boiler.
+
+    The predecessor read all four in one call and stopped at the first that
+    failed, so a boiler that answered nothing greyed out every boiler. The
+    library plans its reads across the whole system and attributes a refusal to
+    the instances it was for, which is what makes this worth asking.
+    """
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     boilers = [
         SolarfocusSensor(
             coordinator,
@@ -277,9 +307,9 @@ def test_a_failing_component_takes_every_instance_of_it() -> None:
         for idx in ("1", "2")
     ]
 
-    coordinator.failed_components = {CONF_BOILER}
+    coordinator.failed_components = {(CONF_BOILER, "1")}
 
-    assert [boiler.available for boiler in boilers] == [False, False]
+    assert [boiler.available for boiler in boilers] == [False, True]
 
 
 def test_a_writable_entity_of_a_failing_component_goes_unavailable() -> None:
@@ -290,7 +320,8 @@ def test_a_writable_entity_of_a_failing_component_goes_unavailable() -> None:
     every component that does answer keep taking them, which is the whole
     difference to failing the refresh.
     """
-    coordinator = build_coordinator(build_config_entry())
+    entry = build_config_entry(**FULLY_EQUIPPED)
+    coordinator = build_coordinator(entry, build_client(entry))
     number = SolarfocusNumberEntity(
         coordinator,
         create_description(
@@ -298,7 +329,7 @@ def test_a_writable_entity_of_a_failing_component_goes_unavailable() -> None:
         ),
     )
 
-    coordinator.failed_components = {CONF_BOILER}
+    coordinator.failed_components = {(CONF_BOILER, "1")}
 
     assert number.available is False
 
@@ -312,10 +343,10 @@ def test_a_component_that_reads_again_comes_back() -> None:
         BOILER_COMPONENT_PREFIX,
     )
 
-    entity.coordinator.failed_components = {CONF_BOILER}
+    entity.coordinator.failed_components = {(CONF_BOILER, "1")}
     assert entity.available is False
 
-    entity.coordinator.failed_components = set()
+    entity.coordinator.failed_components = frozenset()
     assert entity.available is True
 
 
@@ -333,7 +364,7 @@ def test_the_whole_system_being_gone_still_beats_a_working_component() -> None:
     )
 
     entity.coordinator.last_update_success = False
-    entity.coordinator.failed_components = set()
+    entity.coordinator.failed_components = frozenset()
 
     assert entity.available is False
 
@@ -347,9 +378,12 @@ def test_indexed_components_are_addressed_by_position() -> None:
         BOILER_COMPONENT_PREFIX,
         idx="3",
     )
-    boilers = [MagicMock() for _ in range(3)]
-    boilers[2].temperature.scaled_value = 55
-    entity.coordinator.api.boilers = boilers
+    set_reading(
+        entity.coordinator.client, ComponentId.BOILERS, "temperature", 55, index=3
+    )
+    set_reading(
+        entity.coordinator.client, ComponentId.BOILERS, "temperature", 20, index=1
+    )
 
     assert entity._get_native_value("temperature") == 55
 
@@ -363,7 +397,7 @@ def test_components_without_an_index_are_read_directly() -> None:
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
     )
-    entity.coordinator.api.heatpump.evu_lock.scaled_value = 1
+    set_reading(entity.coordinator.client, ComponentId.HEAT_PUMP, "evu_lock", 1)
 
     assert entity._get_native_value("evu_lock") == 1
 
@@ -416,7 +450,12 @@ def test_sensor_reports_the_component_value() -> None:
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
-    getattr(entity.coordinator.api.boilers[0], description.key).scaled_value = 42
+    set_reading(
+        entity.coordinator.client,
+        ComponentId.BOILERS,
+        entity.entity_description.item,
+        42,
+    )
 
     assert entity.native_value == 42
 
@@ -434,11 +473,18 @@ def test_binary_sensor_compares_against_its_on_state(
     """Some binary sensors are active on 0 (a problem) and some on 1 (running)."""
     entity = _make(
         SolarfocusBinarySensorEntity,
-        SolarfocusBinarySensorEntityDescription(key="pump", on_state=on_state),
+        SolarfocusBinarySensorEntityDescription(
+            key="circulator_pump", on_state=on_state
+        ),
         HEATING_CIRCUIT_COMPONENT,
         HEATING_CIRCUIT_COMPONENT_PREFIX,
     )
-    entity.coordinator.api.heating_circuits[0].pump.scaled_value = value
+    set_reading(
+        entity.coordinator.client,
+        ComponentId.HEATING_CIRCUITS,
+        "circulator_pump",
+        value,
+    )
 
     assert entity.is_on is expected
 
@@ -455,7 +501,7 @@ async def test_number_writes_the_value() -> None:
         BOILER_COMPONENT_PREFIX,
     )
 
-    with patch.object(entity, "_set_native_value") as set_value:
+    with patch.object(entity, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await entity.async_set_native_value(60)
 
     assert set_value.call_args_list == [(("target_temperature", 60),)]
@@ -469,7 +515,7 @@ def test_number_reads_the_value() -> None:
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
-    entity.coordinator.api.boilers[0].target_temperature.scaled_value = 55
+    set_reading(entity.coordinator.client, ComponentId.BOILERS, "target_temperature", 55, index=1)
 
     assert entity.native_value == 55
 
@@ -489,12 +535,14 @@ async def test_select_writes_and_reports_the_option() -> None:
 
     assert entity.options == HEATPUMP_SELECT_TYPES[0].solarfocus_options
 
-    with patch.object(entity, "_set_native_value") as set_value:
+    with patch.object(entity, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await entity.async_select_option("3")
 
-    assert set_value.call_args_list == [(("smart_grid", "3"),)]
+    # The number the register holds, not the string the form offered: the
+    # library encodes an int or a member of the register's own enumeration.
+    assert set_value.call_args_list == [(("smart_grid", 3),)]
 
-    entity.coordinator.api.heatpump.smart_grid.scaled_value = 3
+    set_reading(entity.coordinator.client, ComponentId.HEAT_PUMP, "smart_grid", 3)
     assert entity.current_option == "3"
 
 
@@ -511,7 +559,7 @@ async def test_switch_turns_the_lock_on_and_off() -> None:
         idx="",
     )
 
-    with patch.object(entity, "_set_native_value") as set_value:
+    with patch.object(entity, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await entity.async_turn_on()
         await entity.async_turn_off()
 
@@ -530,7 +578,7 @@ def test_switch_reports_its_state() -> None:
         HEAT_PUMP_COMPONENT_PREFIX,
         idx="",
     )
-    entity.coordinator.api.heatpump.evu_lock.scaled_value = 1
+    set_reading(entity.coordinator.client, ComponentId.HEAT_PUMP, "evu_lock", 1)
 
     assert entity.is_on == 1
 
@@ -553,7 +601,7 @@ async def test_button_triggers_its_item(description) -> None:
         BOILER_COMPONENT_PREFIX,
     )
 
-    with patch.object(entity, "_set_native_value") as set_value:
+    with patch.object(entity, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await entity.async_press()
 
     assert set_value.call_args_list == [((description.key, 1),)]
@@ -565,9 +613,9 @@ async def test_button_triggers_its_item(description) -> None:
 
 def test_water_heater_reports_temperatures(boiler_water_heater) -> None:
     """The water heater reads the boiler it belongs to."""
-    boiler = boiler_water_heater.coordinator.api.boilers[1]
-    boiler.temperature.scaled_value = 48.5
-    boiler.target_temperature.scaled_value = 55.0
+    client = boiler_water_heater.coordinator.client
+    set_reading(client, ComponentId.BOILERS, "temperature", 48.5, index=2)
+    set_reading(client, ComponentId.BOILERS, "target_temperature", 55.0, index=2)
 
     assert boiler_water_heater.current_temperature == 48.5
     assert boiler_water_heater.target_temperature == 55.0
@@ -588,7 +636,7 @@ def test_water_heater_maps_the_device_mode(
     boiler_water_heater, mode: int, expected: str
 ) -> None:
     """The numeric device mode is translated into the displayed operation."""
-    boiler_water_heater.coordinator.api.boilers[1].mode.scaled_value = mode
+    set_reading(boiler_water_heater.coordinator.client, ComponentId.BOILERS, "mode", mode, index=2)
 
     assert boiler_water_heater.current_operation == expected
 
@@ -608,7 +656,7 @@ def test_water_heater_operation_list_covers_every_device_mode(
 
 async def test_water_heater_sets_the_target_temperature(boiler_water_heater) -> None:
     """Setting the temperature writes the boiler target temperature."""
-    with patch.object(boiler_water_heater, "_set_native_value") as set_value:
+    with patch.object(boiler_water_heater, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await boiler_water_heater.async_set_temperature(**{ATTR_TEMPERATURE: 52})
 
     assert set_value.call_args_list == [(("target_temperature", 52),)]
@@ -618,7 +666,7 @@ async def test_water_heater_ignores_a_call_without_a_temperature(
     boiler_water_heater,
 ) -> None:
     """A service call without a temperature must not write anything."""
-    with patch.object(boiler_water_heater, "_set_native_value") as set_value:
+    with patch.object(boiler_water_heater, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await boiler_water_heater.async_set_temperature(operation_mode="auto")
 
     assert not set_value.called
@@ -626,7 +674,7 @@ async def test_water_heater_ignores_a_call_without_a_temperature(
 
 async def test_water_heater_sets_the_operation_mode(boiler_water_heater) -> None:
     """The displayed operation is written back as the numeric device mode."""
-    with patch.object(boiler_water_heater, "_set_native_value") as set_value:
+    with patch.object(boiler_water_heater, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await boiler_water_heater.async_set_operation_mode(HA_DISPLAY_MODE_BLOCKWISE)
 
     assert set_value.call_args_list == [
@@ -636,7 +684,7 @@ async def test_water_heater_sets_the_operation_mode(boiler_water_heater) -> None
 
 async def test_water_heater_turns_on_and_off(boiler_water_heater) -> None:
     """On and off map to the always on and always off modes."""
-    with patch.object(boiler_water_heater, "_set_native_value") as set_value:
+    with patch.object(boiler_water_heater, "_async_set_native_value", new_callable=AsyncMock) as set_value:
         await boiler_water_heater.async_turn_on()
         await boiler_water_heater.async_turn_off()
 
@@ -649,21 +697,26 @@ async def test_water_heater_turns_on_and_off(boiler_water_heater) -> None:
 # --- writing ----------------------------------------------------------------
 
 
-def test_set_native_value_writes_and_refreshes_the_component() -> None:
-    """Writing commits the register and reads the component back."""
+async def test_a_write_reaches_the_register_and_is_reported_at_once() -> None:
+    """Writing puts the word on the wire and reports the value immediately.
+
+    There is no read afterwards: a write the controller took updates the
+    component's own cache. It used to commit the register and then read the
+    whole component back, blocking, on the event loop.
+    """
     entity = _make(
         SolarfocusNumberEntity,
         BOILER_NUMBER_TYPES[0],
         BOILER_COMPONENT,
         BOILER_COMPONENT_PREFIX,
     )
-    boiler = entity.coordinator.api.boilers[0]
-    boiler.target_temperature.value = 55
-    boiler.target_temperature.count = 1
 
-    entity._set_native_value("target_temperature", 55)
+    await entity._async_set_native_value("target_temperature", 55)
 
-    boiler.target_temperature.set_unscaled_value.assert_called_once_with(55)
-    boiler.target_temperature.commit.assert_called_once()
-    boiler.update.assert_called_once()
+    # 32000 holding, in tenths of a degree.
+    assert written(entity.coordinator.client) == [
+        (RegisterKind.HOLDING, 32000, (550,))
+    ]
+    assert not controller_of(entity.coordinator.client).reads
+    assert entity._get_native_value("target_temperature") == 55
     entity.async_write_ha_state.assert_called_once()

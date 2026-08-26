@@ -89,24 +89,9 @@ rules:
   stale-devices: done
 
   # Platinum
-  async-dependency:
-    status: todo
-    comment: |
-      pysolarfocus is synchronous, so every read and write goes through
-      `async_add_executor_job`. This is a change in the library rather than
-      here.
+  async-dependency: done
   inject-websession:
     status: exempt
     comment: |
       Modbus TCP, there is no HTTP session to inject.
-  strict-typing:
-    status: todo
-    comment: |
-      Half done. The integration itself passes the strict mypy configuration
-      core applies to an integration in its `.strict-typing`, kept in `mypy.ini`
-      here and run by `make check-mypy` in CI, with no per-module exceptions.
-
-      What is left is pysolarfocus: the rule wants the dependency to be PEP 561
-      compliant, and it ships no `py.typed`. Nearly all of it is annotated
-      already, so this is a marker file and a release rather than a rewrite -
-      and a change in that library rather than here.
+  strict-typing: done
