@@ -188,14 +188,14 @@ wheels = [
 
 [[package]]
 name = "aiosolarfocus"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pymodbus" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/25/59/9e14e063cb1e75e346616a4cb5ab095b7420481e3c6665e895ed0e7d4f6f/aiosolarfocus-0.2.1.tar.gz", hash = "sha256:dc1f695cda765944437e75c9061767531e0ae1c26e797b514ecd3b33970b8b6c", size = 102791, upload-time = "2026-08-26T08:42:17.992Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/68/2f/d5ce1ad986789fe0f89f8a9f1de1cfdb13410ff4e5c340eab6528c40b5c8/aiosolarfocus-0.2.2.tar.gz", hash = "sha256:18f20adb88cda97bd8996c957730b2dc7ed42e038606a7056b6e3785c5d817a5", size = 104544, upload-time = "2026-08-29T14:58:34.94Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/dc/b097c740ea7a338bb5a5467bdd4c093ad39f162ab24e67c1ff580e77add7/aiosolarfocus-0.2.1-py3-none-any.whl", hash = "sha256:7a71662b81f7f1f0e88f9c29c372cc946a2442ce56f4274c64cca4af5711c22a", size = 84104, upload-time = "2026-08-26T08:42:17.006Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/4c/426078edbd189e38f4bce94ba9b001cfb739774be276210277ea805b9ec5/aiosolarfocus-0.2.2-py3-none-any.whl", hash = "sha256:65dfa6c46ab3d99df0ceb178a24b93493e25060f58e3ba0c739ef4c2149a29dc", size = 85087, upload-time = "2026-08-29T14:58:33.976Z" },
 ]
 
 [[package]]
@@ -2440,7 +2440,7 @@ wheels = [
 
 [[package]]
 name = "solarfocus"
-version = "7.0.0rc1"
+version = "7.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosolarfocus" },
@@ -2460,7 +2460,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiosolarfocus", specifier = ">=0.2.1,<1" },
+    { name = "aiosolarfocus", specifier = ">=0.2.2,<1" },
     { name = "homeassistant", specifier = ">=2026.8.0,<2027" },
     { name = "packaging", specifier = "~=24.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
