@@ -2440,7 +2440,7 @@ wheels = [
 
 [[package]]
 name = "solarfocus"
-version = "7.0.0rc2"
+version = "7.0.0rc3"
 source = { editable = "." }
 dependencies = [
     { name = "aiosolarfocus" },
