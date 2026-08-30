@@ -109,7 +109,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         ) from coordinator.last_exception
 
     hub = _async_hub_device(hass, entry, api)
-    coordinator.hub_device_id = hub.id
     entry.runtime_data = coordinator
 
     await _async_align_solar_unique_ids(hass, entry)
