@@ -19,7 +19,6 @@ from homeassistant.const import (
     UnitOfMass,
     UnitOfPower,
     UnitOfTemperature,
-    UnitOfVolume,
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -792,7 +791,7 @@ SOLAR_SENSOR_TYPES = [
     ),
     SolarfocusSensorEntityDescription(
         key="flow_heat_meter",
-        native_unit_of_measurement=UnitOfVolume.LITERS,
+        native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_HOUR,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SolarfocusSensorEntityDescription(
