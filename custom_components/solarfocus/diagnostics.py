@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from aiosolarfocus import __version__ as aiosolarfocus_version
+
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
@@ -29,6 +31,11 @@ async def async_get_config_entry_diagnostics(
     coordinator = entry.runtime_data
 
     return {
+        # The manifest pins one version, but a report is written from what is
+        # installed rather than from what is pinned - fklein1980 ran a stale
+        # aiosolarfocus against a controller and could not tell from its output
+        # (#237), which is the same trap a diagnostics download falls into.
+        "aiosolarfocus": aiosolarfocus_version,
         "entry": {
             "version": entry.version,
             "data": async_redact_data(entry.data, TO_REDACT),

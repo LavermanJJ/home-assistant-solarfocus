@@ -8,6 +8,7 @@ it, and that the address of their controller is not.
 import json
 
 from aiosolarfocus import ApiVersion, ComponentId
+from aiosolarfocus import __version__ as aiosolarfocus_version
 from pytest_homeassistant_custom_component.components.diagnostics import (
     get_diagnostics_for_config_entry,
 )
@@ -43,6 +44,20 @@ async def test_diagnostics_hide_the_address_of_the_controller(
     # The port says nothing on its own and tells a non-standard setup apart
     assert diagnostics["entry"]["data"][CONF_PORT] == 502
     assert "solarfocus.local" not in str(diagnostics)
+
+
+async def test_diagnostics_name_the_library_version_actually_installed(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """The manifest pins a version; a report has to say what is really there.
+
+    fklein1980 ran a stale aiosolarfocus against a controller and nothing in
+    the output said so (#237). A diagnostics download falls into the same trap,
+    and it is the one artefact an issue is usually written from.
+    """
+    diagnostics = await _diagnostics(hass, heating_circuit=1)
+
+    assert diagnostics["aiosolarfocus"] == aiosolarfocus_version
 
 
 async def test_home_assistant_serves_the_download(
