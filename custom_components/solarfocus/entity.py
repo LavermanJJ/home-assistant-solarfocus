@@ -199,15 +199,24 @@ class SolarfocusEntity(Entity):
             translation_placeholders={"idx": description.device_idx},
             model=device.model,
             manufacturer=MANUFACTURER,
+            # The controller every component hangs off, named by its
+            # identifiers rather than by its device id.
+            #
+            # `via_device_id` is what Home Assistant asks for now, and it is
+            # what this used to pass - but the key only exists from core
+            # 2026.8, and `hacs.json` offers this integration from 2025.1. On
+            # anything older the device registry refuses the keyword outright,
+            # which takes down the whole entity: every component sensor, number,
+            # select, switch, button, climate and water heater fails to be
+            # added, leaving an installation with the two entities of the
+            # controller and no component devices at all. See #242, where a
+            # Pellet Elegance on core 2026.3.4 lost all 173 of them.
+            #
+            # `via_device` is deprecated in favour of it and is removed in core
+            # 2027.8, so this has to become `via_device_id` before then -
+            # together with a minimum core version that has the key.
+            via_device=(DOMAIN, self._entry_id),
         )
-
-        # `async_setup_entry` registers the controller before it forwards the
-        # entry to the platforms, so this is set by the time an entity is asked
-        # for its device. Left out rather than passed as `None` if it is not:
-        # an explicit `None` reads as "no via device" and would unlink a
-        # component from the controller it hangs off.
-        if (hub_device_id := self.coordinator.hub_device_id) is not None:
-            device_info["via_device_id"] = hub_device_id
 
         return device_info
 
