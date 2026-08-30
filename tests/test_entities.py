@@ -141,7 +141,6 @@ def test_device_info_puts_the_entity_on_its_own_component() -> None:
     """
     entry = build_config_entry(**FULLY_EQUIPPED)
     coordinator = build_coordinator(entry, build_client(entry))
-    coordinator.hub_device_id = "hub"
     entity = SolarfocusSensor(
         coordinator,
         create_description(
@@ -159,15 +158,17 @@ def test_device_info_puts_the_entity_on_its_own_component() -> None:
     assert device_info["translation_placeholders"] == {"idx": " 2"}
     assert device_info["model"] == BOILER_PREFIX
     assert device_info["manufacturer"] == MANUFACTURER
-    # Every component hangs off the controller
-    assert device_info["via_device_id"] == "hub"
+    # Every component hangs off the controller. `via_device`, not
+    # `via_device_id`: see the note on `device_info` - the newer key does not
+    # exist on the core versions this integration is offered for. See #242.
+    assert device_info["via_device"] == (DOMAIN, entry.entry_id)
+    assert "via_device_id" not in device_info
 
 
 def test_a_component_that_exists_once_is_not_numbered() -> None:
     """There is one heat pump, so its device is `Heat pump`, not `Heat pump 1`."""
     entry = build_config_entry(**FULLY_EQUIPPED)
     coordinator = build_coordinator(entry, build_client(entry))
-    coordinator.hub_device_id = "hub"
     entity = SolarfocusSwitchEntity(
         coordinator,
         create_description(
