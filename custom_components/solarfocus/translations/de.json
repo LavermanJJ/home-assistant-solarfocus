@@ -241,6 +241,9 @@
       "hc_target_supply_temperature": {
         "name": "Vorlaufsolltemperatur Heizen"
       },
+      "hp_outdoor_temperature_external": {
+        "name": "Außentemperatur extern"
+      },
       "installer_code_input": {
         "name": "Installateurcode Eingabe"
       },

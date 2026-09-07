@@ -3,11 +3,14 @@
 from aiosolarfocus import ApiVersion, ComponentId
 
 from custom_components.solarfocus.const import (
+    HEAT_PUMP_COMPONENT,
+    HEAT_PUMP_COMPONENT_PREFIX,
     PHOTOVOLTAIC_COMPONENT,
     PHOTOVOLTAIC_COMPONENT_PREFIX,
 )
 from custom_components.solarfocus.entity import create_description, supported_entities
 from custom_components.solarfocus.number import (
+    HEATPUMP_NUMBER_TYPES,
     PHOTOVOLTAIC_NUMBER_TYPES,
     SolarfocusNumberEntity,
 )
@@ -82,3 +85,64 @@ def test_hems_target_electrical_power_requires_26_020():
     """Register 33415 has been introduced with api version 26.020."""
     assert "hems_target_electrical_power" not in _entities("25.030")
     assert "hems_target_electrical_power" in _entities("26.020")
+
+
+def _heatpump_entities(api_version: str) -> list[str]:
+    """Return the heat pump numbers an entry on this firmware would build."""
+    entry = build_config_entry(api_version=api_version, heatpump=True)
+    coordinator = build_coordinator(entry, build_client(entry))
+
+    entities = [
+        SolarfocusNumberEntity(
+            coordinator,
+            create_description(
+                HEAT_PUMP_COMPONENT,
+                HEAT_PUMP_COMPONENT_PREFIX,
+                "",
+                description,
+            ),
+        )
+        for description in HEATPUMP_NUMBER_TYPES
+    ]
+
+    return [
+        entity.entity_description.item
+        for entity in supported_entities(entry, entities)
+    ]
+
+
+def test_heatpump_numbers_match_library_holding_registers():
+    """Every number entity has to map to a writable value of the library."""
+    entry = build_config_entry(api_version=ApiVersion.V_26_020.label, heatpump=True)
+    heat_pump = build_client(entry).of(ComponentId.HEAT_PUMP)[0]
+
+    for description in HEATPUMP_NUMBER_TYPES:
+        item = description.item or description.key
+        assert heat_pump.supports(item)
+        assert heat_pump.info(item).writable
+
+
+def test_heatpump_number_keys_and_names():
+    """Entity keys and translation keys are prefixed with the component."""
+    description = create_description(
+        HEAT_PUMP_COMPONENT,
+        HEAT_PUMP_COMPONENT_PREFIX,
+        "",
+        HEATPUMP_NUMBER_TYPES[0],
+    )
+
+    assert description.item == "outdoor_temperature_external"
+    assert description.key == "hp_outdoor_temperature_external"
+    assert description.translation_key == "hp_outdoor_temperature_external"
+    assert description.device_idx == ""
+    assert description.component == HEAT_PUMP_COMPONENT
+
+
+def test_outdoor_temperature_external_available_since_20_110():
+    """Register 33406 is available for all supported api versions.
+
+    20.110 is both the version that introduced it and the oldest the library
+    knows, so there is no firmware here that has to do without it.
+    """
+    assert _heatpump_entities("20.110") == ["outdoor_temperature_external"]
+    assert _heatpump_entities("26.020") == ["outdoor_temperature_external"]

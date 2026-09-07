@@ -222,6 +222,9 @@
       "hc_target_supply_temperature": {
         "name": "Target supply temperature"
       },
+      "hp_outdoor_temperature_external": {
+        "name": "Outdoor temperature external"
+      },
       "installer_code_input": {
         "name": "Installer code input"
       },
