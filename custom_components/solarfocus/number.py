@@ -17,8 +17,11 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    BIOMASS_BOILER_COMPONENT,
+    BIOMASS_BOILER_COMPONENT_PREFIX,
     BOILER_COMPONENT,
     BOILER_COMPONENT_PREFIX,
+    CONF_BIOMASS_BOILER,
     CONF_BOILER,
     CONF_HEATING_CIRCUIT,
     CONF_HEATPUMP,
@@ -88,6 +91,18 @@ async def async_setup_entry(
             _description = create_description(
                 HEAT_PUMP_COMPONENT,
                 HEAT_PUMP_COMPONENT_PREFIX,
+                "",
+                description,
+            )
+
+            entity = SolarfocusNumberEntity(coordinator, _description)
+            entities.append(entity)
+
+    if config_entry.options[CONF_BIOMASS_BOILER]:
+        for description in BIOMASS_BOILER_NUMBER_TYPES:
+            _description = create_description(
+                BIOMASS_BOILER_COMPONENT,
+                BIOMASS_BOILER_COMPONENT_PREFIX,
                 "",
                 description,
             )
@@ -272,6 +287,24 @@ HEATPUMP_NUMBER_TYPES = [
     # than from its own. Range and step follow the register - int16 in tenths of
     # a degree, bounded by the library at -50..60 - so a value the controller
     # would reject is rejected here, before it reaches the bus.
+    SolarfocusNumberEntityDescription(
+        key="outdoor_temperature_external",
+        device_class=NumberDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.CONFIG,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=-50.0,
+        native_max_value=60.0,
+        native_step=0.1,
+    ),
+]
+
+BIOMASS_BOILER_NUMBER_TYPES = [
+    # The same holding register the heat pump takes, reached from the other
+    # block: 33406 is offset 6 from 33400 here and offset 2 from 33404 there,
+    # and the two components never coexist because the config flow makes the
+    # heat pump a vampair and the biomass boiler everything else. A biomass
+    # owner needs this more than a vampair owner does, the outdoor sensor being
+    # what the boiler's weather compensation runs on.
     SolarfocusNumberEntityDescription(
         key="outdoor_temperature_external",
         device_class=NumberDeviceClass.TEMPERATURE,

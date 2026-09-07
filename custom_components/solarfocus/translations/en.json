@@ -207,6 +207,9 @@
       }
     },
     "number": {
+      "bb_outdoor_temperature_external": {
+        "name": "Outdoor temperature external"
+      },
       "bo_target_temperature": {
         "name": "Target temperature"
       },

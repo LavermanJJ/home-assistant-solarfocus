@@ -53,6 +53,9 @@
       }
     },
     "number": {
+      "bb_outdoor_temperature_external": {
+        "default": "mdi:thermometer"
+      },
       "bo_target_temperature": {
         "default": "mdi:thermostat"
       },

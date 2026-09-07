@@ -226,6 +226,9 @@
       }
     },
     "number": {
+      "bb_outdoor_temperature_external": {
+        "name": "Außentemperatur extern"
+      },
       "bo_target_temperature": {
         "name": "Solltemperatur"
       },
