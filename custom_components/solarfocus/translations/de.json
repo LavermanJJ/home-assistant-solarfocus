@@ -226,6 +226,9 @@
       }
     },
     "number": {
+      "bb_outdoor_temperature_external": {
+        "name": "Außentemperatur extern"
+      },
       "bo_target_temperature": {
         "name": "Solltemperatur"
       },
@@ -240,6 +243,9 @@
       },
       "hc_target_supply_temperature": {
         "name": "Vorlaufsolltemperatur Heizen"
+      },
+      "hp_outdoor_temperature_external": {
+        "name": "Außentemperatur extern"
       },
       "installer_code_input": {
         "name": "Installateurcode Eingabe"
