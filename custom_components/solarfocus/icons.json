@@ -53,6 +53,9 @@
       }
     },
     "number": {
+      "bb_outdoor_temperature_external": {
+        "default": "mdi:thermometer"
+      },
       "bo_target_temperature": {
         "default": "mdi:thermostat"
       },
@@ -64,6 +67,9 @@
       },
       "hc_target_supply_temperature": {
         "default": "mdi:thermostat"
+      },
+      "hp_outdoor_temperature_external": {
+        "default": "mdi:thermometer"
       },
       "installer_code_input": {
         "default": "mdi:dialpad"
