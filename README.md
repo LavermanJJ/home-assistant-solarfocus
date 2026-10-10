@@ -64,6 +64,20 @@ than a line.
 The climate entity supports heating, cooling and switching the heating circuit off, and it
 sets the flow temperature (_target temperature_) as well as the state (_preset_).
 
+> **Important**
+> The climate entity makes Home Assistant the _external controller_ of the heating circuit.
+> Selecting _Heat_ or _Cool_, turning it on or changing its target temperature writes a fixed
+> flow setpoint to register 32600, and from then on the eco<sup>manager-touch</sup> uses that
+> setpoint **instead of the heating curve** configured on the display. If no setpoint has been
+> set yet, _Heat_ writes 30 °C. This applies to every caller: dashboard cards, automations,
+> scripts, and voice assistants or HomeKit bridges that expose the entity.
+>
+> If you want the eco<sup>manager-touch</sup> to keep controlling the flow temperature, don't
+> use these controls. Changing the _preset_ only writes the operating mode (32603) and is
+> safe. You can also disable the climate entity. To hand control back to the heating curve,
+> set `number.solarfocus_heating_circuit_<n>_target_supply_temperature` to `0`. While that
+> register is 0 and the circuit is running, the thermostat shows no target temperature.
+
 Section 6.2 of the Solarfocus Modbus specification requires all registers of a heating
 circuit to be written together whenever the mode changes, otherwise the controller can end
 up in an undefined state. Selecting a mode therefore writes:

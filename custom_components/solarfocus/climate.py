@@ -230,13 +230,19 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
 
     @property
     @override
-    def target_temperature(self) -> float:
+    def target_temperature(self) -> float | None:
         """Return target supply temperature."""
         if value := self._get_native_value("target_supply_temperature"):
             return round(float(value), 2)
 
-        # The circuit is switched off, register 32600 has been written to 0
-        return self._remembered_target_temperature(self._active_mode)
+        # Register 32600 reads 0. A circuit that is switched off shows the
+        # setpoint it will get when it is switched on from here again.
+        if self.hvac_mode == HVACMode.OFF:
+            return self._remembered_target_temperature(self._active_mode)
+
+        # A running circuit without a setpoint follows the heating curve of the
+        # eco manager-touch; showing the default would suggest an override.
+        return None
 
     def _remembered_target_temperature(self, hvac_mode: HVACMode) -> float:
         """Return the setpoint to write when switching the circuit to a mode."""

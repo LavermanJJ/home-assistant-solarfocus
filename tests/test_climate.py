@@ -286,6 +286,14 @@ async def test_the_setpoint_of_a_switched_off_circuit_is_the_remembered_one() ->
     assert climate.target_temperature == DEFAULT_TARGET_TEMPERATURE[HVACMode.HEAT]
 
 
+async def test_a_running_circuit_without_a_setpoint_shows_none() -> None:
+    """Register 32600 at 0 means the heating curve decides, not a default (#248)."""
+    climate = build_climate(target_supply_temperature=0)
+
+    assert climate.hvac_mode == HVACMode.HEAT
+    assert climate.target_temperature is None
+
+
 # --- condensation ------------------------------------------------------------
 
 
