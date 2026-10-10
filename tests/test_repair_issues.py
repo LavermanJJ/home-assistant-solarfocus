@@ -257,7 +257,7 @@ async def test_the_issue_calls_the_component_what_the_user_renamed_it_to(
 
     entry = await _setup(hass, heating_circuit=1, boiler=1)
     registry = dr.async_get(hass)
-    device = registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bo1")})
+    device = registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_bo1"), entry.entry_id)
 
     assert device is not None
     registry.async_update_device(device.id, name_by_user="Dusche")
@@ -288,7 +288,7 @@ async def test_the_issue_links_the_device_pages_of_the_component(
 
     assert issue is not None
 
-    device = registry.async_get_device({(DOMAIN, f"{entry.entry_id}_bu2")})
+    device = registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_bu2"), entry.entry_id)
 
     assert device is not None
     assert issue.translation_placeholders["devices"] == (
@@ -315,7 +315,7 @@ async def test_an_issue_raised_before_the_devices_exist_is_named_once_they_do(
     issue = _issue(
         hass, f"component_unavailable_{entry.entry_id}_{CONF_HEATING_CIRCUIT}1"
     )
-    device = dr.async_get(hass).async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
+    device = dr.async_get(hass).async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc1"), entry.entry_id)
 
     assert issue is not None
     assert device is not None

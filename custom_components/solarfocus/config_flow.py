@@ -12,7 +12,7 @@ from aiosolarfocus import (
     SolarfocusConnectionError,
     Systems,
 )
-import voluptuous as vol
+import probatio
 
 from homeassistant import config_entries
 from homeassistant.const import (
@@ -82,22 +82,22 @@ SOLARFOCUS_API_VERSIONS = [
     for api_version in reversed(ApiVersion)
 ]
 
-_COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = vol.All(
+_COMPONENT_COUNT_ZERO_EIGHT_SELECTOR = probatio.All(
     selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=0, max=8, mode=selector.NumberSelectorMode.SLIDER
         ),
     ),
-    vol.Coerce(int),
+    probatio.Coerce(int),
 )
 
-_COMPONENT_COUNT_ZERO_FOUR_SELECTOR = vol.All(
+_COMPONENT_COUNT_ZERO_FOUR_SELECTOR = probatio.All(
     selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=0, max=4, mode=selector.NumberSelectorMode.SLIDER
         ),
     ),
-    vol.Coerce(int),
+    probatio.Coerce(int),
 )
 
 
@@ -121,27 +121,27 @@ def _heat_source(was: str, now: str) -> dict[str, bool]:
     return {CONF_HEATPUMP: heat_pump, CONF_BIOMASS_BOILER: not heat_pump}
 
 
-def _connection_schema(current: Mapping[str, Any]) -> vol.Schema:
+def _connection_schema(current: Mapping[str, Any]) -> probatio.Schema:
     """Return the form for what it takes to read the heating system at all.
 
     Where it is, which system it is, which register layout it speaks, and how
     often to ask it.
     """
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Required(CONF_HOST, default=current[CONF_HOST]): cv.string,
-            vol.Optional(CONF_PORT, default=current[CONF_PORT]): cv.port,
-            vol.Optional(
+            probatio.Required(CONF_HOST, default=current[CONF_HOST]): cv.string,
+            probatio.Optional(CONF_PORT, default=current[CONF_PORT]): probatio.Port(),
+            probatio.Optional(
                 CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
             ): cv.positive_int,
-            vol.Required(
+            probatio.Required(
                 CONF_SOLARFOCUS_SYSTEM, default=current[CONF_SOLARFOCUS_SYSTEM]
             ): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=SOLARFOCUS_SYSTEMS, mode=selector.SelectSelectorMode.DROPDOWN
                 ),
             ),
-            vol.Required(
+            probatio.Required(
                 CONF_API_VERSION, default=current[CONF_API_VERSION]
             ): selector.SelectSelector(
                 selector.SelectSelectorConfig(options=SOLARFOCUS_API_VERSIONS),
@@ -150,23 +150,23 @@ def _connection_schema(current: Mapping[str, Any]) -> vol.Schema:
     )
 
 
-STEP_USER_DATA_SCHEMA = vol.Schema(
+STEP_USER_DATA_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-        vol.Optional(
+        probatio.Required(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        probatio.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
+        probatio.Optional(CONF_PORT, default=DEFAULT_PORT): probatio.Port(),
+        probatio.Optional(
             CONF_SCAN_INTERVAL,
             default=DEFAULT_SCAN_INTERVAL,
         ): cv.positive_int,
-        vol.Required(
+        probatio.Required(
             CONF_SOLARFOCUS_SYSTEM, default="Vampair"
         ): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=SOLARFOCUS_SYSTEMS, mode=selector.SelectSelectorMode.DROPDOWN
             ),
         ),
-        vol.Required(CONF_API_VERSION, default="23.020"): selector.SelectSelector(
+        probatio.Required(CONF_API_VERSION, default="23.020"): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=SOLARFOCUS_API_VERSIONS,
                 mode=selector.SelectSelectorMode.DROPDOWN,
@@ -175,56 +175,56 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
-STEP_COMP_SELECTION_SCHEMA = vol.Schema(
+STEP_COMP_SELECTION_SCHEMA = probatio.Schema(
     {
-        vol.Optional(
+        probatio.Optional(
             CONF_HEATING_CIRCUIT, default=1
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
-        vol.Optional(CONF_BIOMASS_BOILER, default=True): bool,
-        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
+        probatio.Optional(CONF_BIOMASS_BOILER, default=True): bool,
+        probatio.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
-STEP_COMP_VAMPAIR_SELECTION_SCHEMA = vol.Schema(
+STEP_COMP_VAMPAIR_SELECTION_SCHEMA = probatio.Schema(
     {
-        vol.Optional(
+        probatio.Optional(
             CONF_HEATING_CIRCUIT, default=1
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(
+        probatio.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(
             CONF_FRESH_WATER_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(
+        probatio.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(
             CONF_DIFFERENTIAL_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_HEATPUMP, default=True): bool,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
-        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_HEATPUMP, default=True): bool,
+        probatio.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
+        probatio.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
-STEP_COMP_THERMINATOR_SELECTION_SCHEMA = vol.Schema(
+STEP_COMP_THERMINATOR_SELECTION_SCHEMA = probatio.Schema(
     {
-        vol.Optional(
+        probatio.Optional(
             CONF_HEATING_CIRCUIT, default=1
         ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-        vol.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(
+        probatio.Optional(CONF_BUFFER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_BOILER, default=1): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(
             CONF_FRESH_WATER_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(
+        probatio.Optional(CONF_CIRCULATION, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(
             CONF_DIFFERENTIAL_MODULE, default=0
         ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-        vol.Optional(CONF_BIOMASS_BOILER, default=True): bool,
-        vol.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
-        vol.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
+        probatio.Optional(CONF_BIOMASS_BOILER, default=True): bool,
+        probatio.Optional(CONF_PHOTOVOLTAIC, default=False): bool,
+        probatio.Optional(CONF_SOLAR, default=0): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
     }
 )
 
@@ -499,54 +499,54 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
         self, current: Mapping[str, Any], errors: dict[str, str]
     ) -> config_entries.ConfigFlowResult:
         """Show the options form, filled in with what the entry has now."""
-        # A voluptuous schema holds markers against validators of every shape,
+        # A probatio schema holds markers against validators of every shape,
         # a selector next to a plain `bool`, so there is no narrower type here.
         schema: dict[Any, Any] = {
-            vol.Optional(
+            probatio.Optional(
                 CONF_SCAN_INTERVAL, default=current[CONF_SCAN_INTERVAL]
             ): cv.positive_int,
-            vol.Optional(
+            probatio.Optional(
                 CONF_HEATING_CIRCUIT, default=current[CONF_HEATING_CIRCUIT]
             ): _COMPONENT_COUNT_ZERO_EIGHT_SELECTOR,
-            vol.Optional(
+            probatio.Optional(
                 CONF_BUFFER, default=current[CONF_BUFFER]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-            vol.Optional(
+            probatio.Optional(
                 CONF_BOILER, default=current[CONF_BOILER]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-            vol.Optional(
+            probatio.Optional(
                 CONF_FRESH_WATER_MODULE, default=current[CONF_FRESH_WATER_MODULE]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-            vol.Optional(
+            probatio.Optional(
                 CONF_CIRCULATION, default=current[CONF_CIRCULATION]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-            vol.Optional(
+            probatio.Optional(
                 CONF_DIFFERENTIAL_MODULE, default=current[CONF_DIFFERENTIAL_MODULE]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         }
 
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
-            schema[vol.Optional(CONF_HEATPUMP, default=current[CONF_HEATPUMP])] = bool
+            schema[probatio.Optional(CONF_HEATPUMP, default=current[CONF_HEATPUMP])] = bool
         else:
             schema[
-                vol.Optional(CONF_BIOMASS_BOILER, default=current[CONF_BIOMASS_BOILER])
+                probatio.Optional(CONF_BIOMASS_BOILER, default=current[CONF_BIOMASS_BOILER])
             ] = bool
             schema[
-                vol.Optional(
+                probatio.Optional(
                     CONF_DOOR_CONTACT_INVERTED,
                     default=current[CONF_DOOR_CONTACT_INVERTED],
                 )
             ] = bool
 
         schema[
-            vol.Optional(CONF_PHOTOVOLTAIC, default=current[CONF_PHOTOVOLTAIC])
+            probatio.Optional(CONF_PHOTOVOLTAIC, default=current[CONF_PHOTOVOLTAIC])
         ] = bool
         schema[
-            vol.Optional(CONF_SOLAR, default=current[CONF_SOLAR])
+            probatio.Optional(CONF_SOLAR, default=current[CONF_SOLAR])
         ] = _COMPONENT_COUNT_ZERO_FOUR_SELECTOR
 
         return self.async_show_form(
-            step_id="init", data_schema=vol.Schema(schema), errors=errors
+            step_id="init", data_schema=probatio.Schema(schema), errors=errors
         )
 
 

@@ -11,7 +11,7 @@ keywords = [
     "api client",
 ]
 dependencies = [
-    "homeassistant>=2026.8.0,<2027",
+    "homeassistant>=2026.9.0,<2027",
     "aiosolarfocus>=0.2.4,<1",
     "packaging~=24.0",
     "pylint>=3.3.3",
@@ -472,6 +472,7 @@ select = [
     "G", # flake8-logging-format
     "I",  # isort
     "ICN001", # import concentions; {name} should be imported as {asname}
+    "ICN002", # Banned import alias
     "ISC001", # Implicitly concatenated string literals on one line
     "N804", # First argument of a class method should be named cls
     "N805", # First argument of a method should be named self
@@ -551,7 +552,6 @@ ignore = [
 "tests/test_live_controller.py" = ["T201"]
 
 [tool.ruff.flake8-import-conventions.extend-aliases]
-voluptuous = "vol"
 "homeassistant.helpers.area_registry" = "ar"
 "homeassistant.helpers.config_validation" = "cv"
 "homeassistant.helpers.device_registry" = "dr"
@@ -559,11 +559,15 @@ voluptuous = "vol"
 "homeassistant.helpers.issue_registry" = "ir"
 "homeassistant.util.dt" = "dt_util"
 
+[tool.ruff.flake8-import-conventions.banned-aliases]
+"probatio" = ["vol"]
+
 [tool.ruff.flake8-pytest-style]
 fixture-parentheses = false
 
 [tool.ruff.flake8-tidy-imports.banned-api]
 "pytz".msg = "use zoneinfo instead"
+"voluptuous".msg = "use probatio instead"
 
 [tool.ruff.isort]
 force-sort-within-sections = true

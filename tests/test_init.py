@@ -745,7 +745,7 @@ async def test_migration_identifies_the_device_by_the_entry_id(
     # The same device, so what the user put on it is still there
     assert migrated.id == device.id
     assert migrated.name_by_user == "Heizung Keller"
-    assert device_registry.async_get_device({(DOMAIN, entry.title)}) is None
+    assert device_registry.async_get_device_by_identifier((DOMAIN, entry.title), entry.entry_id) is None
 
 
 async def test_migration_without_a_device_is_still_a_migration(
@@ -1214,7 +1214,7 @@ async def test_a_renamed_entry_keeps_its_device(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     before = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
     assert hub is not None
 
@@ -1226,7 +1226,7 @@ async def test_a_renamed_entry_keeps_its_device(
     after = dr.async_entries_for_config_entry(device_registry, entry.entry_id)
 
     # The same hub, and the same components under it - a rename adds nothing
-    assert device_registry.async_get_device({(DOMAIN, entry.entry_id)}).id == hub.id
+    assert device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id).id == hub.id
     assert {device.id for device in after} == {device.id for device in before}
 
 
@@ -1288,7 +1288,7 @@ async def test_every_component_is_its_own_device_under_the_hub(
         f"{entry.entry_id}_hp",
     }
 
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     components = [device for device in devices if device.id != hub.id]
 
     assert components
@@ -1310,7 +1310,7 @@ async def test_the_hub_is_the_controller(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
 
     assert hub.name == CONTROLLER_NAME
     assert hub.manufacturer == MANUFACTURER
@@ -1331,13 +1331,13 @@ async def test_the_hub_keeps_the_name_the_user_gave_it(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     device_registry.async_update_device(hub.id, name_by_user="Heizung Keller")
 
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
 
-    renamed = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    renamed = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
 
     assert renamed.name_by_user == "Heizung Keller"
     assert renamed.name == CONTROLLER_NAME
@@ -1422,7 +1422,7 @@ async def test_lowering_a_count_removes_the_device_and_its_entities(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    third = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc3")})
+    third = device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc3"), entry.entry_id)
     assert third is not None
     assert er.async_entries_for_device(entity_registry, third.id)
 
@@ -1431,12 +1431,12 @@ async def test_lowering_a_count_removes_the_device_and_its_entities(
     )
     await hass.async_block_till_done()
 
-    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc3")}) is None
+    assert device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc3"), entry.entry_id) is None
     assert not er.async_entries_for_device(
         entity_registry, third.id, include_disabled_entities=True
     )
     # The ones that are left are untouched
-    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+    assert device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc2"), entry.entry_id)
 
 
 @pytest.mark.parametrize("component", ["circulation", "differential_module"])
@@ -1462,7 +1462,7 @@ async def test_lowering_the_api_version_removes_the_devices_it_takes_away(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_{prefix}2")})
+    assert device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_{prefix}2"), entry.entry_id)
 
     hass.config_entries.async_update_entry(
         entry, data={**entry.data, CONF_API_VERSION: ApiVersion.V_23_020.label}
@@ -1488,14 +1488,14 @@ async def test_switching_a_component_off_removes_its_device(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_pv")})
+    assert device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_pv"), entry.entry_id)
 
     hass.config_entries.async_update_entry(
         entry, options={**entry.options, CONF_PHOTOVOLTAIC: False}
     )
     await hass.async_block_till_done()
 
-    assert device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_pv")}) is None
+    assert device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_pv"), entry.entry_id) is None
 
 
 async def test_raising_a_count_adds_a_device(
@@ -1512,8 +1512,8 @@ async def test_raising_a_count_adds_a_device(
     )
     await hass.async_block_till_done()
 
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
-    second = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
+    second = device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc2"), entry.entry_id)
 
     assert second is not None
     assert second.via_device_id == hub.id
@@ -1549,8 +1549,8 @@ async def test_a_device_can_only_be_deleted_once_its_component_is_gone(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    live = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    live = device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc1"), entry.entry_id)
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     stale = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, f"{entry.entry_id}_bu4")},
@@ -1578,7 +1578,7 @@ async def test_a_new_component_device_lands_in_the_area_of_its_controller(
     await hass.async_block_till_done()
 
     heizraum = area_registry.async_get_or_create("Heizraum")
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     device_registry.async_update_device(hub.id, area_id=heizraum.id)
 
     # A component that appears afterwards, as all of them did on the upgrade
@@ -1587,7 +1587,7 @@ async def test_a_new_component_device_lands_in_the_area_of_its_controller(
     )
     await hass.async_block_till_done()
 
-    second = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc2")})
+    second = device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc2"), entry.entry_id)
 
     assert second.area_id == heizraum.id
 
@@ -1604,8 +1604,8 @@ async def test_a_component_the_user_moved_stays_where_they_put_it(
 
     heizraum = area_registry.async_get_or_create("Heizraum")
     wohnzimmer = area_registry.async_get_or_create("Wohnzimmer")
-    hub = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
-    circuit = device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")})
+    hub = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
+    circuit = device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc1"), entry.entry_id)
     device_registry.async_update_device(hub.id, area_id=heizraum.id)
     device_registry.async_update_device(circuit.id, area_id=wohnzimmer.id)
 
@@ -1613,7 +1613,7 @@ async def test_a_component_the_user_moved_stays_where_they_put_it(
     await hass.async_block_till_done()
 
     assert (
-        device_registry.async_get_device({(DOMAIN, f"{entry.entry_id}_hc1")}).area_id
+        device_registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_hc1"), entry.entry_id).area_id
         == wohnzimmer.id
     )
 
