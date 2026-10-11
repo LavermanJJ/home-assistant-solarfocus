@@ -91,6 +91,11 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         self._entry = entry
         self.hass = hass
         self._failed_components: frozenset[tuple[str, str]] = frozenset()
+        # The controller every component device of this entry hangs off, set by
+        # `async_setup_entry` once the device is registered. A component device
+        # points at it by id rather than by identifier, which Home Assistant
+        # deprecates.
+        self.hub_device_id: str | None = None
         # The number the installer menu of the controller shows: typed in on
         # one entity of it and multiplied by another. Not a register, so it
         # lives here, where both platforms can reach it.
@@ -272,7 +277,9 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         prefix = COMPONENT_PREFIXES[option]
         identifier = (DOMAIN, f"{self._entry.entry_id}_{prefix}{idx}")
 
-        return dr.async_get(self.hass).async_get_device({identifier})
+        return dr.async_get(self.hass).async_get_device_by_identifier(
+            identifier, self._entry.entry_id
+        )
 
     @callback
     def async_report_failed_components(self) -> None:

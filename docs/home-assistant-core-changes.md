@@ -245,6 +245,20 @@ in local test runs.
   (`runtime_data`, unique ID, `has_entity_name`, icon translations, strict typing, test coverage).
   Adding a `quality_scale.yaml` would be a way to track this work.
 
+### 3.12 Schema validation moves from voluptuous to probatio
+- **Post:** [2026-09-30 — Probatio, the new validation engine](https://developers.home-assistant.io/blog/2026/09/30/probatio-validation-engine/)
+- **Released:** 2026.9. Core depends on `probatio` and no longer installs voluptuous; `import
+  voluptuous as vol` keeps working through a `sys.modules` alias, so nothing breaks.
+- **Impact here:** `config_flow.py` was the one place that imported voluptuous.
+- **Done** in #240: it imports `probatio` directly, the way core does, and takes `probatio.Port()`
+  over `cv.port`. That raises the minimum Home Assistant version to 2026.9.0, the first release
+  that ships probatio. Ruff bans `voluptuous` and the `vol` alias for `probatio`, as core's
+  config does.
+- **Knock-on:** the dev environment had to leave 2026.8 for it, and 2026.9 turns the deprecated
+  `async_get_device()` from 2.4 into a test failure. The lookups now go through
+  `async_get_device_by_identifier()`, and with the floor past 2026.8 the component devices are
+  back on `via_device_id` - the condition #245 set for undoing its `via_device` workaround.
+
 ---
 
 ## 4. Reviewed and not applicable

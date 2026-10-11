@@ -184,7 +184,7 @@ The eco<sup>manager-touch</sup> can integrate the following heating systems
 
 ### Prerequisites
 
-- Home Assistant v2025.1.0 or above.
+- Home Assistant v2026.9.0 or above.
 - An eco<sup>manager-touch</sup> reachable over the network, with Modbus TCP enabled on its
   display. The integration reads and writes registers over Modbus TCP; there is no cloud
   account and no authentication involved.

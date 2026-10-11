@@ -334,7 +334,7 @@ async def test_the_registry_agrees_where_they_belong(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    controller = device_registry.async_get_device({(DOMAIN, entry.entry_id)})
+    controller = device_registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
     registered = {
         entity.entity_id: entity
         for entity in er.async_entries_for_device(
