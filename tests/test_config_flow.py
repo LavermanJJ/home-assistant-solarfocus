@@ -6,13 +6,21 @@ quality scale (issue #125): every step, every error path and the options flow.
 
 from unittest.mock import patch
 
-from aiosolarfocus import ApiVersion, Systems
+from aiosolarfocus import (
+    ApiVersion,
+    ComponentCounts,
+    Detection,
+    SolarfocusProtocolError,
+    Systems,
+)
 import pytest
 
 from custom_components.solarfocus.config_flow import (
     CannotConnect,
     InvalidAuth,
     InvalidScanInterval,
+    _detected_differently,
+    _suggested_components,
     validate_input,
 )
 from custom_components.solarfocus.const import (
@@ -417,7 +425,11 @@ async def test_validate_input_raises_invalid_scan_interval(
 
 async def test_validate_input_returns_title(hass: HomeAssistant, mock_client) -> None:
     """Validate_input returns the entry title on success."""
-    assert await validate_input(hass, USER_INPUT) == {"title": DEFAULT_NAME}
+    info = await validate_input(hass, USER_INPUT)
+
+    assert info["title"] == DEFAULT_NAME
+    # What the controller reported, for the forms that follow.
+    assert info["detection"].api_version is ApiVersion.V_23_020
 
 
 @pytest.mark.parametrize(
@@ -574,6 +586,211 @@ async def test_options_flow_biomass_system_disables_heatpump(
     assert result["data"][CONF_HEATPUMP] is False
     # Not asked of a therminator, and still an option every platform reads.
     assert result["data"][CONF_FRESH_WATER_MODULE] == 0
+
+
+# --- what the controller says it is ------------------------------------------
+
+
+def _detection(
+    system: Systems = Systems.VAMPAIR,
+    api_version: ApiVersion = ApiVersion.V_23_020,
+    *,
+    confident: bool = True,
+    photovoltaic: bool = False,
+    **counts: int,
+) -> Detection:
+    """Return what a controller of this kind would have been detected as."""
+    return Detection(
+        api_version=api_version,
+        system=system,
+        counts=ComponentCounts(**counts),
+        has_heat_pump=confident and system is Systems.VAMPAIR,
+        has_biomass_boiler=confident and system is not Systems.VAMPAIR,
+        has_photovoltaic=photovoltaic,
+        has_fresh_water_module_cascade=False,
+        has_circulation_module=False,
+        evidence={},
+        reads=0,
+    )
+
+
+@pytest.mark.parametrize(
+    ("detected", "system", "api_version"),
+    [
+        # Exactly what was chosen.
+        (_detection(), Systems.VAMPAIR, "23.020"),
+        # No release between the two added a register to date it by.
+        (_detection(api_version=ApiVersion.V_25_030), Systems.VAMPAIR, "25.100"),
+        # 25.020 and 25.030 added theirs together.
+        (_detection(api_version=ApiVersion.V_25_030), Systems.VAMPAIR, "25.020"),
+        # Nothing in the registers separates these two, and the detection
+        # calls both a pellet elegance.
+        (_detection(Systems.PELLETELEGANCE), Systems.ECOTOP, "23.020"),
+        # A heat generator that did not identify itself is a default, not a
+        # finding.
+        (_detection(Systems.VAMPAIR, confident=False), Systems.THERMINATOR, "23.020"),
+    ],
+)
+def test_a_choice_the_controller_does_not_contradict_is_not_questioned(
+    detected: Detection, system: Systems, api_version: str
+) -> None:
+    assert _detected_differently(detected, system, api_version) is None
+
+
+@pytest.mark.parametrize(
+    ("detected", "system", "api_version", "expected"),
+    [
+        # The registers of a later release are there and would go unread.
+        (
+            _detection(api_version=ApiVersion.V_26_020),
+            Systems.VAMPAIR,
+            "23.020",
+            {"system": "Vampair", "api_version": "26.020"},
+        ),
+        # The registers of the chosen release are not there to read.
+        (
+            _detection(api_version=ApiVersion.V_23_020),
+            Systems.VAMPAIR,
+            "25.030",
+            {"system": "Vampair", "api_version": "23.020"},
+        ),
+        (
+            _detection(Systems.THERMINATOR),
+            Systems.VAMPAIR,
+            "23.020",
+            {"system": "Therminator", "api_version": "23.020"},
+        ),
+        # The version is still a finding where the system is not, and the
+        # system named is then the one that was chosen.
+        (
+            _detection(Systems.VAMPAIR, ApiVersion.V_26_020, confident=False),
+            Systems.ECOTOP,
+            "23.020",
+            {"system": "Ecotop", "api_version": "26.020"},
+        ),
+    ],
+)
+def test_a_choice_the_controller_contradicts_is_named(
+    detected: Detection, system: Systems, api_version: str, expected: dict[str, str]
+) -> None:
+    assert _detected_differently(detected, system, api_version) == expected
+
+
+def test_nothing_detected_questions_nothing() -> None:
+    assert _detected_differently(None, Systems.VAMPAIR, "23.020") is None
+    assert _suggested_components(None, Systems.VAMPAIR) == {}
+    # A controller that reported nothing was not understood, and a form of
+    # zeroes is a worse start than the defaults.
+    assert _suggested_components(_detection(), Systems.VAMPAIR) == {}
+
+
+def test_a_therminator_is_not_suggested_the_fresh_water_module_it_cannot_have() -> None:
+    detected = _detection(Systems.THERMINATOR, heating_circuits=2, fresh_water_modules=1)
+
+    assert _suggested_components(detected, Systems.THERMINATOR)[CONF_FRESH_WATER_MODULE] == 0
+    assert _suggested_components(detected, Systems.ECOTOP)[CONF_FRESH_WATER_MODULE] == 1
+
+
+async def test_a_contradicted_choice_is_questioned_once_and_then_taken(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """The controller's own screen outranks what its registers suggest."""
+    detected = _detection(Systems.THERMINATOR, ApiVersion.V_26_020)
+
+    with patch(
+        "custom_components.solarfocus.config_flow._detect", return_value=detected
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+
+        assert result["type"] is FlowResultType.FORM
+        assert result["step_id"] == "user"
+        assert result["errors"] == {"base": "detected_differently"}
+        assert result["description_placeholders"] == {
+            "system": "Therminator",
+            "api_version": "26.020",
+        }
+        # The form comes back as it was filled in, not as its defaults.
+        suggested = {
+            str(marker): marker.description["suggested_value"]
+            for marker in result["data_schema"].schema
+        }
+        assert suggested[CONF_HOST] == "solarfocus.local"
+        assert suggested[CONF_API_VERSION] == "23.020"
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], USER_INPUT
+        )
+
+    assert result["step_id"] == "component"
+
+
+async def test_a_corrected_choice_is_checked_again(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """Sending a different answer is not the same as insisting on the first."""
+    detected = _detection(Systems.THERMINATOR, ApiVersion.V_26_020)
+
+    with patch(
+        "custom_components.solarfocus.config_flow._detect", return_value=detected
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {**USER_INPUT, CONF_API_VERSION: ApiVersion.V_26_020.label},
+        )
+        assert result["step_id"] == "user"
+        assert result["errors"] == {"base": "detected_differently"}
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                **USER_INPUT,
+                CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR,
+                CONF_API_VERSION: ApiVersion.V_26_020.label,
+            },
+        )
+
+    assert result["step_id"] == "component"
+
+
+async def test_the_component_form_starts_from_what_the_controller_reported(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    detected = _detection(heating_circuits=3, buffers=2, solar=1, photovoltaic=True)
+
+    with patch(
+        "custom_components.solarfocus.config_flow._detect", return_value=detected
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["step_id"] == "component"
+    suggested = {
+        str(marker): marker.description["suggested_value"]
+        for marker in result["data_schema"].schema
+        if marker.description
+    }
+    assert suggested[CONF_HEATING_CIRCUIT] == 3
+    assert suggested[CONF_BUFFER] == 2
+    assert suggested[CONF_BOILER] == 0
+    assert suggested[CONF_SOLAR] == 1
+    assert suggested[CONF_PHOTOVOLTAIC] is True
+    # Which heat source there is follows the system, and is not suggested.
+    assert CONF_HEATPUMP not in suggested
+
+
+async def test_a_controller_that_cannot_be_detected_is_still_set_up_by_hand(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """Detection is advice for the forms, never a condition of getting through."""
+    with patch(
+        "aiosolarfocus.SolarfocusClient.detect",
+        side_effect=SolarfocusProtocolError("asked for 1 registers and got 2"),
+    ):
+        result = await _start_user_step(hass, USER_INPUT)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "component"
+    assert not result.get("errors")
 
 
 # --- reconfigure -------------------------------------------------------------

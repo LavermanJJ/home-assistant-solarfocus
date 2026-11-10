@@ -44,6 +44,7 @@
       "reconfigure_successful": "Neu konfiguriert"
     },
     "error": {
+      "detected_differently": "Die Register dieser Regelung sehen nach {system} mit API-Version {api_version} aus. Prüfe beides an der Anzeige der Regelung und sende das Formular erneut ab, um deine Auswahl zu behalten.",
       "already_configured": "Diese Adresse wird bereits von einem anderen Solarfocus-Eintrag verwendet",
       "invalid_scan_interval": "Das Abfrageintervall muss mindestens fünf Sekunden betragen",
       "cannot_connect": "Verbindung Fehlgeschlagen",

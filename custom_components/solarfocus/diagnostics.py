@@ -9,9 +9,14 @@ asked for one message at a time.
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
-from aiosolarfocus import __version__ as aiosolarfocus_version
+from aiosolarfocus import (
+    SolarfocusClient,
+    SolarfocusError,
+    __version__ as aiosolarfocus_version,
+)
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
@@ -58,4 +63,43 @@ async def async_get_config_entry_diagnostics(
         # no decoded one, which is how a reader tells "no sensor fitted" from
         # "never read".
         "components": coordinator.client.snapshot(),
+        # What the controller says it is, asked now, next to what the entry
+        # says it is above. Most reports so far have come down to the two
+        # disagreeing - a system or a version chosen wrong, a component counted
+        # that is not there - and were settled by asking for exactly this, one
+        # message at a time.
+        "detection": await _async_detect(coordinator.client),
+    }
+
+
+async def _async_detect(client: SolarfocusClient) -> dict[str, Any]:
+    """Return what the controller reads as, or why it could not be asked.
+
+    Ninety-odd reads over the connection the coordinator already has, which is
+    a few seconds: fine for a download somebody asked for, and a controller
+    that will not answer them is no reason to withhold the rest of it.
+    """
+    try:
+        detection = await client.detect()
+    except SolarfocusError as error:
+        return {"error": str(error)}
+
+    return {
+        "system": detection.system.value,
+        "api_version": detection.api_version.label,
+        "confident": detection.confident,
+        "counts": asdict(detection.counts),
+        "heat_pump": detection.has_heat_pump,
+        "biomass_boiler": detection.has_biomass_boiler,
+        "photovoltaic": detection.has_photovoltaic,
+        "fresh_water_module_cascade": detection.has_fresh_water_module_cascade,
+        "circulation_module": detection.has_circulation_module,
+        # Counted, and not something this system is supposed to have.
+        "unsupported": {
+            component.value: count
+            for component, count in detection.unsupported().items()
+        },
+        # The readings each of those was decided on.
+        "evidence": dict(detection.evidence),
+        "reads": detection.reads,
     }

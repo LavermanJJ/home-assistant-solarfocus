@@ -14,6 +14,7 @@ from aiosolarfocus import (
     Systems,
 )
 from aiosolarfocus.codec import words_to_raw
+from aiosolarfocus.detect import VERSION_MARKERS
 from aiosolarfocus.testing import FakeController
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -266,9 +267,22 @@ class ClientFactory:
 
     def __call__(self, config: SolarfocusConfig, **kwargs: Any) -> SolarfocusClient:
         """Build the client the integration asked for."""
-        client = SolarfocusClient(
-            config, transport=self.controller_type.for_config(config)
-        )
+        controller = self.controller_type.for_config(config)
+        # `for_config` maps every register the document lists, whatever the
+        # firmware, and the registers a later release added are what a
+        # controller is dated by. Taken away, the fake reads as the version it
+        # was configured as - which is what the config flow now checks the
+        # user's choice against. 25.020 keeps the marker of 25.030: the two
+        # added their registers together.
+        for version, kind, address in VERSION_MARKERS:
+            together = (
+                version is ApiVersion.V_25_030
+                and config.api_version is ApiVersion.V_25_020
+            )
+            if version > config.api_version and not together:
+                controller.unmap(kind, address)
+
+        client = SolarfocusClient(config, transport=controller)
         self.instances.append(client)
 
         for component, register, value, index in self._readings:
