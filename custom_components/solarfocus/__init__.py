@@ -120,7 +120,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SolarfocusConfigEntry) -
         # a controller that answered the connection and then none of the
         # registers. Whether the library is still connected is what says which.
         address = f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}"
-        if not client.connected:
+        connected = client.connected
+        # Nothing holds this client once the setup has failed: `runtime_data` is
+        # never set, so unloading has nothing to close, and the retry builds a
+        # client of its own. Left open, each retry would leave the controller
+        # one more session it has to keep.
+        await client.disconnect()
+        if not connected:
             raise ConfigEntryNotReady(
                 translation_domain=DOMAIN,
                 translation_key="cannot_connect",

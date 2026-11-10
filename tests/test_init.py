@@ -195,6 +195,32 @@ async def test_a_controller_that_answers_nothing_says_that_instead(
     assert config_entry.error_reason_translation_key == "cannot_set_up"
 
 
+async def test_a_setup_that_fails_does_not_leave_its_connection_open(
+    hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
+) -> None:
+    """Every retry builds a client of its own, and nothing unloads a failed one.
+
+    A controller that accepts the connection and answers nothing would
+    otherwise be left one more session by every retry, until it has too many
+    to accept another.
+    """
+    for component in (
+        ComponentId.HEATING_CIRCUITS,
+        ComponentId.BUFFERS,
+        ComponentId.BOILERS,
+        ComponentId.HEAT_PUMP,
+    ):
+        mock_client.silence(component)
+    config_entry.add_to_hass(hass)
+
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert config_entry.error_reason_translation_key == "cannot_set_up"
+    assert not mock_client.instance.connected
+
+
 async def test_updating_options_reloads_the_entry(
     hass: HomeAssistant, enable_custom_integrations, mock_client, config_entry
 ) -> None:
