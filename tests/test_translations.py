@@ -274,6 +274,8 @@ def test_something_raises_a_translated_exception() -> None:
         "cannot_read",
         "cannot_set_up",
         "invalid_configuration",
+        "value_not_accepted",
+        "write_failed",
     }
 
 

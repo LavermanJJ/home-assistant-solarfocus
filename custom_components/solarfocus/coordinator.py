@@ -123,9 +123,14 @@ class SolarfocusDataUpdateCoordinator(DataUpdateCoordinator[None]):
         return self._failed_components
 
     @property
+    def address(self) -> str:
+        """Return the address of the heating system, for a message to the user."""
+        return f"{self._entry.data[CONF_HOST]}:{self._entry.data[CONF_PORT]}"
+
+    @property
     def _address(self) -> str:
         """Return the address of the heating system, for log messages."""
-        return f"{self._entry.data[CONF_HOST]}:{self._entry.data[CONF_PORT]}"
+        return self.address
 
     @override
     async def _async_update_data(self) -> None:

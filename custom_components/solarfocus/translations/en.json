@@ -129,6 +129,12 @@
     },
     "invalid_configuration": {
       "message": "The configured components do not match the Solarfocus system: {reason}. Correct them in the options of the integration."
+    },
+    "value_not_accepted": {
+      "message": "The Solarfocus system does not accept that value: {reason}."
+    },
+    "write_failed": {
+      "message": "Could not write to the Solarfocus system at {address}: {reason}."
     }
   },
   "issues": {
