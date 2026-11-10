@@ -111,7 +111,8 @@ def test_platform_declares_parallel_updates(platform) -> None:
 async def test_entity_keys_are_unique(hass: HomeAssistant, platform) -> None:
     """Duplicate keys would collide on the same unique id."""
     entry = build_config_entry(
-        Systems.THERMINATOR,
+        # Not a therminator, which is the one boiler with no fresh water module.
+        Systems.ECOTOP,
         api_version=ApiVersion.V_26_020.label,
         heating_circuit=3,
         buffer=2,
@@ -325,7 +326,8 @@ async def test_binary_sensors_cover_all_configured_components(
 ) -> None:
     """Binary sensors exist for every component that has one."""
     entry = build_config_entry(
-        Systems.THERMINATOR,
+        # Not a therminator, which is the one boiler with no fresh water module.
+        Systems.ECOTOP,
         # The fresh water module binary sensors need at least 23.040
         api_version=ApiVersion.V_26_020.label,
         heating_circuit=1,

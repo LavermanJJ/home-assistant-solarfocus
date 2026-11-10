@@ -229,6 +229,31 @@ STEP_COMP_THERMINATOR_SELECTION_SCHEMA = probatio.Schema(
 )
 
 
+def _biomass_selection_schema(system: str) -> probatio.Schema:
+    """Return the component form of a boiler, less what that boiler cannot have.
+
+    A therminator maps the registers of a fresh water module and answers a flat
+    zero on them, whatever is wired to it - Solarfocus confirmed as much - so
+    the library refuses a configuration that claims one. Asking for a count the
+    setup then fails on is worse than not asking.
+    """
+    if system != Systems.THERMINATOR:
+        return STEP_COMP_THERMINATOR_SELECTION_SCHEMA
+
+    return probatio.Schema(
+        {
+            marker: validator
+            for marker, validator in STEP_COMP_THERMINATOR_SELECTION_SCHEMA.schema.items()
+            if marker != CONF_FRESH_WATER_MODULE
+        }
+    )
+
+
+def _fresh_water_modules(system: str, count: int) -> int:
+    """Return how many fresh water modules an entry of this system may claim."""
+    return 0 if system == Systems.THERMINATOR else count
+
+
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect.
 
@@ -264,7 +289,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Solarfocus."""
 
-    VERSION = 12
+    VERSION = 13
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
@@ -321,7 +346,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             return self.async_show_form(
                 step_id="component",
-                data_schema=STEP_COMP_THERMINATOR_SELECTION_SCHEMA,
+                data_schema=_biomass_selection_schema(self.data[CONF_SOLARFOCUS_SYSTEM]),
             )
 
         # Split on the heat pump here as well, so this reads back exactly the
@@ -353,7 +378,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_SOLAR: user_input[CONF_SOLAR],
                 CONF_HEATPUMP: self.data[CONF_HEATPUMP],
                 CONF_BIOMASS_BOILER: self.data[CONF_BIOMASS_BOILER],
-                CONF_FRESH_WATER_MODULE: user_input[CONF_FRESH_WATER_MODULE],
+                CONF_FRESH_WATER_MODULE: _fresh_water_modules(
+                    self.data[CONF_SOLARFOCUS_SYSTEM],
+                    user_input.get(CONF_FRESH_WATER_MODULE, 0),
+                ),
                 CONF_CIRCULATION: user_input[CONF_CIRCULATION],
                 CONF_DIFFERENTIAL_MODULE: user_input[CONF_DIFFERENTIAL_MODULE],
                 # Not asked here - see #91. Off, the specification's polarity,
@@ -431,6 +459,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             user_input[CONF_SOLARFOCUS_SYSTEM],
                         ),
                         CONF_SCAN_INTERVAL: scan_interval,
+                        # A count the system it is being corrected to cannot
+                        # have would fail the setup this reload leads to.
+                        CONF_FRESH_WATER_MODULE: _fresh_water_modules(
+                            user_input[CONF_SOLARFOCUS_SYSTEM],
+                            entry.options[CONF_FRESH_WATER_MODULE],
+                        ),
                     },
                 )
 
@@ -491,6 +525,11 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                     if vampair
                     else user_input[CONF_DOOR_CONTACT_INVERTED]
                 ),
+                # Not asked of a therminator, so not in the form either.
+                CONF_FRESH_WATER_MODULE: _fresh_water_modules(
+                    self.config_entry.data[CONF_SOLARFOCUS_SYSTEM],
+                    user_input.get(CONF_FRESH_WATER_MODULE, 0),
+                ),
             },
         )
 
@@ -515,15 +554,22 @@ class SolarfocusOptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_BOILER, default=current[CONF_BOILER]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
             probatio.Optional(
-                CONF_FRESH_WATER_MODULE, default=current[CONF_FRESH_WATER_MODULE]
-            ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
-            probatio.Optional(
                 CONF_CIRCULATION, default=current[CONF_CIRCULATION]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
             probatio.Optional(
                 CONF_DIFFERENTIAL_MODULE, default=current[CONF_DIFFERENTIAL_MODULE]
             ): _COMPONENT_COUNT_ZERO_FOUR_SELECTOR,
         }
+
+        if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] != Systems.THERMINATOR:
+            # The one system that cannot have one - see
+            # `_biomass_selection_schema`.
+            schema[
+                probatio.Optional(
+                    CONF_FRESH_WATER_MODULE,
+                    default=current.get(CONF_FRESH_WATER_MODULE, 0),
+                )
+            ] = _COMPONENT_COUNT_ZERO_FOUR_SELECTOR
 
         if self.config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
             schema[probatio.Optional(CONF_HEATPUMP, default=current[CONF_HEATPUMP])] = bool
