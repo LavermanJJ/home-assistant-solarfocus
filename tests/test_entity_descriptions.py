@@ -153,6 +153,11 @@ def test_every_description_names_a_value_the_library_carries() -> None:
                 continue
             if component == BIOMASS_BOILER_COMPONENT and system is Systems.VAMPAIR:
                 continue
+            if (
+                component == FRESH_WATER_MODULE_COMPONENT
+                and system is Systems.THERMINATOR
+            ):
+                continue
             everywhere |= _values(system, component)
 
         orphaned += [
@@ -199,6 +204,8 @@ def test_no_key_is_described_twice_for_one_system(system: Systems) -> None:
         if component == HEAT_PUMP_COMPONENT and system is not Systems.VAMPAIR:
             continue
         if component == BIOMASS_BOILER_COMPONENT and system is Systems.VAMPAIR:
+            continue
+        if component == FRESH_WATER_MODULE_COMPONENT and system is Systems.THERMINATOR:
             continue
 
         available = _values(system, component)

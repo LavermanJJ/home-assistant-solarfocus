@@ -68,7 +68,7 @@ async def test_setup_passes_component_counts_to_the_library(
 ) -> None:
     """The configured component counts are handed to the library."""
     entry = build_config_entry(
-        Systems.THERMINATOR,
+        Systems.ECOTOP,
         api_version=ApiVersion.V_25_030.label,
         heating_circuit=3,
         buffer=2,
@@ -91,7 +91,7 @@ async def test_setup_passes_component_counts_to_the_library(
     # every entity of a second one raised IndexError on read.
     assert config.fresh_water_modules == 2
     assert config.solar == 2
-    assert config.system is Systems.THERMINATOR
+    assert config.system is Systems.ECOTOP
     assert config.api_version is ApiVersion.V_25_030
 
 
@@ -372,6 +372,31 @@ async def test_migration_from_version_11_adds_the_door_contact_option(
 
     assert entry.version == CURRENT_VERSION
     assert entry.options[CONF_DOOR_CONTACT_INVERTED] is False
+
+
+@pytest.mark.parametrize(
+    ("system", "expected"),
+    [(Systems.THERMINATOR, 0), (Systems.ECOTOP, 2), (Systems.VAMPAIR, 2)],
+)
+async def test_migration_takes_the_fresh_water_modules_off_a_therminator_only(
+    hass: HomeAssistant, system: Systems, expected: int
+) -> None:
+    """Version 12 could say a therminator has fresh water modules.
+
+    The library refuses that configuration from 0.3.0, so an entry left saying
+    so would stop loading altogether rather than lose a few entities that
+    never reported anything.
+    """
+    entry = build_config_entry(system)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_FRESH_WATER_MODULE: 2}, version=12
+    )
+
+    assert await async_migrate_entry(hass, entry) is True
+
+    assert entry.version == CURRENT_VERSION
+    assert entry.options[CONF_FRESH_WATER_MODULE] == expected
 
 
 async def test_migration_keeps_the_door_contact_option_an_entry_already_has(

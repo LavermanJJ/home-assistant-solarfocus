@@ -47,7 +47,7 @@ from homeassistant.const import (
 )
 
 # The config entry version the integration currently migrates to.
-CURRENT_VERSION = 12
+CURRENT_VERSION = 13
 
 
 def build_data(system: Systems = Systems.VAMPAIR) -> dict:
@@ -133,6 +133,10 @@ def every_component(system: Systems = Systems.VAMPAIR, **overrides) -> dict:
         CONF_BIOMASS_BOILER: system is not Systems.VAMPAIR,
     }
     options.update(overrides)
+    if system is Systems.THERMINATOR:
+        # The one system that cannot have one, whatever the caller asked of
+        # every system at once: the library refuses the configuration.
+        options[CONF_FRESH_WATER_MODULE] = 0
 
     return options
 

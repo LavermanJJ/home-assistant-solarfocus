@@ -220,14 +220,24 @@ async def test_full_flow_vampair(
 async def test_full_flow_biomass_systems(
     hass: HomeAssistant, enable_custom_integrations, mock_client, system: Systems
 ) -> None:
-    """Biomass systems are stored with the heat pump disabled."""
+    """Biomass systems are stored with the heat pump disabled.
+
+    A therminator is not asked for a fresh water module, which it cannot have,
+    and is stored with none.
+    """
+    fresh_water_modules = 0 if system is Systems.THERMINATOR else 1
     result = await _start_user_step(hass, {**USER_INPUT, CONF_SOLARFOCUS_SYSTEM: system})
 
     assert result["step_id"] == "component"
 
     with patch("custom_components.solarfocus.async_setup_entry", return_value=True):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], THERMINATOR_COMPONENTS
+            result["flow_id"],
+            {
+                option: value
+                for option, value in THERMINATOR_COMPONENTS.items()
+                if option != CONF_FRESH_WATER_MODULE or fresh_water_modules
+            },
         )
         await hass.async_block_till_done()
 
@@ -236,7 +246,7 @@ async def test_full_flow_biomass_systems(
     assert result["options"][CONF_BIOMASS_BOILER] is True
     assert result["options"][CONF_HEATPUMP] is False
     assert result["options"][CONF_SOLAR] == 2
-    assert result["options"][CONF_FRESH_WATER_MODULE] == 1
+    assert result["options"][CONF_FRESH_WATER_MODULE] == fresh_water_modules
     assert result["options"][CONF_CIRCULATION] == 2
     assert result["options"][CONF_DIFFERENTIAL_MODULE] == 1
     assert result["options"][CONF_DOOR_CONTACT_INVERTED] is False
@@ -550,7 +560,6 @@ async def test_options_flow_biomass_system_disables_heatpump(
                 CONF_HEATING_CIRCUIT: 1,
                 CONF_BUFFER: 1,
                 CONF_BOILER: 1,
-                CONF_FRESH_WATER_MODULE: 0,
                 CONF_CIRCULATION: 0,
                 CONF_DIFFERENTIAL_MODULE: 0,
                 CONF_BIOMASS_BOILER: True,
@@ -563,6 +572,8 @@ async def test_options_flow_biomass_system_disables_heatpump(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_BIOMASS_BOILER] is True
     assert result["data"][CONF_HEATPUMP] is False
+    # Not asked of a therminator, and still an option every platform reads.
+    assert result["data"][CONF_FRESH_WATER_MODULE] == 0
 
 
 # --- reconfigure -------------------------------------------------------------
@@ -742,6 +753,45 @@ async def test_reconfigure_between_biomass_systems_keeps_the_heat_source(
 
     assert entry.options[CONF_BIOMASS_BOILER] is False
     assert entry.options[CONF_HEATPUMP] is False
+
+
+async def test_reconfigure_to_a_therminator_drops_the_fresh_water_modules(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """The one system that cannot have one, and the library refuses to be told so.
+
+    Carried over, the count would fail the setup the reconfiguration ends in.
+    """
+    entry = build_config_entry(
+        Systems.ECOTOP, heating_circuit=1, biomassboiler=True, fresh_water_module=2
+    )
+    entry.add_to_hass(hass)
+
+    result = await _start_reconfigure(hass, entry)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {**RECONFIGURE_INPUT, CONF_SOLARFOCUS_SYSTEM: Systems.THERMINATOR},
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_FRESH_WATER_MODULE] == 0
+
+
+async def test_the_options_of_a_therminator_do_not_ask_for_a_fresh_water_module(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    therminator = build_config_entry(Systems.THERMINATOR, biomassboiler=True)
+    ecotop = build_config_entry(Systems.ECOTOP, biomassboiler=True)
+    asked = {}
+    for entry in (therminator, ecotop):
+        entry.add_to_hass(hass)
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        asked[entry.data[CONF_SOLARFOCUS_SYSTEM]] = {
+            str(marker) for marker in result["data_schema"].schema
+        }
+
+    assert CONF_FRESH_WATER_MODULE not in asked[Systems.THERMINATOR]
+    assert CONF_FRESH_WATER_MODULE in asked[Systems.ECOTOP]
 
 
 async def test_reconfigure_to_a_heat_pump_switches_the_heat_source(

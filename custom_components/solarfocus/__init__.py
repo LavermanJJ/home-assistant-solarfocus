@@ -851,6 +851,20 @@ async def async_migrate_entry(
             config_entry, options=new_options, version=12
         )
 
+    if config_entry.version == 12:
+        # A therminator maps the registers of a fresh water module and answers
+        # a flat zero on them, and from 0.3.0 the library refuses a
+        # configuration that claims one instead of reading the zeroes. An entry
+        # that says it has one would stop loading altogether, for the sake of
+        # entities that never reported anything.
+        new_options = {**config_entry.options}
+        if config_entry.data[CONF_SOLARFOCUS_SYSTEM] == Systems.THERMINATOR:
+            new_options[CONF_FRESH_WATER_MODULE] = 0
+
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, version=13
+        )
+
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     _LOGGER.debug(
         "Config Entries data: %s, options: %s", config_entry.data, config_entry.options
