@@ -128,6 +128,12 @@
     },
     "invalid_configuration": {
       "message": "Die konfigurierten Komponenten passen nicht zur Solarfocus-Anlage: {reason}. Korrigiere sie in den Optionen der Integration."
+    },
+    "value_not_accepted": {
+      "message": "Die Solarfocus-Anlage nimmt diesen Wert nicht an: {reason}."
+    },
+    "write_failed": {
+      "message": "Auf die Solarfocus-Anlage unter {address} konnte nicht geschrieben werden: {reason}."
     }
   },
   "issues": {

@@ -391,16 +391,17 @@ class SolarfocusClimateEntity(SolarfocusEntity, RestoreEntity, ClimateEntity):
         """
         component = cast(HeatingCircuit, self.component)
 
-        await component.set_operating_state(
-            target_supply_temperature=target_supply_temperature,
-            cooling=HeatingCircuitCooling(cooling),
-            mode=HeatingCircuitMode(operating_mode),
-            heating_mode=(
-                HeatingCircuitHeatingMode(HEATING_MODE_HEATING_AND_COOLING)
-                if self.cooling_supported
-                else None
-            ),
-        )
+        with self.reporting_write_errors():
+            await component.set_operating_state(
+                target_supply_temperature=target_supply_temperature,
+                cooling=HeatingCircuitCooling(cooling),
+                mode=HeatingCircuitMode(operating_mode),
+                heating_mode=(
+                    HeatingCircuitHeatingMode(HEATING_MODE_HEATING_AND_COOLING)
+                    if self.cooling_supported
+                    else None
+                ),
+            )
 
         self.async_write_ha_state()
 

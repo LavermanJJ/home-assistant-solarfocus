@@ -2,14 +2,22 @@
 
 
 from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 import logging
 from typing import Any, override
 
-from aiosolarfocus import ComponentId, Systems
+from aiosolarfocus import (
+    ComponentId,
+    IllegalValueError,
+    SolarfocusError,
+    SolarfocusValueError,
+    Systems,
+)
 from aiosolarfocus.components.base import Component
 
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
@@ -345,9 +353,37 @@ class SolarfocusEntity(Entity):
             value,
         )
 
-        await component.write(getattr(type(component), item), value)
+        with self.reporting_write_errors():
+            await component.write(getattr(type(component), item), value)
 
         self.async_write_ha_state()
+
+    @contextmanager
+    def reporting_write_errors(self) -> Generator[None]:
+        """Turn what the library raises on a write into what the user is shown.
+
+        Left as they are, they reach the user as "Unknown error" with a
+        traceback in the log, whichever of two different things happened: a
+        value the register does not take, which is theirs to correct and no
+        fault of anything, or a controller that could not be written to.
+        """
+        try:
+            yield
+        except (SolarfocusValueError, IllegalValueError) as error:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="value_not_accepted",
+                translation_placeholders={"reason": error.message},
+            ) from error
+        except SolarfocusError as error:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="write_failed",
+                translation_placeholders={
+                    "address": self.coordinator.address,
+                    "reason": error.message,
+                },
+            ) from error
 
     def _get_native_value(self, item: str) -> Any:
         """Read the value of one register of the component this entity is on.
