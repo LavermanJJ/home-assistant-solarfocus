@@ -106,6 +106,7 @@
       }
     },
     "error": {
+      "detected_differently": "The registers of this controller read like a {system} on API version {api_version}. Check both against the controller's own screen, and submit again to keep what you chose.",
       "already_configured": "Another Solarfocus entry already uses this address",
       "invalid_scan_interval": "The polling interval has to be at least five seconds",
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",

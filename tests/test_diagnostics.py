@@ -6,8 +6,9 @@ it, and that the address of their controller is not.
 """
 
 import json
+from unittest.mock import patch
 
-from aiosolarfocus import ApiVersion, ComponentId
+from aiosolarfocus import ApiVersion, ComponentId, SolarfocusProtocolError, Systems
 from aiosolarfocus import __version__ as aiosolarfocus_version
 from pytest_homeassistant_custom_component.components.diagnostics import (
     get_diagnostics_for_config_entry,
@@ -100,6 +101,35 @@ async def test_diagnostics_survive_being_written_out(
     diagnostics = await _diagnostics(hass, heating_circuit=1, heatpump=True)
 
     assert json.loads(json.dumps(diagnostics, cls=ExtendedJSONEncoder))
+
+
+async def test_diagnostics_say_what_the_controller_reads_as(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    """Next to what the entry says it is, which is what most reports turn on."""
+    diagnostics = await _diagnostics(hass, heating_circuit=1, heatpump=True)
+
+    detection = diagnostics["detection"]
+
+    assert detection["api_version"] == ApiVersion.V_23_020.label
+    assert detection["system"] in {system.value for system in Systems}
+    assert set(detection["counts"]) >= {"heating_circuits", "buffers", "solar"}
+    assert detection["evidence"]["api_version_marker"] == ApiVersion.V_23_020.label
+    assert detection["reads"] > 0
+    assert json.loads(json.dumps(detection, cls=ExtendedJSONEncoder))
+
+
+async def test_diagnostics_are_not_withheld_for_a_controller_that_cannot_be_detected(
+    hass: HomeAssistant, enable_custom_integrations, mock_client
+) -> None:
+    with patch(
+        "aiosolarfocus.SolarfocusClient.detect",
+        side_effect=SolarfocusProtocolError("asked for 1 registers and got 2"),
+    ):
+        diagnostics = await _diagnostics(hass, heating_circuit=1, heatpump=True)
+
+    assert diagnostics["detection"] == {"error": "asked for 1 registers and got 2"}
+    assert diagnostics["components"]["heating_circuits.1"]
 
 
 async def test_diagnostics_describe_how_the_entry_is_configured(

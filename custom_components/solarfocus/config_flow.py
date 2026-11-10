@@ -7,11 +7,14 @@ from typing import Any, override
 
 from aiosolarfocus import (
     ApiVersion,
+    Detection,
     SolarfocusClient,
     SolarfocusConfig,
     SolarfocusConnectionError,
+    SolarfocusError,
     Systems,
 )
+from aiosolarfocus.detect import VERSION_MARKERS
 import probatio
 
 from homeassistant import config_entries
@@ -273,9 +276,10 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         api_version=ApiVersion.parse(data[CONF_API_VERSION]),
     )
 
+    detection: Detection | None = None
     try:
-        async with SolarfocusClient(config):
-            pass
+        async with SolarfocusClient(config) as client:
+            detection = await _detect(client)
     except SolarfocusConnectionError as error:
         raise CannotConnect from error
 
@@ -283,7 +287,97 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise InvalidScanInterval
 
     # Return info that you want to store in the config entry.
-    return {"title": data["name"]}
+    return {"title": data["name"], "detection": detection}
+
+
+async def _detect(client: SolarfocusClient) -> Detection | None:
+    """Ask the controller what it is, or return nothing if it would not say.
+
+    Advice for the forms that follow and never a condition of getting through
+    them: the connection has already been made by the time this runs, and a
+    controller that fumbles one of the ninety-odd reads this takes is still a
+    controller the user can describe by hand, as everyone did before.
+    """
+    try:
+        return await client.detect()
+    except SolarfocusError as error:
+        _LOGGER.debug("Could not detect what the controller is: %s", error)
+        return None
+
+
+def _detected_differently(
+    detection: Detection | None, system: str, api_version: str
+) -> dict[str, str] | None:
+    """Return what the controller reads as, if that contradicts what was chosen.
+
+    Only a contradiction the detection can stand behind, because the user is
+    stopped for it:
+
+    - The system counts when the heat generator identified itself, and not
+      between an ecotop and a pellet elegance. Nothing in the registers
+      separates those two, the detection calls both a pellet elegance, and a
+      real ecotop owner told otherwise would be told wrong.
+    - The version is dated by the registers a release added, so it is the
+      newest release that added any. A choice counts as the same when no
+      marker lies between the two: 25.100 on a controller dated 25.030 is
+      as likely right as not. 25.020 and 25.030 added theirs together.
+    """
+    if detection is None:
+        return None
+
+    chosen_system = Systems(system)
+    indistinguishable = {Systems.ECOTOP, Systems.PELLETELEGANCE}
+    system_differs = (
+        detection.confident
+        and detection.system != chosen_system
+        and not {detection.system, chosen_system} <= indistinguishable
+    )
+
+    chosen_version = ApiVersion.parse(api_version)
+    dated = detection.api_version
+    lowest = ApiVersion.V_25_020 if dated is ApiVersion.V_25_030 else dated
+    later_markers = [version for version, _, _ in VERSION_MARKERS if version > dated]
+    version_differs = chosen_version < lowest or (
+        bool(later_markers) and chosen_version >= min(later_markers)
+    )
+
+    if not system_differs and not version_differs:
+        return None
+
+    return {
+        "system": detection.system if detection.confident else chosen_system,
+        "api_version": dated.label,
+    }
+
+
+def _suggested_components(detection: Detection | None, system: str) -> dict[str, Any]:
+    """Return the component form filled in with what the controller reported.
+
+    Suggestions in a form the user still reads and submits, so a count read
+    wrong costs a correction rather than an entry set up wrong.
+    """
+    if detection is None:
+        return {}
+
+    counts = detection.counts
+    suggested: dict[str, Any] = {
+        CONF_HEATING_CIRCUIT: counts.heating_circuits,
+        CONF_BUFFER: counts.buffers,
+        CONF_BOILER: counts.boilers,
+        CONF_FRESH_WATER_MODULE: _fresh_water_modules(
+            system, counts.fresh_water_modules
+        ),
+        CONF_CIRCULATION: counts.circulations,
+        CONF_DIFFERENTIAL_MODULE: counts.differential_modules,
+        CONF_SOLAR: counts.solar,
+        CONF_PHOTOVOLTAIC: detection.has_photovoltaic,
+    }
+    if not any(value for value in suggested.values()):
+        # A controller that reported nothing at all was not understood, and a
+        # form of zeroes is a worse start than the defaults.
+        return {}
+
+    return suggested
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -293,6 +387,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     data: dict[str, Any]
+    # What the controller reported in the user step, for the forms after it.
+    _detection: Detection | None = None
+    # The answer that was last questioned, so the same one is not questioned twice.
+    _questioned: dict[str, Any] | None = None
 
     @override
     async def async_step_user(
@@ -313,7 +411,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         try:
-            await validate_input(self.hass, user_input)
+            info = await validate_input(self.hass, user_input)
         except CannotConnect:
             errors["base"] = "cannot_connect"
         except InvalidAuth:
@@ -324,8 +422,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            self.data = user_input
-            return await self.async_step_component()
+            self._detection = info["detection"]
+            differs = _detected_differently(
+                self._detection,
+                user_input[CONF_SOLARFOCUS_SYSTEM],
+                user_input[CONF_API_VERSION],
+            )
+            # Said once, with the form left as the user filled it in. The
+            # controller's own screen outranks what its registers suggest, so
+            # sending the same answer again is how to say it was meant.
+            if differs is None or self._questioned == user_input:
+                self.data = user_input
+                return await self.async_step_component()
+
+            self._questioned = dict(user_input)
+            return self.async_show_form(
+                step_id="user",
+                data_schema=self.add_suggested_values_to_schema(
+                    STEP_USER_DATA_SCHEMA, user_input
+                ),
+                errors={"base": "detected_differently"},
+                description_placeholders=differs,
+            )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
@@ -340,13 +458,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # boiler form covers everything else. Falling out of this without a
             # form would leave the step reading an input the user has not given
             # yet.
-            if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR:
-                return self.async_show_form(
-                    step_id="component", data_schema=STEP_COMP_VAMPAIR_SELECTION_SCHEMA
-                )
+            schema = (
+                STEP_COMP_VAMPAIR_SELECTION_SCHEMA
+                if self.data[CONF_SOLARFOCUS_SYSTEM] == Systems.VAMPAIR
+                else _biomass_selection_schema(self.data[CONF_SOLARFOCUS_SYSTEM])
+            )
             return self.async_show_form(
                 step_id="component",
-                data_schema=_biomass_selection_schema(self.data[CONF_SOLARFOCUS_SYSTEM]),
+                data_schema=self.add_suggested_values_to_schema(
+                    schema,
+                    _suggested_components(
+                        self._detection, self.data[CONF_SOLARFOCUS_SYSTEM]
+                    ),
+                ),
             )
 
         # Split on the heat pump here as well, so this reads back exactly the
